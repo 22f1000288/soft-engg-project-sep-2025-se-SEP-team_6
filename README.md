@@ -1,5 +1,8 @@
 # soft-engg-project-sep-2025-se-SEP-team_6
 
+Industry: HRMS
+
+
 Git clone the repo 
 1. npm install tailwindcss @tailwindcss/vite
 2. In the viteconfig.js, pasted the below code 
