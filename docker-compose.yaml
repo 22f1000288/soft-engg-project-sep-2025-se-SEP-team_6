@@ -1,0 +1,21 @@
+services:
+  frontend:
+    build:
+      context: ./hrms-project
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./hrms-project:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+    depends_on:
+      - backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
