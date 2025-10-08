@@ -16,7 +16,7 @@ Git clone the repo
 
 ## Working in Docker
 
-1. Install the docker desktop -> https://docs.docker.com/desktop/
+1. Install the docker desktop -> https://docs.docker.com/desktop
 2. Start the docker engine
 3. Run the startup.sh on a bash terminal in vs code
 4. The app is live on localhost:5173 ( Docker will run in detached mode )
