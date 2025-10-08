@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Briefcase, Shield, Mail, Lock, Eye, EyeOff, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 const AuthSystem = () => {
@@ -7,17 +7,7 @@ const AuthSystem = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(null);
   
-  const [users, setUsers] = useState([
-    { id: 1, email: 'admin@company.com', password: 'admin123', role: 'admin', name: 'Admin User' },
-    { id: 2, email: 'hr@company.com', password: 'hr123', role: 'hr', name: 'HR Manager' },
-    { id: 3, email: 'candidate@example.com', password: 'candidate123', role: 'candidate', name: 'John Doe' }
-  ]);
-
-  const [applications] = useState([
-    { id: 1, candidateName: 'John Doe', email: 'candidate@example.com', position: 'Software Engineer', status: 'under-review', appliedDate: '2025-10-01' },
-    { id: 2, candidateName: 'Jane Smith', email: 'jane@example.com', position: 'Product Manager', status: 'approved', appliedDate: '2025-09-28' },
-    { id: 3, candidateName: 'Mike Johnson', email: 'mike@example.com', position: 'UX Designer', status: 'rejected', appliedDate: '2025-09-25' }
-  ]);
+  const [users, setUsers] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -28,22 +18,39 @@ const AuthSystem = () => {
 
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (loggedInUser && loggedInUser.role === 'admin') {
+      fetch('http://localhost:8000/login')
+        .then(res => res.json())
+        .then(data => setUsers(data))
+        .catch(() => setUsers([]));
+    }
+  }, [loggedInUser]);
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (isLogin) {
-      const user = users.find(u => u.email === formData.email && u.password === formData.password);
-      if (user) {
-        setLoggedInUser(user);
+      try {
+        const response = await fetch('http://localhost:8000/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email, password: formData.password }),
+        });
+        if (!response.ok) {
+          throw new Error('Invalid email or password');
+        }
+        const data = await response.json();
+        setLoggedInUser(data.user);
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-      } else {
-        setError('Invalid email or password');
+      } catch (err) {
+        setError(err.message);
       }
     } else {
       if (formData.password !== formData.confirmPassword) {
