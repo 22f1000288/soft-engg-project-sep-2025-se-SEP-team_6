@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from backend.databases.models import SessionLocal, User
+from backend.databases.models import SessionLocal, User, Application
 
 app = FastAPI()
 
@@ -36,15 +36,33 @@ def read_users(db: Session = Depends(get_db)):
         {
             "id": user.id,
             "email": user.email,
+            "password": user.password,
             "role": user.role,
             "name": user.name
         }
         for user in users
     ]
 
+@app.get("/applications")
+def read_apps(db: Session = Depends(get_db)):
+    apps = db.query(Application).all()
+    return [
+        {
+            "id": app.id,
+            "candidateName": app.candidateName,
+            "email": app.email,
+            "position": app.position,
+            "status": app.status,
+            "appliedDate": app.appliedDate
+        }
+        for app in apps
+    ]
+
 @app.post("/login")
 def login(request: Login, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email).first()
+    print("User from DB:", user)
+    print("Password from request:", request.password)
     if user and user.password == request.password:
         return {
             "message": "Login successful",
