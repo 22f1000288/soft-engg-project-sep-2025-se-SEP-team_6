@@ -7,7 +7,24 @@ const AuthSystem = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(null);
   
+
   const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/users')
+      .then(res => res.json())
+      .then(data => setUsers(data));
+  },[])
+
+
+  const [applications, setApplications] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/applications')
+      .then(res => res.json())
+      .then(data => setApplications(data));
+  },[])
+
 
   const [formData, setFormData] = useState({
     name: '',
@@ -17,15 +34,6 @@ const AuthSystem = () => {
   });
 
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (loggedInUser && loggedInUser.role === 'admin') {
-      fetch('http://localhost:8000/login')
-        .then(res => res.json())
-        .then(data => setUsers(data))
-        .catch(() => setUsers([]));
-    }
-  }, [loggedInUser]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
