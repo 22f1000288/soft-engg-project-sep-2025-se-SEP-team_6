@@ -29,6 +29,12 @@ class Login(BaseModel):
     email: str
     password: str
 
+class SignupRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: str
+
 @app.get("/users")
 def read_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
@@ -74,6 +80,30 @@ def login(request: Login, db: Session = Depends(get_db)):
             }
         }
     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+@app.post("/signup")
+def signup(request: SignupRequest, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == request.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    new_user = User(
+        name=request.name,
+        email=request.email,
+        password=request.password,
+        role=request.role
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {
+        "message": "Signup successful",
+        "user": {
+            "id": new_user.id,
+            "email": new_user.email,
+            "role": new_user.role,
+            "name": new_user.name
+        }
+    }
 
 @app.get("/")
 async def root():
