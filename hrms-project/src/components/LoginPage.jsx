@@ -3,7 +3,7 @@ import { User, Briefcase, Shield, Mail, Lock, Eye, EyeOff, CheckCircle, Clock, X
 
 const AuthSystem = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [userRole, setUserRole] = useState('candidate');
+  const [userRole, setUserRole] = useState('admin');
   const [showPassword, setShowPassword] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(null);
   
@@ -23,6 +23,7 @@ const AuthSystem = () => {
     fetch('http://localhost:8000/applications')
       .then(res => res.json())
       .then(data => setApplications(data));
+      
   },[])
 
 
@@ -56,56 +57,45 @@ const AuthSystem = () => {
         }
         const data = await response.json();
         setLoggedInUser(data.user);
+        setUserRole(data.user.role);
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
       } catch (err) {
         setError(err.message);
       }
     } else {
-          if (formData.password !== formData.confirmPassword) {
-          setError('Passwords do not match');
-          return;
-        }
-        if (formData.password.length < 6) {
-          setError('Password must be at least 6 characters');
-          return;
-        }
-
-        try {
-          const response = await fetch('http://localhost:8000/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: formData.name,
-              email: formData.email,
-              password: formData.password,
-              role: userRole
-            }),
-          });
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.detail || 'Signup failed');
-          }
-          const data = await response.json();
-          setLoggedInUser(data.user);
-          setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-        } catch (err) {
-          setError(err.message);
-        }
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters');
         return;
       }
 
-      const newUser = {
-        id: users.length + 1,
-        email: formData.email,
-        password: formData.password,
-        role: userRole,
-        name: formData.name
-      };
-
-      setUsers([...users, newUser]);
-      setLoggedInUser(newUser);
-      setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-    };
+      try {
+        const response = await fetch('http://localhost:8000/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            role: userRole
+          }),
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.detail || 'Signup failed');
+        }
+        const data = await response.json();
+        setLoggedInUser(data.user);
+        setUserRole(data.user.role);
+        setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+  };
   
 
   const handleLogout = () => {
@@ -311,7 +301,7 @@ const AuthSystem = () => {
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">Select Role</label>
               <div className="grid grid-cols-2 gap-3">
-                {['candidate', 'hr'].map(role => (
+                {['candidate', 'hr','admin'].map(role => (
                   <button
                     key={role}
                     type="button"
