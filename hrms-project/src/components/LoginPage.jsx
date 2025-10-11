@@ -61,18 +61,36 @@ const AuthSystem = () => {
         setError(err.message);
       }
     } else {
-      if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
-        return;
-      }
-      if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters');
-        return;
-      }
-      
-      const existingUser = users.find(u => u.email === formData.email);
-      if (existingUser) {
-        setError('Email already registered');
+          if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match');
+          return;
+        }
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters');
+          return;
+        }
+
+        try {
+          const response = await fetch('http://localhost:8000/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: formData.name,
+              email: formData.email,
+              password: formData.password,
+              role: userRole
+            }),
+          });
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.detail || 'Signup failed');
+          }
+          const data = await response.json();
+          setLoggedInUser(data.user);
+          setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+        } catch (err) {
+          setError(err.message);
+        }
         return;
       }
 
@@ -87,8 +105,8 @@ const AuthSystem = () => {
       setUsers([...users, newUser]);
       setLoggedInUser(newUser);
       setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-    }
-  };
+    };
+  
 
   const handleLogout = () => {
     setLoggedInUser(null);
@@ -292,8 +310,8 @@ const AuthSystem = () => {
           {!isLogin && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">Select Role</label>
-              <div className="grid grid-cols-3 gap-3">
-                {['candidate', 'hr', 'admin'].map(role => (
+              <div className="grid grid-cols-2 gap-3">
+                {['candidate', 'hr'].map(role => (
                   <button
                     key={role}
                     type="button"
