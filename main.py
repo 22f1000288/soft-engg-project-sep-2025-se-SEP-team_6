@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from backend.databases.models import SessionLocal, User
+from backend.databases.models import SessionLocal, User, Application
 
 app = FastAPI()
 
@@ -29,6 +29,12 @@ class Login(BaseModel):
     email: str
     password: str
 
+class SignupRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: str
+
 @app.get("/users")
 def read_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
@@ -36,15 +42,33 @@ def read_users(db: Session = Depends(get_db)):
         {
             "id": user.id,
             "email": user.email,
+            "password": user.password,
             "role": user.role,
             "name": user.name
         }
         for user in users
     ]
 
+@app.get("/applications")
+def read_apps(db: Session = Depends(get_db)):
+    apps = db.query(Application).all()
+    return [
+        {
+            "id": app.id,
+            "candidateName": app.candidateName,
+            "email": app.email,
+            "position": app.position,
+            "status": app.status,
+            "appliedDate": app.appliedDate
+        }
+        for app in apps
+    ]
+
 @app.post("/login")
 def login(request: Login, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email).first()
+    print("User from DB:", user)
+    print("Password from request:", request.password)
     if user and user.password == request.password:
         return {
             "message": "Login successful",
@@ -56,6 +80,30 @@ def login(request: Login, db: Session = Depends(get_db)):
             }
         }
     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+@app.post("/signup")
+def signup(request: SignupRequest, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == request.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    new_user = User(
+        name=request.name,
+        email=request.email,
+        password=request.password,
+        role=request.role
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {
+        "message": "Signup successful",
+        "user": {
+            "id": new_user.id,
+            "email": new_user.email,
+            "role": new_user.role,
+            "name": new_user.name
+        }
+    }
 
 @app.get("/")
 async def root():
