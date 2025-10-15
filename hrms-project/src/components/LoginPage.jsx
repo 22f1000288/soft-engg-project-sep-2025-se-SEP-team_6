@@ -46,6 +46,15 @@ const AuthSystem = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.email || !formData.password) {
+      setError('Please enter email and password');
+      return;
+    }
+    if(!formData.email.includes('@') && !formData.email.includes('.')) {
+      setError('Please enter a valid email');
+      setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+      return;
+    }
     setError('');
 
     if (isLogin) {
@@ -56,6 +65,8 @@ const AuthSystem = () => {
           body: JSON.stringify({ email: formData.email, password: formData.password }),
         });
         if (!response.ok) {
+          // empty the email and password fields
+          setFormData({ name: '', email: '', password: '', confirmPassword: '' });
           throw new Error('Invalid email or password');
         }
         const data = await response.json();
@@ -180,7 +191,7 @@ const AuthSystem = () => {
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">Select Role</label>
               <div className="grid grid-cols-2 gap-3">
-                {['candidate', 'hr','admin'].map(role => (
+                {['candidate', 'hr'].map(role => (
                   <button
                     key={role}
                     type="button"
@@ -271,6 +282,7 @@ const AuthSystem = () => {
                     placeholder="Confirm your password"
                     required
                   />
+                  
                 </div>
               </div>
             )}
