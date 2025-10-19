@@ -5,7 +5,11 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from backend.databases.models import SessionLocal, User, Application
 
-app = FastAPI()
+app = FastAPI(
+    title="TalentForm HRMS API",
+    description="API documentation for HRMS application",
+    version="1.0.0"
+)
 
 # CORS setup
 app.add_middleware(
@@ -35,7 +39,7 @@ class SignupRequest(BaseModel):
     password: str
     role: str
 
-@app.get("/users")
+@app.get("/users", tags=["Users"])
 def read_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return [
@@ -49,7 +53,7 @@ def read_users(db: Session = Depends(get_db)):
         for user in users
     ]
 
-@app.get("/applications")
+@app.get("/applications", tags=["Applications"])
 def read_apps(db: Session = Depends(get_db)):
     apps = db.query(Application).all()
     return [
@@ -64,7 +68,7 @@ def read_apps(db: Session = Depends(get_db)):
         for app in apps
     ]
 
-@app.post("/login")
+@app.post("/login", tags=["Authentication"])
 def login(request: Login, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email).first()
     print("User from DB:", user)
@@ -81,7 +85,7 @@ def login(request: Login, db: Session = Depends(get_db)):
         }
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
-@app.post("/signup")
+@app.post("/signup", tags=["Authentication"])
 def signup(request: SignupRequest, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == request.email).first()
     if existing_user:
@@ -105,7 +109,7 @@ def signup(request: SignupRequest, db: Session = Depends(get_db)):
         }
     }
 
-@app.get("/")
+@app.get("/", tags=["Health Check"])
 async def root():
     return {"message": "Hello World"}
 
