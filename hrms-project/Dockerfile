@@ -8,7 +8,7 @@ COPY package*.json ./
 
 # Clean install inside container (Linux deps only)
 RUN rm -rf node_modules && npm cache clean --force && npm ci
-
+RUN npm install react-router-dom
 # Copy rest of your app
 COPY . .
 
