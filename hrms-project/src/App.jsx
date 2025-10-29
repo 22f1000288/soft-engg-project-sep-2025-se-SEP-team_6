@@ -1,5 +1,6 @@
 import './App.css'
 import AuthSystem from './components/LoginPage'
+import JobCreater from './components/JobCreater'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import TalentFlowLanding from './components/LandingPage';
 import AdminDashboard from './components/AdminDashboard';
@@ -16,6 +17,7 @@ function App() {
         <Route path="/candidate-dashboard" element={<CandidateDashboard />} />
 
         <Route path="/login-signup" element={<AuthSystem />} />
+        <Route path="/job-creator" element={<JobCreater />} />
       </Routes>
     </Router>
   );
