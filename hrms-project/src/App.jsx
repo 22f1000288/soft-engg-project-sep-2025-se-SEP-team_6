@@ -1,11 +1,11 @@
 import './App.css'
-import AuthSystem from './components/LoginPage'
-import JobCreater from './components/JobCreater'
+import AuthSystem from './pages/LoginPage'
+import JobCreater from './pages/JobCreater'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import TalentFlowLanding from './components/LandingPage';
-import AdminDashboard from './components/AdminDashboard';
-import HRDashboard from './components/HRDashboard';
-import CandidateDashboard from './components/CandidateDashboard';
+import TalentFlowLanding from './pages/LandingPage';
+import AdminDashboard from './pages/AdminDashboard';
+import HRDashboard from './pages/HRDashboard';
+import CandidateDashboard from './pages/CandidateDashboard';
 
 function App() {
   return (
