@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Navbar from "../components/HRNavbar";
 
 export default function JobCreater() {
   const [form, setForm] = useState({
@@ -9,6 +10,16 @@ export default function JobCreater() {
     culture: "",
     location: "",
   });
+
+  const navItems = [
+    { label: "Dashboard", to: "/hr-dashboard" },
+    { label: "Jobs", to: "/jobs" },
+    { label: "Candidates", to: "/candidates" },
+    { label: "Communications", to: "/communications" },
+    { label: "Analytics", to: "/analytics" },
+    { label: "Schedule", to: "/schedule" },
+  ];
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,7 +33,13 @@ export default function JobCreater() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-10">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar
+        navItems={navItems}
+        userName="Jane Recruiter"
+        onLogout={() => print("Logout clicked")}
+        brand={{ title: "TalentFlow" }}
+      />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -36,7 +53,7 @@ export default function JobCreater() {
           </div>
         </header>
 
-        {/* Main content: left form, right  preview */}
+        {/* Main content */}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left: Form card */}
