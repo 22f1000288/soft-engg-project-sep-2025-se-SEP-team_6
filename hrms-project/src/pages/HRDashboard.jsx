@@ -44,19 +44,19 @@ export default function RecruitmentDashboard(props) {
 
   const interviews = [
     {
-      name: 'John Smith',
-      role: 'Frontend Developer',
+      name: 'Abhinav Namikaze',
+      role: 'Executive Assistant',
       time: '10:00 AM - 11:00 AM',
       color: 'border-blue-500'
     },
     {
-      name: 'Sarah Johnson',
-      role: 'Product Manager',
+      name: 'Suhani Sharma',
+      role: 'CFO',
       time: '2:00 PM - 3:00 PM',
       color: 'border-green-500'
     },
     {
-      name: 'Mike Chen',
+      name: 'Amitabh Bachchan',
       role: 'Backend Developer',
       time: '4:00 PM - 5:00 PM',
       color: 'border-purple-500'
@@ -95,7 +95,7 @@ export default function RecruitmentDashboard(props) {
             <button className="text-gray-600 hover:text-gray-900">
               
             </button>
-              <div>Jane Recruiter</div>
+              <div>Saurabh Shukla</div>
             <div className="flex items-center gap-2">
               
               <span onClick={handleLogout} className="text-sm text-gray-700 cursor-pointer">Logout</span>

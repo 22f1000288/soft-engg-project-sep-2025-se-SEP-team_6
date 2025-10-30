@@ -22,17 +22,9 @@ export default function TalentFlowLanding() {
           </div>
           <div className="flex items-center gap-4">
             <button className="text-gray-600 hover:text-gray-900">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-              <span className="text-gray-700">User</span>
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+            
           </div>
         </div>
       </header>
