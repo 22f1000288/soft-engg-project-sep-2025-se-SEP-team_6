@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/HRNavbar";
+import { useNavigate } from "react-router-dom";
 
 export default function JobCreater() {
   const [form, setForm] = useState({
@@ -10,6 +11,8 @@ export default function JobCreater() {
     culture: "",
     location: "",
   });
+
+  const navigate = useNavigate();
 
   const navItems = [
     { label: "Dashboard", to: "/hr-dashboard" },
@@ -26,6 +29,7 @@ export default function JobCreater() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  
   const handleGenerate = (e) => {
     e.preventDefault();
 
@@ -37,10 +41,10 @@ export default function JobCreater() {
       <Navbar
         navItems={navItems}
         userName="Jane Recruiter"
-        onLogout={() => print("Logout clicked")}
+        onLogout={() => navigate("/")}
         brand={{ title: "TalentFlow" }}
       />
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto mt-7">
         {/* Header */}
         <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>

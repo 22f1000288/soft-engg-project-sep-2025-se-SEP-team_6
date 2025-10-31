@@ -54,7 +54,7 @@ export default function Navbar({
             <div className="text-sm text-gray-700">{userName}</div>
             <button
               onClick={onLogout}
-              className="text-sm text-gray-700 hover:text-gray-900"
+              className="text-sm text-gray-700 hover:text-gray-900 cursor-pointer"
             >
               Logout
             </button>

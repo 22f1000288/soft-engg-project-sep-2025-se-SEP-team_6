@@ -247,13 +247,13 @@ export default function Jobs(props) {
                   <div className="flex gap-2">
                     <button
                       onClick={() => alert("Edit")}
-                      className="px-3 py-1 border rounded-md text-sm"
+                      className="px-3 py-1 border rounded-md text-sm hover:bg-green-500 hover:text-white transition hover:cursor-pointer"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => alert("Close job")}
-                      className="px-3 py-1 border rounded-md text-sm"
+                      className="px-3 py-1 border rounded-md text-sm hover:bg-red-600 hover:text-white transition hover:cursor-pointer"
                     >
                       Close
                     </button>

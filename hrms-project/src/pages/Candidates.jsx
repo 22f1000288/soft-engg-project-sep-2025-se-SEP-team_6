@@ -84,7 +84,7 @@ export default function Candidates(props) {
         brand={{ title: "TalentFlow" }}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mt-5">
         {/* Title */}
         <div className="mb-6 shadow-sm">
           <h1 className="text-2xl md:text-4xl font-bold text-blue-700">

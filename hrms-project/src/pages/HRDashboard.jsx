@@ -11,17 +11,16 @@ import { useNavigate } from "react-router-dom";
 
 export default function RecruitmentDashboard(props) {
   const [activeTab, setActiveTab] = useState("Dashboard");
+  
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    props.setLoggedInUser(null);
-    props.setFormData({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
+    navigate("/");
   };
-  const navigate = useNavigate();
+ 
+  const createJobHandler = () => {
+    navigate('/job-creator');
+  }
 
   const stats = [
     {
@@ -201,7 +200,7 @@ export default function RecruitmentDashboard(props) {
               <h2 className="text-2xl font-bold text-gray-900">
                 Hiring Pipeline
               </h2>
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition font-medium">
+              <button onClick={createJobHandler} className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition font-medium">
                 <Plus className="w-4 h-4" />
                 Create Job
               </button>
