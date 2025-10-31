@@ -81,7 +81,7 @@ export default function CandidateApplications(props) {
             <button className="text-gray-600 hover:text-gray-900">
               
             </button>
-              <div>John Candidate</div>
+              <div>Akshay Kumar</div>
             <div className="flex items-center gap-2">
               
               <span onClick={handleLogout} className="text-sm text-gray-700 cursor-pointer">Logout</span>
