@@ -4,20 +4,20 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 //sample use of this component is following(if you want to use this navbar in other pages  )
 
-//import Navbar from "../components/HRNavbar";
-//<Navbar userName={userName} />
-//see pages like Analytics.jsx , Schedule.jsx etc for reference
+//import CandidateNavbar from "../components/CandidateNavbar";
+//<CandidateNavbar userName={userName} />
+//see pages like CandidateJobs.jsx , CandidateApplications.jsx etc for reference
 
-export default function Navbar({
+export default function CandidateNavbar({
+  //Navbar props for candidate
   navItems = [
-    { label: "Dashboard", to: "/hr-dashboard" },
-    { label: "Jobs", to: "/hr-jobs" },
-    { label: "Candidates", to: "/candidates" },
-    { label: "Communications", to: "/communications" },
-    { label: "Analytics", to: "/analytics" },
-    // { label: "Schedule", to: "/schedule" },
+    { label: "Dashboard", to: "/candidate-dashboard" },
+    { label: "Jobs", to: "/candidate-jobs" },
+    { label: "Applications", to: "/candidate-applications" },
+    { label: "Interview Prep", to: "/interview-prep" },
+    { label: "Profile", to: "/profile" },
   ],
-  userName = "User",
+  userName = "Candidate",
   brand = { title: "TalentFlow" },
 }) {
   const [open, setOpen] = useState(false);

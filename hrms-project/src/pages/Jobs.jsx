@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 export default function Jobs(props) {
   const navigate = useNavigate();
   const userName = props?.userName ?? "Jane Recruiter";
-  const onLogout = props?.onLogout ?? (() => {});
 
   // jobs data
   const sampleJobs = [
@@ -58,16 +57,6 @@ export default function Jobs(props) {
   const [statusFilter, setStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState("recent");
 
-  // nav items for Navbar
-  const navItems = [
-    { label: "Dashboard", to: "/hr-dashboard" },
-    { label: "Jobs", to: "/jobs" },
-    { label: "Candidates", to: "/candidates" },
-    { label: "Communications", to: "/communications" },
-    { label: "Analytics", to: "/analytics" },
-    { label: "Schedule", to: "/schedule" },
-  ];
-
   const departments = Array.from(new Set(jobs.map((j) => j.department)));
   const statuses = Array.from(new Set(jobs.map((j) => j.status)));
 
@@ -101,15 +90,10 @@ export default function Jobs(props) {
     //Navbar
 
     <div className="min-h-screen bg-gray-50">
-      <Navbar
-        navItems={navItems}
-        userName={userName}
-        onLogout={onLogout}
-        brand={{ title: "TalentFlow" }}
-      />
+      <Navbar userName={userName} />
       {/* Main Content Section */}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 py-8">
+      <main className="py-6 px-6 sm:pt-12 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] overflow-auto bg-gray-50  ">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
@@ -145,7 +129,7 @@ export default function Jobs(props) {
         </div>
 
         {/* Filters row */}
-        <div className="bg-white rounded-2xl p-4 shadow-2xl mb-4">
+        <div className="bg-white rounded-2xl p-4 shadow-lg mb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               <div>
@@ -209,7 +193,7 @@ export default function Jobs(props) {
           {filtered.map((job) => (
             <div
               key={job.id}
-              className="bg-white rounded-lg p-5 shadow-2xl border border-gray-100"
+              className="bg-white rounded-lg p-5 shadow-lg border border-gray-100"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -266,7 +250,7 @@ export default function Jobs(props) {
 
         {/* Empty state */}
         {filtered.length === 0 && (
-          <div className="bg-white rounded-lg p-6 shadow-2xl mt-6 text-center text-gray-500">
+          <div className="bg-white rounded-lg p-6 shadow-lg mt-6 text-center text-gray-500">
             No jobs match your filters. Try clearing filters or create a new
             job.
           </div>

@@ -5,7 +5,7 @@ import { CloudUpload, Download,Users,Plus } from "lucide-react";
 export default function Candidates(props) {
   //Props
   const userName = props?.userName ?? "Jane Recruiter";
-  const onLogout = props?.onLogout ?? (() => {});
+
 
   const [selectedJob, setSelectedJob] = useState("");
   const [files, setFiles] = useState([]);
@@ -66,27 +66,16 @@ export default function Candidates(props) {
   ).length;
   const lowMatch = candidates.filter((c) => c.score < 60).length;
 
-  const navItems = [
-    { label: "Dashboard", to: "/hr-dashboard" },
-    { label: "Jobs", to: "/jobs" },
-    { label: "Candidates", to: "/candidates" },
-    { label: "Communications", to: "/communications" },
-    { label: "Analytics", to: "/analytics" },
-    { label: "Schedule", to: "/schedule" },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar
-        navItems={navItems}
         userName={userName}
-        onLogout={onLogout}
-        brand={{ title: "TalentFlow" }}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mt-5">
+      <main className="py-6 sm:pt-12 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] overflow-auto bg-gray-50">
         {/* Title */}
-        <div className="mb-6 shadow-sm">
+        <div className="mb-6 shadow-lg">
           <h1 className="text-2xl md:text-4xl font-bold text-blue-700">
             AI Resume Screening
           </h1>
@@ -97,7 +86,7 @@ export default function Candidates(props) {
         </div>
 
         {/* Top control card */}
-        <section className="bg-white rounded-2xl p-6 shadow-2xl mb-8">
+        <section className="bg-white rounded-2xl p-6 shadow-lg mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
             {/* Job select */}
             <div className="lg:col-span-4">
@@ -166,7 +155,7 @@ export default function Candidates(props) {
         {/* Content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left card: Top 10 Candidates */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-2xl">
+          <div className="lg:col-span-7 bg-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-start justify-between mb-4">
               <h2 className="text-xl font-semibold text-blue-700">
                 Top 10 Candidates
@@ -231,84 +220,7 @@ export default function Candidates(props) {
             )}
           </div>
 
-          {/* Right column cards */}
-          <div className="space-y-6">
-            {/* Screening Summary */}
-            <div className="bg-white rounded-2xl p-6 shadow-2xl">
-              <h3 className="text-lg font-semibold text-blue-700 mb-4">
-                Screening Summary
-              </h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span>Total Resumes</span>
-                  <span className="font-semibold">{totalResumes}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>High Match (80%+)</span>
-                  <span className="font-semibold text-green-600">
-                    {highMatch}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Medium Match (60-79%)</span>
-                  <span className="font-semibold text-yellow-600">
-                    {medMatch}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Low Match (&lt;60%)</span>
-                  <span className="font-semibold text-red-600">{lowMatch}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Flagged Mismatches</span>
-                  <span className="font-semibold text-red-600">0</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Talent Clusters */}
-            <div className="bg-white rounded-2xl p-6 shadow-2xl">
-              <h3 className="text-lg font-semibold text-blue-700 mb-4">
-                Talent Clusters
-              </h3>
-              <div className="text-sm text-gray-600">
-                {/* SamplePlaceholder clusters */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Frontend Engineers</div>
-                      <div className="text-xs text-gray-500">
-                        React, TypeScript
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">
-                      18
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Backend Engineers</div>
-                      <div className="text-xs text-gray-500">Node, Python</div>
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">
-                      12
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Product Managers</div>
-                      <div className="text-xs text-gray-500">
-                        Roadmap, Strategy
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">6</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </main>
     </div>

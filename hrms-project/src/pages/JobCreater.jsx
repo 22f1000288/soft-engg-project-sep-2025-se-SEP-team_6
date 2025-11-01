@@ -23,13 +23,11 @@ export default function JobCreater() {
     { label: "Schedule", to: "/schedule" },
   ];
 
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  
   const handleGenerate = (e) => {
     e.preventDefault();
 
@@ -61,7 +59,7 @@ export default function JobCreater() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left: Form card */}
-          <div className="bg-white rounded-xl shadow-2xl p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Job Details</h2>
 
             <form onSubmit={handleGenerate} className="space-y-4">
@@ -185,7 +183,7 @@ export default function JobCreater() {
 
           {/* Right: Generated description card */}
 
-          <div className="bg-white rounded-xl shadow-2xl p-6 flex flex-col">
+          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
               <h3 className="text-lg font-medium">Generated Job Description</h3>
               <div className="flex items-center gap-2">
