@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import {
   Briefcase,
   Users,
@@ -8,19 +7,16 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/HRNavbar";
 
 export default function RecruitmentDashboard(props) {
-  const [activeTab, setActiveTab] = useState("Dashboard");
-  
   const navigate = useNavigate();
+  const userName = props?.userName ?? "Jane Recruiter";
 
-  const handleLogout = () => {
-    navigate("/");
-  };
- 
+
   const createJobHandler = () => {
-    navigate('/job-creator');
-  }
+    navigate("/job-creator");
+  };
 
   const stats = [
     {
@@ -99,18 +95,13 @@ export default function RecruitmentDashboard(props) {
     },
   ];
 
-  const navItems = [
-    "Dashboard",
-    "Jobs",
-    "Candidates",
-    "Communications",
-    "Analytics",
-    "Schedule",
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      <Navbar
+        userName={userName}
+      />
+
+      {/* Header
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -157,12 +148,12 @@ export default function RecruitmentDashboard(props) {
           </div>
         </div>
       </header>
-
+ */}
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="py-6 sm:pt-12 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] overflow-auto bg-gray-50">
         {/* Page Title */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl font-bold text-blue-700 mb-2">
             Recruitment Dashboard
           </h1>
           <p className="text-gray-600">
@@ -175,7 +166,7 @@ export default function RecruitmentDashboard(props) {
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <div key={index} className="bg-white rounded-2xl p-6 shadow-sm">
+              <div key={index} className="bg-white rounded-2xl p-6 shadow-lg">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-gray-600 text-sm mb-2">{stat.label}</p>
@@ -195,12 +186,15 @@ export default function RecruitmentDashboard(props) {
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Hiring Pipeline */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
+          <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-blue-700">
                 Hiring Pipeline
               </h2>
-              <button onClick={createJobHandler} className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition font-medium">
+              <button
+                onClick={createJobHandler}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition font-medium"
+              >
                 <Plus className="w-4 h-4" />
                 Create Job
               </button>
@@ -262,8 +256,8 @@ export default function RecruitmentDashboard(props) {
           </div>
 
           {/* Today's Interviews */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <div className="bg-white rounded-2xl p-6 shadow-lg">
+            <h2 className="text-2xl font-bold text-blue-700 mb-6">
               Today's Interviews
             </h2>
             <div className="space-y-4">

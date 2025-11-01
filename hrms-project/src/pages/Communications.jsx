@@ -4,7 +4,6 @@ import { Send } from "lucide-react";
 
 export default function Communications(props) {
   const userName = props?.userName ?? "Jane Recruiter";
-  const onLogout = props?.onLogout ?? (() => {});
 
   // Form state
   const [selectedCandidate, setSelectedCandidate] = useState("");
@@ -59,15 +58,6 @@ export default function Communications(props) {
     },
   ];
 
-  const navItems = [
-    { label: "Dashboard", to: "/hr-dashboard" },
-    { label: "Jobs", to: "/jobs" },
-    { label: "Candidates", to: "/candidates" },
-    { label: "Communications", to: "/communications" },
-    { label: "Analytics", to: "/analytics" },
-    { label: "Schedule", to: "/schedule" },
-  ];
-
   const handleSend = () => {
     if (!selectedCandidate || !messageType || message.trim().length === 0) {
       alert("Please choose a candidate, message type and write a message.");
@@ -90,14 +80,9 @@ export default function Communications(props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar
-        navItems={navItems}
-        userName={userName}
-        onLogout={onLogout}
-        brand={{ title: "TalentFlow" }}
-      />
+      <Navbar userName={userName} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="py-6 sm:pt-12 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] overflow-auto bg-gray-50">
         {/* Page header */}
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-blue-700">
@@ -111,9 +96,9 @@ export default function Communications(props) {
 
         {/* Top: Cards Section */}
         <section>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-6">
             {/* Automated Follow-ups */}
-            <div className="bg-white rounded-2xl p-5 shadow-2xl">
+            <div className="bg-white rounded-2xl p-5 shadow-lg">
               <h3 className="font-semibold text-gray-900 mb-3">
                 Automated Follow-ups
               </h3>
@@ -167,7 +152,7 @@ export default function Communications(props) {
             </div>
 
             {/* AI Translation */}
-            <div className="bg-white rounded-2xl p-5 shadow-2xl">
+            <div className="bg-white rounded-2xl p-5 shadow-lg">
               <h3 className="font-semibold text-gray-900 mb-3">
                 AI Translation
               </h3>
@@ -211,7 +196,7 @@ export default function Communications(props) {
             </div>
 
             {/* Communication Metrics */}
-            <div className="bg-white rounded-2xl p-5 shadow-2xl">
+            <div className="bg-white rounded-2xl p-5 shadow-lg">
               <h3 className="font-semibold text-gray-900 mb-3">
                 Communication Metrics
               </h3>
@@ -247,9 +232,9 @@ export default function Communications(props) {
 
         {/* Middle section: Send Message + AI Suggestions */}
         <section>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6  mb-6 ">
             {/* Send Message card */}
-            <div className="lg:col-span-8 bg-white rounded-2xl p-6 shadow-2xl">
+            <div className="lg:col-span-8 bg-white rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
                   Send Message
@@ -372,7 +357,7 @@ export default function Communications(props) {
             </div>
 
             {/* AI Suggestions card */}
-            <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-2xl">
+            <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-lg">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 AI Suggestions
               </h3>
@@ -388,7 +373,7 @@ export default function Communications(props) {
 
         {/* BottomRecent Communications Card */}
         <section>
-          <div className="bg-white rounded-2xl p-6 shadow-2xl">
+          <div className="bg-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Recent Communications
