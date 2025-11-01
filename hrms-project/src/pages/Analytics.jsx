@@ -13,7 +13,7 @@ export default function Analytics(props) {
 
   // Backend Coming Soon
   const kpis = [
-    { id: 1, label: "Open Roles", value: 24, icon: Briefcase, delta: "+3" },
+    { id: 1, label: "Open Roles", value: 24, icon: Briefcase},
     {
       id: 2,
       label: "Avg Time to Hire (days)",
@@ -21,8 +21,8 @@ export default function Analytics(props) {
       icon: Clock,
       delta: "-2",
     },
-    { id: 3, label: "Applications", value: 1240, icon: Users, delta: "+12%" },
-    { id: 4, label: "Hires (30d)", value: 8, icon: BarChart, delta: "+1" },
+    { id: 3, label: "Applications", value: 1240, icon: Users},
+    { id: 4, label: "Hires (30d)", value: 8, icon: BarChart},
   ];
 
   const topRoles = [
@@ -31,20 +31,7 @@ export default function Analytics(props) {
     { id: "r3", title: "Product Manager", open: 2 },
   ];
 
-  const recentHires = [
-    {
-      id: "h1",
-      name: "Asha K.",
-      role: "Frontend Engineer",
-      date: "Oct 10, 2025",
-    },
-    {
-      id: "h2",
-      name: "Ravi S.",
-      role: "Backend Engineer",
-      date: "Sep 28, 2025",
-    },
-  ];
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -73,7 +60,7 @@ export default function Analytics(props) {
                       <div className="text-2xl font-bold text-gray-900">
                         {k.value}
                       </div>
-                      <div className="text-sm text-green-600">{k.delta}</div>
+                      
                     </div>
                   </div>
                   <div className="p-2 bg-gray-100 rounded-md">
@@ -202,39 +189,9 @@ export default function Analytics(props) {
               </ul>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 shadow-lg">
-              <h3 className="text-md font-semibold text-gray-900 mb-3">
-                Recent Hires
-              </h3>
-              <ul className="space-y-3">
-                {recentHires.map((h) => (
-                  <li key={h.id} className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-gray-800">{h.name}</div>
-                      <div className="text-xs text-gray-500">{h.role}</div>
-                    </div>
-                    <div className="text-xs text-gray-500">{h.date}</div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            
 
-            <div className="bg-white rounded-2xl p-4 shadow-lg">
-              <h3 className="text-md font-semibold text-gray-900 mb-3">
-                Quick Actions
-              </h3>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={createJobHandler}
-                  className="w-full text-sm px-3 py-2 rounded-md bg-blue-600 text-white"
-                >
-                  Create new Job
-                </button>
-                <button className="w-full text-sm px-3 py-2 rounded-md border border-gray-200">
-                  Export report
-                </button>
-              </div>
-            </div>
+            
           </aside>
         </div>
       </main>

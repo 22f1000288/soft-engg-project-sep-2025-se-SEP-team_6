@@ -155,7 +155,7 @@ export default function Candidates(props) {
         {/* Content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left card: Top 10 Candidates */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-lg">
+          <div className="lg:col-span-7 bg-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-start justify-between mb-4">
               <h2 className="text-xl font-semibold text-blue-700">
                 Top 10 Candidates
@@ -220,84 +220,7 @@ export default function Candidates(props) {
             )}
           </div>
 
-          {/* Right column cards */}
-          <div className="space-y-6">
-            {/* Screening Summary */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold text-blue-700 mb-4">
-                Screening Summary
-              </h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span>Total Resumes</span>
-                  <span className="font-semibold">{totalResumes}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>High Match (80%+)</span>
-                  <span className="font-semibold text-green-600">
-                    {highMatch}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Medium Match (60-79%)</span>
-                  <span className="font-semibold text-yellow-600">
-                    {medMatch}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Low Match (&lt;60%)</span>
-                  <span className="font-semibold text-red-600">{lowMatch}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Flagged Mismatches</span>
-                  <span className="font-semibold text-red-600">0</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Talent Clusters */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold text-blue-700 mb-4">
-                Talent Clusters
-              </h3>
-              <div className="text-sm text-gray-600">
-                {/* SamplePlaceholder clusters */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Frontend Engineers</div>
-                      <div className="text-xs text-gray-500">
-                        React, TypeScript
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">
-                      18
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Backend Engineers</div>
-                      <div className="text-xs text-gray-500">Node, Python</div>
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">
-                      12
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Product Managers</div>
-                      <div className="text-xs text-gray-500">
-                        Roadmap, Strategy
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">6</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </main>
     </div>

@@ -73,8 +73,8 @@ export default function CandidateDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <div className="mb-8 mt-4">
+          <h1 className="text-4xl font-bold text-blue-600 mb-2">
             Candidate Dashboard
           </h1>
           <p className="text-gray-600">
@@ -90,8 +90,8 @@ export default function CandidateDashboard() {
               <div key={index} className="bg-white rounded-2xl p-6 shadow-lg">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-gray-600 text-sm mb-2">{stat.label}</p>
-                    <p className="text-4xl font-bold text-gray-900">
+                    <p className="text-blue-600 text-sm mb-2">{stat.label}</p>
+                    <p className="text-4xl font-bold text-blue-600">
                       {stat.value}
                     </p>
                   </div>
@@ -108,7 +108,7 @@ export default function CandidateDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Applications */}
           <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <h2 className="text-2xl font-bold text-blue-600 mb-6">
               Recent Applications
             </h2>
 
@@ -120,7 +120,7 @@ export default function CandidateDashboard() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-1">
+                      <h3 className="text-lg font-bold text-blue-600 mb-1">
                         {app.title}
                       </h3>
                       <p className="text-gray-600 text-sm">
@@ -140,7 +140,7 @@ export default function CandidateDashboard() {
 
           {/* Interview Preparation */}
           <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <h2 className="text-2xl font-bold text-blue-600 mb-6">
               Interview Preparation
             </h2>
 
@@ -159,7 +159,7 @@ export default function CandidateDashboard() {
                         <Icon className={`w-6 h-6 ${tool.iconColor}`} />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
+                        <h3 className="text-lg font-bold text-blue-600 mb-1">
                           {tool.title}
                         </h3>
                         <p className="text-gray-600 text-sm">

@@ -88,165 +88,21 @@ export default function Communications(props) {
           <h1 className="text-2xl md:text-3xl font-bold text-blue-700">
             Candidate Communications
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 mt-1 mb-2">
             Automate follow-ups, translate messages, and provide personalized
             feedback to candidates
           </p>
         </div>
-
-        {/* Top: Cards Section */}
-        <section>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-6">
-            {/* Automated Follow-ups */}
-            <div className="bg-white rounded-2xl p-5 shadow-lg">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                Automated Follow-ups
-              </h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div className="flex items-start justify-between bg-gray-50 p-3 rounded-md">
-                  <div>
-                    <div className="font-medium">Application Received</div>
-                    <div className="text-xs text-gray-500">
-                      Auto-sent within 2 hours
-                    </div>
-                  </div>
-                  <div className="h-3 w-3 rounded-full bg-green-500 mt-2" />
-                </div>
-
-                <div className="flex items-start justify-between bg-gray-50 p-3 rounded-md">
-                  <div>
-                    <div className="font-medium">Under Review</div>
-                    <div className="text-xs text-gray-500">
-                      Send after 3 days
-                    </div>
-                  </div>
-                  <div className="h-3 w-3 rounded-full bg-yellow-400 mt-2" />
-                </div>
-
-                <div className="flex items-start justify-between bg-gray-50 p-3 rounded-md">
-                  <div>
-                    <div className="font-medium">Interview Scheduled</div>
-                    <div className="text-xs text-gray-500">
-                      Immediate notification
-                    </div>
-                  </div>
-                  <div className="h-3 w-3 rounded-full bg-blue-400 mt-2" />
-                </div>
-
-                <div className="flex items-start justify-between bg-gray-50 p-3 rounded-md">
-                  <div>
-                    <div className="font-medium">Post-Interview Feedback</div>
-                    <div className="text-xs text-gray-500">
-                      Send within 24 hours
-                    </div>
-                  </div>
-                  <div className="h-3 w-3 rounded-full bg-indigo-400 mt-2" />
-                </div>
-
-                <div className="pt-3">
-                  <button className="w-full bg-white border border-indigo-600 text-indigo-600 px-4 py-2 rounded-md">
-                    + Create New Template
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Translation */}
-            <div className="bg-white rounded-2xl p-5 shadow-lg">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                AI Translation
-              </h3>
-              <div className="text-sm text-gray-600">
-                <div className="bg-indigo-50 p-3 rounded-md text-indigo-700 mb-3">
-                  25% Response Rate Boost — Auto-translate messages to
-                  candidate's preferred language
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />{" "}
-                    English
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />{" "}
-                    Spanish
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />{" "}
-                    French
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />{" "}
-                    German
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />{" "}
-                    Hindi
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />{" "}
-                    Mandarin
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <button className="w-full bg-violet-600 text-white px-4 py-2 rounded-md">
-                    Test Translation
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Communication Metrics */}
-            <div className="bg-white rounded-2xl p-5 shadow-lg">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                Communication Metrics
-              </h3>
-              <div className="text-sm text-gray-600 space-y-3">
-                <div className="flex justify-between">
-                  <span>Messages Sent Today</span>
-                  <span className="font-semibold">47</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Response Rate</span>
-                  <span className="font-semibold text-green-600">78%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Avg Response Time</span>
-                  <span className="font-semibold">4.2 hours</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Translations Used</span>
-                  <span className="font-semibold text-blue-600">23</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Feedback Sent</span>
-                  <span className="font-semibold text-purple-600">12</span>
-                </div>
-
-                <div className="mt-3 p-3 bg-green-50 rounded-md text-sm text-green-700">
-                  + 25% improvement — Response rate increased this month
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Middle section: Send Message + AI Suggestions */}
         <section>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6  mb-6 ">
             {/* Send Message card */}
-            <div className="lg:col-span-8 bg-white rounded-2xl p-6 shadow-lg">
+            <div className="lg:col-span-18 bg-white rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
                   Send Message
                 </h3>
-                <div className="flex gap-3">
-                  <button className="px-3 py-1 text-sm border rounded-md">
-                    Load Template
-                  </button>
-                  <button className="px-3 py-1 text-sm border rounded-md">
-                    Save Draft
-                  </button>
-                </div>
+                
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -356,18 +212,7 @@ export default function Communications(props) {
               </div>
             </div>
 
-            {/* AI Suggestions card */}
-            <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                AI Suggestions
-              </h3>
-              <div className="h-64 flex items-center justify-center text-gray-400">
-                <div className="text-center">
-                  <div className="rounded-full bg-gray-100 w-16 h-16 mx-auto mb-3"></div>
-                  <p>Select a candidate and message type for AI suggestions</p>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </section>
 
@@ -378,20 +223,7 @@ export default function Communications(props) {
               <h3 className="text-lg font-semibold text-gray-900">
                 Recent Communications
               </h3>
-              <div className="flex gap-2">
-                <button className="px-3 py-1 text-sm border rounded-md">
-                  All
-                </button>
-                <button className="px-3 py-1 text-sm border rounded-md">
-                  Sent
-                </button>
-                <button className="px-3 py-1 text-sm border rounded-md">
-                  Scheduled
-                </button>
-                <button className="px-3 py-1 text-sm border rounded-md">
-                  Translated
-                </button>
-              </div>
+              
             </div>
 
             <div className="space-y-4">
@@ -419,20 +251,7 @@ export default function Communications(props) {
                           {r.snippet}
                         </div>
 
-                        <div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-block w-3 h-3 bg-blue-100 rounded-sm"></span>{" "}
-                            Email
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="inline-block w-3 h-3 bg-indigo-100 rounded-sm"></span>{" "}
-                            Auto-translated to Spanish
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="inline-block w-3 h-3 bg-green-100 rounded-sm"></span>{" "}
-                            Opened
-                          </div>
-                        </div>
+                        
                       </div>
                     </div>
 

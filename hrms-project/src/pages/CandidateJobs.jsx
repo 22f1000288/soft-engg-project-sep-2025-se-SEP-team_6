@@ -184,7 +184,7 @@ export default function CandidateJobs() {
                 </div>
 
                 <div className="mt-5 flex items-center justify-between gap-3">
-                  <div className="text-sm text-gray-500">Posted 3 days ago</div>
+                  
                   <div className="flex items-center gap-2">
                     <button
                       className="text-sm px-3 py-1 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"

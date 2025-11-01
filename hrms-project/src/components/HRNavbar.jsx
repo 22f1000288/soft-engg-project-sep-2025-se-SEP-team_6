@@ -15,7 +15,7 @@ export default function Navbar({
     { label: "Candidates", to: "/candidates" },
     { label: "Communications", to: "/communications" },
     { label: "Analytics", to: "/analytics" },
-    { label: "Schedule", to: "/schedule" },
+    // { label: "Schedule", to: "/schedule" },
   ],
   userName = "User",
   brand = { title: "TalentFlow" },
