@@ -14,6 +14,8 @@ import Schedule from "./pages/Schedule";
 import CandidateJobs from "./pages/CandidateJobs";
 import CandidateApplications from "./pages/CandidateApplications";
 import InterviewPrep from "./pages/InterviewPrep";
+import CandidateProfilePage from "./components/CandidateProfile";
+import HRProfilePage from "./components/HRProfile";
 
 function App() {
   return (
@@ -34,6 +36,8 @@ function App() {
         <Route path="/candidate-jobs" element={<CandidateJobs />} />
         <Route path="/candidate-applications" element={<CandidateApplications />} />
         <Route path="/interview-prep" element={<InterviewPrep />} />
+        <Route path="/profile" element={<CandidateProfilePage />} />
+        <Route path="/hr-profile" element={<HRProfilePage />} />
       </Routes>
     </Router>
   );
