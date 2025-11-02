@@ -46,7 +46,7 @@ export default function JobCreater() {
         {/* Header */}
         <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-blue-600">
+            <h1 className="text-2xl sm:text-3xl font-semibold mt-7 text-blue-600">
               AI Job Description Creator
             </h1>
             <p className="mt-1 text-sm text-gray-500 sm:hidden">

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, Edit2, Calendar, MapPin, Linkedin } from 'lucide-react';
+import CandidateNavbar from './CandidateNavbar';
 
 // Mock profile data (replace with props or API response)
 const initialProfile = {
-  name: 'John Candidate',
+  name: 'Candidate',
   email: 'john.candidate@email.com',
   password: '********',
   birthDate: 'Jan 20, 2025',
@@ -29,50 +30,17 @@ export default function CandidateProfilePage(props) {
     setProfile(editForm);
     setIsEditing(false);
   };
-
-  // Navigation logic (mimics dashboard)
-  const navItems = ['Dashboard', 'Jobs', 'Applications', 'Interview Prep', 'Profile'];
-  const [activeTab, setActiveTab] = useState('Profile');
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg"></div>
-              <span className="text-xl font-semibold text-gray-900">TalentFlow</span>
-            </div>
-            <nav className="flex gap-6">
-              {navItems.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setActiveTab(item)}
-                  className={`text-sm font-medium transition ${
-                    activeTab === item
-                      ? 'text-gray-900'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <div>{profile.name}</div>
-            <div className="flex items-center gap-2">
-              <span onClick={() => props.handleLogout?.()} className="text-sm text-gray-700 cursor-pointer">Logout</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <CandidateNavbar />
 
       {/* Main Profile Content */}
       <main className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Profile</h1>
+          <h1 className="text-4xl font-bold text-blue-600 mt-8 mb-2">My Profile</h1>
           <p className="text-gray-600">Manage your profile information</p>
         </div>
 
@@ -81,15 +49,15 @@ export default function CandidateProfilePage(props) {
           {!isEditing ? (
             <>
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                <div className="w-50 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
                   {profile.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
-                  <p className="text-gray-600">{profile.bio}</p>
+                  <h2 className="text-2xl font-bold text-blue-600">{profile.name}</h2>
+                  <p className="text-blue-600">{profile.bio}</p>
                 </div>
                 <button
-                  className="ml-auto bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg flex items-center gap-2"
+                  className="ml-auto bg-indigo-100  hover:bg-green-600 hover:text-white hover:cursor-pointer text-indigo-700 px-4 py-2 rounded-lg flex items-center gap-2"
                   onClick={() => setIsEditing(true)}
                 >
                   <Edit2 className="w-4 h-4" />
@@ -101,23 +69,23 @@ export default function CandidateProfilePage(props) {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Mail className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium text-gray-700">{profile.email}</span>
+                    <span className="font-medium text-blue-600">{profile.email}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Lock className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium text-gray-700">{profile.password}</span>
+                    <span className="font-medium text-blue-600">{profile.password}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium text-gray-700">{profile.birthDate}</span>
+                    <span className="font-medium text-blue-600">{profile.birthDate}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium text-gray-700">{profile.location}</span>
+                    <span className="font-medium text-blue-600">{profile.location}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Linkedin className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium text-gray-700">{profile.url}</span>
+                    <span className="font-medium text-blue-600">{profile.url}</span>
                   </div>
                 </div>
               </div>
