@@ -2,11 +2,7 @@ import React, { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-//sample use of this component is following(if you want to use this navbar in other pages  )
 
-//import Navbar from "../components/HRNavbar";
-//<Navbar userName={userName} />
-//see pages like Analytics.jsx , Schedule.jsx etc for reference
 
 export default function Navbar({
   navItems = [

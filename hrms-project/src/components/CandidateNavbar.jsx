@@ -17,7 +17,7 @@ export default function CandidateNavbar({
     { label: "Interview Prep", to: "/interview-prep" },
     { label: "Profile", to: "/profile" },
   ],
-  userName = "Candidate",
+  userName = "Pralhad Singh",
   brand = { title: "TalentFlow" },
 }) {
   const [open, setOpen] = useState(false);
