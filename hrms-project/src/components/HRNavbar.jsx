@@ -40,8 +40,12 @@ export default function Navbar({
           {/* Brand +  nav */}
           <div className="flex items-center gap-10">
             <div className="flex items-center gap-3">
-              {/* logo color */}
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg" />
+              {/* logo */}
+              <img
+                src="/hrms-logo.webp"
+                alt="TalentFlow Logo"
+                className="w-8 h-8 rounded-lg object-cover"
+              />
               <span className="text-xl font-semibold text-gray-900">
                 {brand.title}
               </span>
