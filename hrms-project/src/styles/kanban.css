@@ -1,0 +1,226 @@
+/* HR Application Management Kanban Board Styles */
+
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 8px;
+  min-height: 600px;
+}
+
+.kanban-column {
+  min-width: 320px;
+  border: 2px solid;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.kanban-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.kanban-column-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  flex: 1;
+}
+
+.kanban-column-count {
+  background: #6b7280;
+  color: white;
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 20px;
+  text-align: center;
+}
+
+.kanban-column-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kanban-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  cursor: grab;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.kanban-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+}
+
+.kanban-card-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.kanban-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.kanban-card-position {
+  font-size: 14px;
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.kanban-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kanban-card-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.kanban-card-detail span {
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Column-specific colors */
+.bg-blue-50 {
+  background-color: #eff6ff;
+}
+
+.border-blue-200 {
+  border-color: #bfdbfe;
+}
+
+.bg-yellow-50 {
+  background-color: #fefce8;
+}
+
+.border-yellow-200 {
+  border-color: #fde047;
+}
+
+.bg-purple-50 {
+  background-color: #faf5ff;
+}
+
+.border-purple-200 {
+  border-color: #e9d5ff;
+}
+
+.bg-orange-50 {
+  background-color: #fff7ed;
+}
+
+.border-orange-200 {
+  border-color: #fed7aa;
+}
+
+.bg-green-50 {
+  background-color: #f0fdf4;
+}
+
+.border-green-200 {
+  border-color: #bbf7d0;
+}
+
+/* Drag and drop states */
+.kanban-card[draggable="true"]:hover {
+  cursor: grab;
+}
+
+.kanban-column:hover {
+  opacity: 0.95;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .kanban-board {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .kanban-column {
+    min-width: 100%;
+    max-height: 400px;
+  }
+  
+  .kanban-card-detail {
+    font-size: 11px;
+  }
+  
+  .kanban-card-name {
+    font-size: 14px;
+  }
+  
+  .kanban-card-position {
+    font-size: 12px;
+  }
+}
+
+/* Scrollbar styling */
+.kanban-column-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kanban-column-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.kanban-column-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.kanban-column-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.kanban-board::-webkit-scrollbar {
+  height: 8px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

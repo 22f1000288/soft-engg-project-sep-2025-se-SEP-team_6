@@ -40,7 +40,7 @@ class SignupRequest(BaseModel):
     role: str
 
 @app.get("/users", tags=["Users"])
-def read_users(db: Session = Depends(get_db)):
+async def read_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return [
         {
@@ -54,7 +54,7 @@ def read_users(db: Session = Depends(get_db)):
     ]
 
 @app.get("/applications", tags=["Applications"])
-def read_apps(db: Session = Depends(get_db)):
+async def read_apps(db: Session = Depends(get_db)):
     apps = db.query(Application).all()
     return [
         {
@@ -69,7 +69,7 @@ def read_apps(db: Session = Depends(get_db)):
     ]
 
 @app.post("/login", tags=["Authentication"])
-def login(request: Login, db: Session = Depends(get_db)):
+async def login(request: Login, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email).first()
     print("User from DB:", user)
     print("Password from request:", request.password)
@@ -86,7 +86,7 @@ def login(request: Login, db: Session = Depends(get_db)):
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @app.post("/signup", tags=["Authentication"])
-def signup(request: SignupRequest, db: Session = Depends(get_db)):
+async def signup(request: SignupRequest, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == request.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
