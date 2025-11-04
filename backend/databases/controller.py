@@ -15,7 +15,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # User controller functions
-def add_user(user: User):
+async def add_user(user: User):
     db = SessionLocal()
     db.add(user)
     db.commit()
@@ -23,7 +23,7 @@ def add_user(user: User):
 
 
 # Application controller functions
-def add_application(application: Application):
+async def add_application(application: Application):
     db = SessionLocal()
     db.add(application)
     db.commit()
