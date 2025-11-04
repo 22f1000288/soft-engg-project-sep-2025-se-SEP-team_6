@@ -9,6 +9,7 @@ export default function Navbar({
     { label: "Dashboard", to: "/hr-dashboard" },
     { label: "Jobs", to: "/hr-jobs" },
     { label: "Candidates", to: "/candidates" },
+    { label: "Pipeline", to: "/kanban-board" },
     { label: "Communications", to: "/communications" },
     { label: "Analytics", to: "/analytics" },
     // { label: "Schedule", to: "/schedule" },

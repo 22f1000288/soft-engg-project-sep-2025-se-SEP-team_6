@@ -14,6 +14,7 @@ import Schedule from "./pages/Schedule";
 import CandidateJobs from "./pages/CandidateJobs";
 import CandidateApplications from "./pages/CandidateApplications";
 import InterviewPrep from "./pages/InterviewPrep";
+import KanbanBoard from "./pages/KanbanBoard";
 import CandidateProfilePage from "./components/CandidateProfile";
 import HRProfilePage from "./components/HRProfile";
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/candidate-jobs" element={<CandidateJobs />} />
         <Route path="/candidate-applications" element={<CandidateApplications />} />
         <Route path="/interview-prep" element={<InterviewPrep />} />
+        <Route path="/kanban-board" element={<KanbanBoard />} />
         <Route path="/profile" element={<CandidateProfilePage />} />
         <Route path="/hr-profile" element={<HRProfilePage />} />
       </Routes>
