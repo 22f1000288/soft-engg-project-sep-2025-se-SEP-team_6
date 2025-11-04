@@ -44,7 +44,7 @@ export default function CandidateProfilePage(props) {
           <p className="text-gray-600">Manage your profile information</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
+        <div className="bg-white rounded-2xl p-6 shadow-lg space-y-6">
           {/* Personal Info */}
           {!isEditing ? (
             <>

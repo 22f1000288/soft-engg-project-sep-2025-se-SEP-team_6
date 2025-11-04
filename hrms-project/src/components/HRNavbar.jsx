@@ -12,6 +12,7 @@ export default function Navbar({
     { label: "Pipeline", to: "/kanban-board" },
     { label: "Communications", to: "/communications" },
     { label: "Analytics", to: "/analytics" },
+    { label: "Profile", to: "/hr-profile" }
     // { label: "Schedule", to: "/schedule" },
   ],
   userName = "User",
