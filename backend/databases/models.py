@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, Float, DateTime, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -14,8 +14,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class User(Base):
-    __tablename__ = "users"
-
+    __tablename__ = "user"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
@@ -24,25 +23,70 @@ class User(Base):
 
 class Application(Base):
 
-    __tablename__ = 'applications'
+    __tablename__ = 'application'
+    id = Column(Integer, unique=True, nullable=False)
+    candidate_id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, nullable=True)
+    status_applied = Column(Boolean, nullable=True)
+    status_shortlisted = Column(Boolean, nullable=True)
+    status_interviewed = Column(Boolean, nullable=True)
+    status_offered = Column(Boolean, nullable=True)
+    status_rejected = Column(Boolean, nullable=True)
+    score = Column(Float, nullable=True)
+    submitted_at = Column(DateTime, nullable=True)
+
+class Job(Base):
+    __tablename__ = 'job'
     id = Column(Integer, primary_key=True, index=True)
-    candidateName = Column(String, nullable=False)
-    email = Column(String, nullable=False)
-    position = Column(String, nullable=False)
+    posted_by = Column(Integer, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    skills_required = Column(String, nullable=False)
+    qualification = Column(String, nullable=False)
+    location = Column(String, nullable=False)
+    employment_type = Column(String, nullable=False)
     status = Column(String, nullable=False)
-    appliedDate = Column(String, nullable=False)
+    created_at = Column(DateTime, nullable=False)
 
-def add_user(user: User):
-    db = SessionLocal()
-    db.add(user)
-    db.commit()
-    db.close()
+class Analytics(Base):
+    __tablename__ = 'analytics'
+    id = Column(Integer, primary_key=True, index=True)
+    type = Column(String, nullable=False)
+    data = Column(String, nullable=False)
+    generated_at = Column(DateTime, nullable=False)
+    user_id = Column(Integer, nullable=False)
 
-def add_application(application: Application):
-    db = SessionLocal()
-    db.add(application)
-    db.commit()
-    db.close()
+class Candidate(Base):
+    __tablename__ = 'candidate'
+    id = Column(Integer, primary_key=True, index=True)
+    resume_url = Column(String, nullable=False)
+    skills = Column(String, nullable=False)
+    experience = Column(String, nullable=False)
+    education = Column(String, nullable=False)
+    profile_summary = Column(String, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    candidate_id = Column(Integer, nullable=False)
+
+class Communication(Base):
+    __tablename__ = 'communication'
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, nullable=False)
+    receiver_id = Column(Integer, nullable=False)
+    message_id = Column(Integer, nullable=False)
+    content = Column(String, nullable=False)
+    timestamp = Column(DateTime, nullable=False)
+    type = Column(String, nullable=False)
+    application_id = Column(Integer, nullable=False)
+
+class Recruiter(Base):
+    __tablename__ = 'recruiter'
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False)
+    organization = Column(String, nullable=False)
+    designation = Column(String, nullable=False)
+    department = Column(String, nullable=False)
+    permissions_level = Column(String, nullable=False)
+
 
 # Create the table
 Base.metadata.create_all(bind=engine)
@@ -63,13 +107,8 @@ def init_admin():
         db.commit()
     db.close()
 
-init_admin()
-
 if __name__ == "__main__":
-    add_user(User(id=2, email="hr@company.com", password="hr123", role="hr", name="HR Manager"))
-    add_user(User(id=3, email="candidate@example.com", password="candidate123", role="candidate", name="John Doe"))
-    add_application(Application(id=1, candidateName="John Doe", email="candidate@example.com", position="Software Engineer", status="under-review", appliedDate="2025-10-01"))
-    add_application(Application(id=2, candidateName="Jane Smith", email="jane@example.com", position="Product Manager", status="approved", appliedDate="2025-09-28"))
-    add_application(Application(id=3, candidateName="Mike Johnson", email="mike@example.com", position="UX Designer", status="rejected", appliedDate="2025-09-25"))
+    init_admin()
+
 
     
