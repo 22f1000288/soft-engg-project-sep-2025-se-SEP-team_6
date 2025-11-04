@@ -16,7 +16,7 @@ export default function JobCreater() {
 
   const navItems = [
     { label: "Dashboard", to: "/hr-dashboard" },
-    { label: "Jobs", to: "/jobs" },
+    { label: "Jobs", to: "/hr-jobs" },
     { label: "Candidates", to: "/candidates" },
     { label: "Communications", to: "/communications" },
     { label: "Analytics", to: "/analytics" },

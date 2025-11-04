@@ -91,11 +91,11 @@ const initialApplications = {
 };
 
 const columns = [
-  { id: "new-applications", title: "New Applications", color: "bg-blue-50 border-blue-200" },
-  { id: "under-review", title: "Under Review", color: "bg-yellow-50 border-yellow-200" },
-  { id: "interview-scheduled", title: "Interview Scheduled", color: "bg-purple-50 border-purple-200" },
-  { id: "final-review", title: "Final Review", color: "bg-orange-50 border-orange-200" },
-  { id: "hired", title: "Hired", color: "bg-green-50 border-green-200" }
+  { id: "new-applications", title: "Applied", color: "bg-blue-50 border-blue-200" },
+  { id: "under-review", title: "Screened", color: "bg-yellow-50 border-yellow-200" },
+  { id: "interview-scheduled", title: "Interviewed", color: "bg-purple-50 border-purple-200" },
+  { id: "final-review", title: "Under Review", color: "bg-orange-50 border-orange-200" },
+  { id: "hired", title: "Offered", color: "bg-green-50 border-green-200" }
 ];
 
 export default function KanbanBoard(props) {
