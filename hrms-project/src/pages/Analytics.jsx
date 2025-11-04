@@ -1,15 +1,9 @@
 import React from "react";
 import Navbar from "../components/HRNavbar";
 import { BarChart, Users, Briefcase, Clock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 export default function Analytics(props) {
   const userName = props?.userName ?? "Jane Recruiter";
-  const navigate = useNavigate();
-
-  const createJobHandler = () => {
-    navigate("/job-creator");
-  };
 
   // Backend Coming Soon
   const kpis = [
@@ -31,7 +25,7 @@ export default function Analytics(props) {
     { id: "r3", title: "Product Manager", open: 2 },
   ];
 
-  
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -60,7 +54,6 @@ export default function Analytics(props) {
                       <div className="text-2xl font-bold text-gray-900">
                         {k.value}
                       </div>
-                      
                     </div>
                   </div>
                   <div className="p-2 bg-gray-100 rounded-md">
@@ -188,10 +181,6 @@ export default function Analytics(props) {
                 ))}
               </ul>
             </div>
-
-            
-
-            
           </aside>
         </div>
       </main>
