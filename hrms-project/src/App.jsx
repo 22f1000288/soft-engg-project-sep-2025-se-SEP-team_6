@@ -38,7 +38,7 @@ function App() {
         <Route path="/candidate-applications" element={<CandidateApplications />} />
         <Route path="/interview-prep" element={<InterviewPrep />} />
         <Route path="/kanban-board" element={<KanbanBoard />} />
-        <Route path="/profile" element={<CandidateProfilePage />} />
+        <Route path="/candidate-profile" element={<CandidateProfilePage />} />
         <Route path="/hr-profile" element={<HRProfilePage />} />
       </Routes>
     </Router>

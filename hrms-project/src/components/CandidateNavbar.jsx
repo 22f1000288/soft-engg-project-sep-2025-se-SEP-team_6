@@ -15,7 +15,7 @@ export default function CandidateNavbar({
     { label: "Jobs", to: "/candidate-jobs" },
     { label: "Applications", to: "/candidate-applications" },
     { label: "Interview Prep", to: "/interview-prep" },
-    { label: "Profile", to: "/profile" },
+    { label: "Profile", to: "/candidate-profile" },
   ],
   userName = "Pralhad Singh",
   brand = { title: "TalentFlow" },

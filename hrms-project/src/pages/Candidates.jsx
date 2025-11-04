@@ -59,12 +59,12 @@ export default function Candidates(props) {
     setCandidates(sample);
   };
 
-  const totalResumes = files.length || candidates.length || 0;
-  const highMatch = candidates.filter((c) => c.score >= 80).length;
-  const medMatch = candidates.filter(
+  const _totalResumes = files.length || candidates.length || 0;
+  const _highMatch = candidates.filter((c) => c.score >= 80).length;
+  const _medMatch = candidates.filter(
     (c) => c.score >= 60 && c.score < 80
   ).length;
-  const lowMatch = candidates.filter((c) => c.score < 60).length;
+  const _lowMatch = candidates.filter((c) => c.score < 60).length;
 
 
   return (

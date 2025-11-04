@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, Edit2, Calendar, MapPin } from 'lucide-react';
+import HRNavbar from '../components/HRNavbar';
 
 // Mock profile data (replace with props or API response)
 const initialProfile = {
@@ -28,53 +29,19 @@ export default function HRProfilePage(props) {
     setIsEditing(false);
   };
 
-  // Navigation logic (mimics dashboard)
-  const navItems = ['Dashboard', 'Jobs', 'Applications', 'Interview Prep', 'Profile'];
-  const [activeTab, setActiveTab] = useState('Profile');
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg"></div>
-              <span className="text-xl font-semibold text-gray-900">TalentFlow</span>
-            </div>
-            <nav className="flex gap-6">
-              {navItems.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setActiveTab(item)}
-                  className={`text-sm font-medium transition ${
-                    activeTab === item
-                      ? 'text-gray-900'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <div>{profile.name}</div>
-            <div className="flex items-center gap-2">
-              <span onClick={() => props.handleLogout?.()} className="text-sm text-gray-700 cursor-pointer">Logout</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <HRNavbar userName={props?.userName || "John HR"} />
 
       {/* Main Profile Content */}
-      <main className="max-w-3xl mx-auto px-6 py-8">
+      <main className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Profile</h1>
+          <h1 className="text-4xl font-bold text-blue-700 mb-2">My Profile</h1>
           <p className="text-gray-600">Manage your profile information</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
+        <div className="bg-white rounded-2xl p-6 shadow-lg space-y-6">
           {/* Personal Info */}
           {!isEditing ? (
             <>
