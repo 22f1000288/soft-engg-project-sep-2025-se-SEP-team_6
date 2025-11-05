@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Edit2, Calendar, MapPin, Linkedin } from 'lucide-react';
 import CandidateNavbar from './CandidateNavbar';
+import useAuth from '../contexts/useAuth';
 
 // Mock profile data (replace with props or API response)
 const initialProfile = {
@@ -13,10 +14,34 @@ const initialProfile = {
   url: "Linkedin.com/johncandidate",
 };
 
-export default function CandidateProfilePage(props) {
-  const [profile, setProfile] = useState(initialProfile);
+export default function CandidateProfilePage() {
+  const { user } = useAuth();
+  const derived = {
+    name: user?.name || initialProfile.name,
+    email: user?.email || initialProfile.email,
+    password: '********',
+    birthDate: initialProfile.birthDate,
+    location: user?.location || initialProfile.location,
+    bio: initialProfile.bio,
+    url: initialProfile.url,
+  };
+  const [profile, setProfile] = useState(derived);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState(profile);
+  const [editForm, setEditForm] = useState(derived);
+
+  useEffect(() => {
+    const next = {
+      name: user?.name || initialProfile.name,
+      email: user?.email || initialProfile.email,
+      password: '********',
+      birthDate: initialProfile.birthDate,
+      location: user?.location || initialProfile.location,
+      bio: initialProfile.bio,
+      url: initialProfile.url,
+    };
+    setProfile(next);
+    setEditForm(next);
+  }, [user]);
 
   // For Edit logic
   const handleEditChange = (e) => {

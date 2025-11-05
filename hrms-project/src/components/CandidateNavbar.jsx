@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import useAuth from "../contexts/useAuth";
 
 //sample use of this component is following(if you want to use this navbar in other pages  )
 
@@ -17,15 +18,16 @@ export default function CandidateNavbar({
     { label: "Interview Prep", to: "/interview-prep" },
     { label: "Profile", to: "/candidate-profile" },
   ],
-  userName = "Pralhad Singh",
+  userName = "User",
   brand = { title: "TalentFlow" },
 }) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const displayName = user?.name || userName;
 
   const handleLogout = () => {
-    navigate("/");
+    logout();
   };
 
   const isActive = (to) => {
@@ -72,7 +74,7 @@ export default function CandidateNavbar({
 
           {/* actions */}
           <div className="hidden md:flex items-center gap-4">
-            <div className="text-sm text-gray-700">{userName}</div>
+            <div className="text-sm text-gray-700">{displayName}</div>
             <button
               onClick={() => {
                 handleLogout();
@@ -117,7 +119,7 @@ export default function CandidateNavbar({
             ))}
 
             <div className="flex items-center justify-between pt-2">
-              <div className="text-sm text-gray-700">{userName}</div>
+              <div className="text-sm text-gray-700">{displayName}</div>
               <button
                 onClick={() => {
                   setOpen(false);

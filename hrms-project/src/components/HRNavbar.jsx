@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import useAuth from "../contexts/useAuth";
 
 
 
@@ -20,10 +21,13 @@ export default function Navbar({
 }) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const displayName = user?.name || userName;
 
   const handleLogout = () => {
-    navigate("/");
+    // delegate logout to AuthContext (it will navigate)
+    logout();
   };
 
   const isActive = (to) => {
@@ -70,7 +74,7 @@ export default function Navbar({
 
           {/* actions */}
           <div className="hidden md:flex items-center gap-4">
-            <div className="text-sm text-gray-700">{userName}</div>
+            <div className="text-sm text-gray-700">{displayName}</div>
             <button
               onClick={() => {
                 handleLogout();
@@ -115,7 +119,7 @@ export default function Navbar({
             ))}
 
             <div className="flex items-center justify-between pt-2">
-              <div className="text-sm text-gray-700">{userName}</div>
+              <div className="text-sm text-gray-700">{displayName}</div>
               <button
                 onClick={() => {
                   setOpen(false);

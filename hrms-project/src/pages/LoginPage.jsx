@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   User,
   Briefcase,
@@ -11,30 +11,14 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import useAuth from "../contexts/useAuth";
 
 const AuthSystem = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [userRole, setUserRole] = useState("admin");
   const [showPassword, setShowPassword] = useState(false);
-  const [_loggedInUser, setLoggedInUser] = useState(null);
-  const navigate = useNavigate();
-
-  const [_users, setUsers] = useState([]);
-
-  useEffect(() => {
-    fetch("http://localhost:8000/users")
-      .then((res) => res.json())
-      .then((data) => setUsers(data));
-  }, []);
-
-  const [_applications, setApplications] = useState([]);
-
-  useEffect(() => {
-    fetch("http://localhost:8000/applications")
-      .then((res) => res.json())
-      .then((data) => setApplications(data));
-  }, []);
+  // do not track logged-in user locally; AuthContext manages that
+  const auth = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -65,36 +49,12 @@ const AuthSystem = () => {
 
     if (isLogin) {
       try {
-        const response = await fetch("http://localhost:8000/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
-        });
-        if (!response.ok) {
-          // empty the email and password fields
-          setFormData({
-            name: "",
-            email: "",
-            password: "",
-            confirmPassword: "",
-          });
-          throw new Error("Invalid email or password");
-        }
-        const data = await response.json();
-        setLoggedInUser(data.user);
-        setUserRole(data.user.role);
+  // delegate login to AuthContext; it handles storing user and navigation
+  // AuthProvider.login expects (email, password)
+  await auth.login(formData.email, formData.password);
         setFormData({ name: "", email: "", password: "", confirmPassword: "" });
-
-        // navigate to role-specific dashboard
-
-        if (data?.user?.role === "hr") navigate("/hr-dashboard");
-        else if (data?.user?.role === "admin") navigate("/admin-dashboard");
-        else navigate("/candidate-dashboard");
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Login failed");
       }
     } else {
       if (formData.password !== formData.confirmPassword) {
@@ -107,30 +67,16 @@ const AuthSystem = () => {
       }
 
       try {
-        const response = await fetch("http://localhost:8000/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            role: userRole,
-          }),
+        // delegate signup to AuthContext; AuthContext should handle navigation
+        await auth.signup({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: userRole,
         });
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.detail || "Signup failed");
-        }
-        const data = await response.json();
-        setLoggedInUser(data.user);
-        setUserRole(data.user.role);
         setFormData({ name: "", email: "", password: "", confirmPassword: "" });
-        // navigate after signup as well
-        if (data?.user?.role === "hr") navigate("/hr-dashboard");
-        else if (data?.user?.role === "admin") navigate("/admin-dashboard");
-        else navigate("/candidate-dashboard");
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Signup failed");
       }
     }
   };
