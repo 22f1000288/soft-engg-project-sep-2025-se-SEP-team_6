@@ -1,5 +1,6 @@
 import "./App.css";
 import AuthSystem from "./pages/LoginPage";
+import { AuthProvider } from "./contexts/AuthContext";
 import JobCreater from "./pages/JobCreater";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import TalentFlowLanding from "./pages/LandingPage";
@@ -21,6 +22,7 @@ import HRProfilePage from "./components/HRProfile";
 function App() {
   return (
     <Router>
+      <AuthProvider>
       <Routes>
         <Route path="/" element={<TalentFlowLanding />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
@@ -41,6 +43,7 @@ function App() {
         <Route path="/candidate-profile" element={<CandidateProfilePage />} />
         <Route path="/hr-profile" element={<HRProfilePage />} />
       </Routes>
+      </AuthProvider>
     </Router>
   );
 }
