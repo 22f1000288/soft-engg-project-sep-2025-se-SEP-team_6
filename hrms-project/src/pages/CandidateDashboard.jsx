@@ -49,22 +49,7 @@ export default function CandidateDashboard() {
     },
   ];
 
-  const preparationTools = [
-    {
-      title: "Mock Interview",
-      description: "Practice with AI-generated questions",
-      icon: HelpCircle,
-      color: "bg-blue-100",
-      iconColor: "text-blue-600",
-    },
-    {
-      title: "Resume Analysis",
-      description: "Get AI feedback on your resume",
-      icon: FileText,
-      color: "bg-green-100",
-      iconColor: "text-green-600",
-    },
-  ];
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -107,7 +92,7 @@ export default function CandidateDashboard() {
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Applications */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
+          <div className="bg-white rounded-2xl p-6 shadow-lg w-100">
             <h2 className="text-2xl font-bold text-blue-600 mb-6">
               Recent Applications
             </h2>
@@ -138,40 +123,8 @@ export default function CandidateDashboard() {
             </div>
           </div>
 
-          {/* Interview Preparation */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <h2 className="text-2xl font-bold text-blue-600 mb-6">
-              Interview Preparation
-            </h2>
-
-            <div className="space-y-4">
-              {preparationTools.map((tool, index) => {
-                const Icon = tool.icon;
-                return (
-                  <div
-                    key={index}
-                    className="border border-gray-200 rounded-xl p-5 hover:border-indigo-300 transition cursor-pointer"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`${tool.color} p-3 rounded-xl flex-shrink-0`}
-                      >
-                        <Icon className={`w-6 h-6 ${tool.iconColor}`} />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-blue-600 mb-1">
-                          {tool.title}
-                        </h3>
-                        <p className="text-gray-600 text-sm">
-                          {tool.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          
+          
         </div>
       </main>
     </div>
