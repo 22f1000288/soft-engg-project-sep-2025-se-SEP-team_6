@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  title: TalentForm HRMS API
+  description: API documentation for HRMS application
+  version: 1.0.0
+paths:
+  "/users":
+    get:
+      tags:
+      - Users
+      summary: Read Users
+      operationId: read_users_users_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  "/applications":
+    get:
+      tags:
+      - Applications
+      summary: Read Apps
+      operationId: read_apps_applications_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  "/login":
+    post:
+      tags:
+      - Authentication
+      summary: Login
+      operationId: login_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Login"
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/signup":
+    post:
+      tags:
+      - Authentication
+      summary: Signup
+      operationId: signup_signup_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SignupRequest"
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/active-jobs":
+    get:
+      tags:
+      - Jobs
+      summary: Get Active Jobs
+      operationId: get_active_jobs_active_jobs_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  "/candidate-count":
+    get:
+      tags:
+      - Candidates
+      summary: Get All Candidates
+      operationId: get_all_candidates_candidate_count_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  "/hired-count":
+    get:
+      tags:
+      - Hires
+      summary: Get Hired Candidates
+      operationId: get_hired_candidates_hired_count_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  "/":
+    get:
+      tags:
+      - Health Check
+      summary: Root
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            "$ref": "#/components/schemas/ValidationError"
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Login:
+      properties:
+        email:
+          type: string
+          title: Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+      - email
+      - password
+      title: Login
+    SignupRequest:
+      properties:
+        name:
+          type: string
+          title: Name
+        email:
+          type: string
+          title: Email
+        password:
+          type: string
+          title: Password
+        role:
+          type: string
+          title: Role
+      type: object
+      required:
+      - name
+      - email
+      - password
+      - role
+      title: SignupRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
