@@ -1,0 +1,273 @@
+{
+  "personal_info": {
+    "name": "Saswata",
+    "email": null,
+    "phone": null,
+    "location": null,
+    "linkedin": null,
+    "github": null,
+    "portfolio": null,
+    "other_links": []
+  },
+  "sections": [
+    {
+      "section_name": "EDUCATION",
+      "content_type": "education",
+      "column": "left",
+      "items": [
+        {
+          "institution": "IIIT HYDERABAD",
+          "degree": "B.Tech in Computer Science and MS in Computational Linguistics",
+          "dates": "Expected Dec 2028",
+          "location": "Hyderabad, TG, IND",
+          "gpa": "8.03/10.00"
+        },
+        {
+          "institution": "IIT MADRAS",
+          "degree": "BS in Data Science and Applications",
+          "dates": "Expected May 2027",
+          "location": "Madras, TN, IND",
+          "gpa": "8.78/10.00",
+          "notes": "Online Degree Program"
+        },
+        {
+          "institution": "ATREYEE DAV PUBLIC SCHOOL",
+          "degree": "AISSCE",
+          "dates": "Graduated Apr 2022",
+          "location": "Balurghat, WB, IND",
+          "percentage": "91.6%"
+        },
+        {
+          "institution": "ATREYEE DAV PUBLIC SCHOOL",
+          "degree": "AISSE",
+          "dates": "Graduated Apr 2020",
+          "location": "Balurghat, WB, IND",
+          "percentage": "97.8%"
+        }
+      ]
+    },
+    {
+      "section_name": "RELEVANT COURSEWORK",
+      "content_type": "education",
+      "column": "left",
+      "items": [
+        "Machine Learning",
+        "Linear Algebra",
+        "Probability and Statistics",
+        "Data Structures and Algorithms",
+        "Algorithm Analysis and Design",
+        "Operating Systems and Networks",
+        "Database Management Systems",
+        "Application Development and Software Systems",
+        "Natural Language Processing"
+      ]
+    },
+    {
+      "section_name": "SKILLS",
+      "content_type": "skills",
+      "column": "left",
+      "items": {
+        "Technical Skills": [
+          "Python",
+          "CSS",
+          "JavaScript",
+          "MySQL",
+          "PostgreSQL",
+          "C",
+          "L A T X",
+          "Java",
+          "TensorFlow",
+          "PyTorch",
+          "Scikit-Learn",
+          "Numpy",
+          "Scipy",
+          "MERN Stack",
+          "AWS",
+          "Vue",
+          "MNE"
+        ],
+        "Soft Skills": [
+          "Team Management",
+          "Leadership",
+          "Critical Thinking",
+          "Adaptability",
+          "Resilience",
+          "Mentoring",
+          "Teamwork"
+        ]
+      }
+    },
+    {
+      "section_name": "HOBBIES",
+      "content_type": "custom",
+      "column": "left",
+      "items": [
+        "Participating in Hackathons",
+        "Member of Team Nyay Saheli, Finalist in The BharatGen Generative AI Hackathon 2025",
+        "Participating in Debates",
+        "Painting, Crafts and Sculpture",
+        "Trained in Painting, Crafting and Sculpting for approx. 5 years",
+        "Music",
+        "B.Mus in Rabindra Sangeet",
+        "Also trained in Hindustani (Vocal) Classical",
+        "Taekwondo",
+        "Obtained 1st Dan Black Belt"
+      ]
+    },
+    {
+      "section_name": "LANGUAGES KNOWN",
+      "content_type": "languages",
+      "column": "left",
+      "items": [
+        {
+          "language": "English",
+          "proficiency": "Proficient"
+        },
+        {
+          "language": "Hindi",
+          "proficiency": "Proficient"
+        },
+        {
+          "language": "Bengali",
+          "proficiency": "Native"
+        }
+      ]
+    },
+    {
+      "section_name": "RESEARCH",
+      "content_type": "research",
+      "column": "left",
+      "items": [
+        {
+          "title": "STUDENT RESEARCHER",
+          "institution": "BCCL, IIIT Hyderabad",
+          "dates": "June 2024 – Present",
+          "advisor": "Prof. S. Bapi Raju",
+          "description": [
+            "Developing EEG-based Sleep Stage Classification, Sleep Artefact Detection and other diagnostic tools in collaboration with NIMHANS, Bangalore",
+            "Researching cognitive representations of language-based and speech-based encodings and decoding procedures based on EEG and MEG data",
+            "Investigating Deep Learning Models for efficient detection of multiple sleep diseases in home-based settings in collaboration with UCL, London"
+          ]
+        }
+      ]
+    },
+    {
+      "section_name": "RELEVANT PROJECTS",
+      "content_type": "projects",
+      "column": "right",
+      "items": [
+        {
+          "title": "Vehicle Parking Platform",
+          "dates": "May 2025 – Aug 2025",
+          "description": "Built a streamlined website for vehicle parking lot managers and users for registration of parking lots and vehicles and streamlined occupation of parking lots"
+        },
+        {
+          "title": "Creating a basic Mixture-of-Experts Model for User-specific sentence completion",
+          "dates": "Jan 2025 – May 2025",
+          "description": "Created a basic functional Mixture of Experts model using 3 transformers specifically fine-tuned on multiple datasets suited for sentence completion, with the appropriate transformer chosen using a simple gating mechanism"
+        },
+        {
+          "title": "Implementing a Network File System in C",
+          "dates": "Jan 2024 – May 2024",
+          "description": "Implemented a Network File System in C having a Naming Server, a Storage Server and multiple clients with functionalities of appropriate error handling, searching of contents, caching and logging in addition to normal reading and writing of files"
+        },
+        {
+          "title": "Comparison of the performance of different methods of POS tagging on Bidialected Bengali text",
+          "dates": "Jan 2024 – May 2024",
+          "description": "Calibrated four POS tagging methods—LSTM (with Adagrad, Adam, Adaboost), HMM, CRF, and MiRA—on manually generated Bengali mixed-dialect text"
+        }
+      ]
+    },
+    {
+      "section_name": "PAST EXPERIENCE",
+      "content_type": "experience",
+      "column": "right",
+      "items": [
+        {
+          "title": "Artificial Intelligence Sophomore Intern",
+          "company": "CoralComp Pvt. Ltd.",
+          "dates": "Aug, 2024 - Dec, 2024",
+          "description": "Created a Deep Learning Based Ensemble Model for Weather Prediction on METAR data from the Middle East. Also assisted in the creation of a website to display this data in an interactive format and host the system on AWS"
+        },
+        {
+          "title": "Artificial Intelligence Project Trainee",
+          "company": "NIMHANS, Bangalore",
+          "dates": "May, 2025 - Jul, 2025",
+          "description": "Integrated patient devices provided by NIMHANS (Sleep and Stroke Lab) for monitoring, extracted valuable medical information from the extracted data and preprocessed the same for usage in AI models down the pipeline which are still under development"
+        },
+        {
+          "title": "Natural Language Processing Research Intern",
+          "company": "IIT Roorkee",
+          "dates": "May, 2025 - Jul, 2025",
+          "description": "Was an integral part of the team under Dr. Raksha Sharma for the creation of a template-based algorithm for Fake News dataset creation and created the largest dataset (in volume) among all existing Fake News datasets for Bangla as spoken in India"
+        }
+      ]
+    },
+    {
+      "section_name": "ACHIEVEMENTS",
+      "content_type": "awards",
+      "column": "right",
+      "items": [
+        "Achieved AIR 2199 in JEE Advanced 2023",
+        "Achieved AIR 5382 (99.55%ile) in JEE Mains 2023",
+        "Achieved GMR 134 in WBJEE 2023",
+        "Achieved AIR 78 in IISER Aptitude Test (IAT) 2023",
+        "Achieved AIR 122 in IIITH UGEE 2023",
+        "Achieved AIR 112 in ISI UG Entrance Exam 2023",
+        "Achieved State Rank of 115 in NTSE 2021",
+        "Achieved AIR 1608 in KVPY 2021",
+        "Accepted as a JBNSTS Scholar in 2021",
+        "National Champion (Class 8) of VVM 2019"
+      ]
+    },
+    {
+      "section_name": "CERTIFICATIONS",
+      "content_type": "certifications",
+      "column": "right",
+      "items": [
+        {
+          "name": "Machine Learning Using Numpy",
+          "issuer": "IIT Madras",
+          "date": "Oct 2024",
+          "instructor": "Prof. K. Thiagarajan"
+        },
+        {
+          "name": "Machine Learning Specialization",
+          "issuer": "Coursera",
+          "date": "Jun 2024",
+          "instructor": "Prof. Andrew Ng"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "file_path": "resume.pdf",
+    "layout_info": [
+      {
+        "page": 1,
+        "layout_type": "2_column",
+        "columns": [
+          [
+            0,
+            233.2036933286175
+          ],
+          [
+            233.2036933286175,
+            595.28
+          ]
+        ]
+      },
+      {
+        "page": 2,
+        "layout_type": "single_column",
+        "columns": [
+          [
+            0,
+            595.28
+          ]
+        ]
+      }
+    ],
+    "parsed_at": "2025-11-09T20:17:30.276086"
+  }
+}
