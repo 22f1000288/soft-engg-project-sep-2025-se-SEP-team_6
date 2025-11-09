@@ -137,6 +137,11 @@ async def get_all_candidates(db: Session = Depends(get_db)):
 #     count = result.scalar()
 #     return {"interview_count": count}
 
+@app.get('/hired-count', tags=["Hires"])
+async def get_hired_candidates(db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT COUNT(*) FROM application WHERE status_offered = :status"), {"status": 1})
+    count = result.scalar()
+    return {"hired_count": count}
 
 
 @app.get("/", tags=["Health Check"])
