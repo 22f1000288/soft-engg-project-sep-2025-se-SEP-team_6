@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import useAuth from "../contexts/useAuth";
-
+import {useNavigate} from 'react-router-dom';
 
 
 export default function Navbar({
@@ -24,10 +24,12 @@ export default function Navbar({
   const { user, logout } = useAuth();
 
   const displayName = user?.name || userName;
-
+  const navigate = useNavigate();
   const handleLogout = () => {
     // delegate logout to AuthContext (it will navigate)
     logout();
+    navigate('/');
+
   };
 
   const isActive = (to) => {

@@ -2,12 +2,7 @@ import React, { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import useAuth from "../contexts/useAuth";
-
-//sample use of this component is following(if you want to use this navbar in other pages  )
-
-//import CandidateNavbar from "../components/CandidateNavbar";
-//<CandidateNavbar userName={userName} />
-//see pages like CandidateJobs.jsx , CandidateApplications.jsx etc for reference
+import { useNavigate } from "react-router-dom";
 
 export default function CandidateNavbar({
   //Navbar props for candidate
@@ -26,8 +21,11 @@ export default function CandidateNavbar({
   const { user, logout } = useAuth();
   const displayName = user?.name || userName;
 
+  const navigate = useNavigate();
+
   const handleLogout = () => {
     logout();
+    navigate("/");
   };
 
   const isActive = (to) => {
