@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from backend.databases.models import SessionLocal, User, Application
 from backend.utils import verify_password, hash_password
 
@@ -116,6 +117,27 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
             "name": new_user.name
         }
     }
+
+@app.get("/active-jobs",tags=["Jobs"])
+async def get_active_jobs(db: Session = Depends(get_db)):
+    # Use named parameters in the SQL query
+    result = db.execute(text('SELECT COUNT(*) FROM job WHERE status = :status'), {"status": "active"})
+    count = result.scalar()
+    return {"active_jobs_count": count}
+
+@app.get('/candidate-count', tags=["Candidates"])
+async def get_all_candidates(db: Session = Depends(get_db)):
+    result = db.execute(text('SELECT COUNT(*) FROM candidate'))
+    count = result.scalar()
+    return {"candidate_count": count}
+
+# @app.get('/interview-count', tags=["Interviews"])
+# async def get_all_interviews(db: Session = Depends(get_db)):
+#     result = db.execute(text('SELECT COUNT(*) FROM candidate'))
+#     count = result.scalar()
+#     return {"interview_count": count}
+
+
 
 @app.get("/", tags=["Health Check"])
 async def root():
