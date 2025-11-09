@@ -8,27 +8,43 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/HRNavbar";
+import { useEffect, useState } from "react";
 
 export default function RecruitmentDashboard(props) {
   const navigate = useNavigate();
   const userName = props?.userName ?? "Jane Recruiter";
-
+  const [activeJobs, setActiveJobs] = useState(0);
+  const [candidateCount, setCandidateCount] = useState(0);
 
   const createJobHandler = () => {
     navigate("/job-creator");
   };
 
+  useEffect(() => {
+    fetch("http://localhost:8000/active-jobs")
+    .then((response) => response.json())
+    .then((data) => setActiveJobs(data.active_jobs_count))
+    .catch((error) => console.error("Error fetching active jobs:", error));
+  },[activeJobs]);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/candidate-count")
+    .then((response) => response.json())
+    .then((data) => setCandidateCount(data.candidate_count))
+    .catch((error) => console.error("Error fetching candidate count:", error));
+  })
+
   const stats = [
     {
       label: "Active Jobs",
-      value: "24",
+      value: activeJobs,
       icon: Briefcase,
       color: "bg-blue-100",
       iconColor: "text-blue-600",
     },
     {
       label: "Candidates",
-      value: "156",
+      value: candidateCount,
       icon: Users,
       color: "bg-green-100",
       iconColor: "text-green-600",
