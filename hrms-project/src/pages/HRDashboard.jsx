@@ -15,6 +15,7 @@ export default function RecruitmentDashboard(props) {
   const userName = props?.userName ?? "Jane Recruiter";
   const [activeJobs, setActiveJobs] = useState(0);
   const [candidateCount, setCandidateCount] = useState(0);
+  const [hiredCount, setHiredCount] = useState(0);
 
   const createJobHandler = () => {
     navigate("/job-creator");
@@ -32,7 +33,14 @@ export default function RecruitmentDashboard(props) {
     .then((response) => response.json())
     .then((data) => setCandidateCount(data.candidate_count))
     .catch((error) => console.error("Error fetching candidate count:", error));
-  })
+  },[])
+
+  useEffect(() => {
+    fetch("http://localhost:8000/hired-count")
+    .then((response) => response.json())
+    .then((data) => setHiredCount(data.hired_count))
+    .catch((error) => console.error("Error fetching hired count:", error));
+  },[])
 
   const stats = [
     {
@@ -57,8 +65,8 @@ export default function RecruitmentDashboard(props) {
       iconColor: "text-yellow-600",
     },
     {
-      label: "Hired This Month",
-      value: "12",
+      label: "Hired",
+      value: hiredCount,
       icon: CheckCircle,
       color: "bg-purple-100",
       iconColor: "text-purple-600",

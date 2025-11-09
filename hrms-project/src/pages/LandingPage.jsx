@@ -18,13 +18,10 @@ export default function TalentFlowLanding() {
           <div className="flex items-center gap-3">
             {/* Updated Logo */}
             <img
-              src="/hrms-logo.webp"
+              src="/icon.png"
               alt="TalentFlow Logo"
-              className="w-10 h-10 rounded-lg object-cover"
+              className="w-20 h-20 rounded-lg object-cover"
             />
-            <span className="text-xl font-semibold text-gray-900">
-              TalentFlow
-            </span>
           </div>
         </div>
       </header>
