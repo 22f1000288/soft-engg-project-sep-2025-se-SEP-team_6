@@ -44,13 +44,10 @@ export default function CandidateNavbar({
             <div className="flex items-center gap-3">
               {/* logo */}
               <img
-                src="/hrms-logo.webp"
+                src="/icon.png"
                 alt="TalentFlow Logo"
-                className="w-8 h-8 rounded-lg object-cover"
+                className="w-20 h-20 rounded-lg object-cover"
               />
-              <span className="text-xl font-semibold text-gray-900">
-                {brand.title}
-              </span>
             </div>
 
             <nav className="hidden md:flex items-center gap-14">
