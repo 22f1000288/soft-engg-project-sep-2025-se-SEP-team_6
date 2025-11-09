@@ -288,18 +288,7 @@ const AuthSystem = () => {
             </button>
           </div>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 font-medium mb-2">
-              Demo Credentials:
-            </p>
-            <p className="text-xs text-gray-500">
-              Admin: admin@company.com / admin123
-            </p>
-            <p className="text-xs text-gray-500">HR: hr@company.com / hr123</p>
-            <p className="text-xs text-gray-500">
-              Candidate: candidate@example.com / candidate123
-            </p>
-          </div>
+          
         </div>
       </div>
     </div>

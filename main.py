@@ -3,7 +3,9 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from backend.databases.models import SessionLocal, User, Application
+from backend.utils import verify_password, hash_password
 
 app = FastAPI(
     title="TalentForm HRMS API",
@@ -14,8 +16,11 @@ app = FastAPI(
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+        ],
+    # allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -46,7 +51,6 @@ async def read_users(db: Session = Depends(get_db)):
         {
             "id": user.id,
             "email": user.email,
-            "password": user.password,
             "role": user.role,
             "name": user.name
         }
@@ -70,20 +74,25 @@ async def read_apps(db: Session = Depends(get_db)):
 
 @app.post("/login", tags=["Authentication"])
 async def login(request: Login, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
-    print("User from DB:", user)
-    print("Password from request:", request.password)
-    if user and user.password == request.password:
-        return {
-            "message": "Login successful",
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "role": user.role,
-                "name": user.name
+    try:
+        user = db.query(User).filter(User.email == request.email).first()
+        # verify_password should accept (plain_password, hashed_password) and return True/False
+        if user and verify_password(request.password, user.password):
+            return {
+                "message": "Login successful",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "role": user.role,
+                    "name": user.name
+                }
             }
-        }
-    raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Login error:", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/signup", tags=["Authentication"])
 async def signup(request: SignupRequest, db: Session = Depends(get_db)):
@@ -93,7 +102,7 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
     new_user = User(
         name=request.name,
         email=request.email,
-        password=request.password,
+        password=hash_password(request.password),
         role=request.role
     )
     db.add(new_user)
@@ -108,6 +117,27 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
             "name": new_user.name
         }
     }
+
+@app.get("/active-jobs",tags=["Jobs"])
+async def get_active_jobs(db: Session = Depends(get_db)):
+    # Use named parameters in the SQL query
+    result = db.execute(text('SELECT COUNT(*) FROM job WHERE status = :status'), {"status": "active"})
+    count = result.scalar()
+    return {"active_jobs_count": count}
+
+@app.get('/candidate-count', tags=["Candidates"])
+async def get_all_candidates(db: Session = Depends(get_db)):
+    result = db.execute(text('SELECT COUNT(*) FROM candidate'))
+    count = result.scalar()
+    return {"candidate_count": count}
+
+# @app.get('/interview-count', tags=["Interviews"])
+# async def get_all_interviews(db: Session = Depends(get_db)):
+#     result = db.execute(text('SELECT COUNT(*) FROM candidate'))
+#     count = result.scalar()
+#     return {"interview_count": count}
+
+
 
 @app.get("/", tags=["Health Check"])
 async def root():
