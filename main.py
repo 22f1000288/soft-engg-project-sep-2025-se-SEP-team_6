@@ -63,11 +63,15 @@ async def read_apps(db: Session = Depends(get_db)):
     return [
         {
             "id": app.id,
-            "candidateName": app.candidateName,
-            "email": app.email,
-            "position": app.position,
-            "status": app.status,
-            "appliedDate": app.appliedDate
+            "candidate_id": app.candidate_id,
+            "job_id": app.job_id,
+            "status_applied": app.status_applied,
+            "status_shortlisted": app.status_shortlisted,
+            "status_interviewed": app.status_interviewed,
+            "status_offered": app.status_offered,
+            "status_rejected": app.status_rejected,
+            "score": app.score,
+            "submitted_at": app.submitted_at
         }
         for app in apps
     ]
@@ -142,6 +146,25 @@ async def get_hired_candidates(db: Session = Depends(get_db)):
     result = db.execute(text("SELECT COUNT(*) FROM application WHERE status_offered = :status"), {"status": 1})
     count = result.scalar()
     return {"hired_count": count}
+
+@app.get('/application-count', tags=["Applications"])
+async def get_application_count(db: Session = Depends(get_db)):
+    result = db.execute(text('SELECT COUNT(*) FROM application'))
+    count = result.scalar()
+    return {"application_count": count}
+
+@app.get('/interview-count', tags=["Interviews"])
+async def get_interview_count(db: Session = Depends(get_db)):
+    result = db.execute(text('SELECT COUNT(*) FROM interview'))
+    count = result.scalar()
+    return {"interview_count": count}
+
+@app.get('/job-offered-count', tags=["Jobs"])
+async def get_job_offered_count(db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT COUNT(*) FROM application WHERE status_offered = :status"), {"status": 1})
+    count = result.scalar()
+    return {"offer_count": count}
+
 
 
 @app.get("/", tags=["Health Check"])
