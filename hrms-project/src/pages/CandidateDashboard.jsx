@@ -6,26 +6,69 @@ import {
   HelpCircle,
 } from "lucide-react";
 import CandidateNavbar from "../components/CandidateNavbar";
+import {useState} from "react";
+import { useEffect } from "react";
 
 export default function CandidateDashboard() {
+
+  const [applicationCount, setApplicationCount] = useState(0);
+  const [interviewCount, setInterviewCount] = useState(0);
+  const [jobOfferedCount, setjobOfferedCount] = useState(0);
+
+  useEffect(() => { 
+    // Fetch application count from backend API
+    fetch('http://localhost:8000/application-count')
+    .then(res => res.json())
+    .then(data => {
+      setApplicationCount(data.application_count);
+    })
+    .catch(err => {
+      console.error("Error fetching application count:", err);
+    });
+  },[applicationCount])
+
+  useEffect(() => { 
+    // Fetch interview count from backend API
+    fetch('http://localhost:8000/interview-count')
+    .then(res => res.json())
+    .then(data => {
+      setInterviewCount(data.interview_count);
+    })
+    .catch(err => {
+      console.error("Error fetching interview count:", err);
+    });
+  },[interviewCount])
+
+  useEffect(() => {
+    // Fetch job offered count from backend API
+    fetch('http://localhost:8000/job-offered-count')
+    .then(res => res.json())
+    .then(data => {
+      setjobOfferedCount(data.offer_count);
+    })
+    .catch(err => {
+      console.error("Error fetching job offered count:", err);
+    });
+  },[jobOfferedCount]);
+
   const stats = [
     {
       label: "Applications",
-      value: "12",
+      value: applicationCount,
       icon: FileText,
       color: "bg-blue-100",
       iconColor: "text-blue-600",
     },
     {
       label: "Interviews",
-      value: "3",
+      value: interviewCount,
       icon: Calendar,
       color: "bg-green-100",
       iconColor: "text-green-600",
     },
     {
       label: "Offers",
-      value: "1",
+      value: jobOfferedCount,
       icon: CheckCircle,
       color: "bg-purple-100",
       iconColor: "text-purple-600",

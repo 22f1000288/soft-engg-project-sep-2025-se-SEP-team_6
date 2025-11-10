@@ -33,14 +33,14 @@ export default function RecruitmentDashboard(props) {
     .then((response) => response.json())
     .then((data) => setCandidateCount(data.candidate_count))
     .catch((error) => console.error("Error fetching candidate count:", error));
-  },[])
+  },[candidateCount])
 
   useEffect(() => {
     fetch("http://localhost:8000/hired-count")
     .then((response) => response.json())
     .then((data) => setHiredCount(data.hired_count))
     .catch((error) => console.error("Error fetching hired count:", error));
-  },[])
+  },[hiredCount])
 
   const stats = [
     {
