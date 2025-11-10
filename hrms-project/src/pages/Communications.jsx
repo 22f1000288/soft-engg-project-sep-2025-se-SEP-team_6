@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../components/HRNavbar";
 import { Send } from "lucide-react";
 
@@ -12,13 +12,7 @@ export default function Communications(props) {
   const [message, setMessage] = useState("");
   const [autoTranslate, setAutoTranslate] = useState(false);
   const [scheduled, setScheduled] = useState(false);
-
-  // Sample data
-  const candidates = [
-    { id: "c1", name: "Sarah Chen", status: "Interview Feedback Sent" },
-    { id: "c2", name: "Michael Rodriguez", status: "Interview Scheduled" },
-    { id: "c3", name: "Emily Johnson", status: "Application Follow-up" },
-  ];
+  const [candidateList, setCandidateList] = useState([]);
 
   const messageTypes = [
     "Select type",
@@ -78,6 +72,18 @@ export default function Communications(props) {
     alert("Preview\n\n" + message);
   };
 
+  useEffect(() => {
+    fetch("http://localhost:8000/candidate-list")
+    .then((res) => res.json())
+    .then((data) => {
+      setCandidateList(data.candidates);
+      console.log("Fetched candidate list:", data.candidates);
+    })
+    .catch((err) => {
+      console.error("Error fetching candidate list:", err);
+    });
+  },[])
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar userName={userName} />
@@ -117,7 +123,7 @@ export default function Communications(props) {
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 bg-white"
                     >
                       <option value="">Choose candidate</option>
-                      {candidates.map((c) => (
+                      {candidateList.map((c) => (
                         <option key={c.id} value={c.name}>
                           {c.name}
                         </option>

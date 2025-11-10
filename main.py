@@ -165,7 +165,13 @@ async def get_job_offered_count(db: Session = Depends(get_db)):
     count = result.scalar()
     return {"offer_count": count}
 
-
+@app.get('/candidate-list', tags=["Candidates"])
+async def get_candidate_list(db: Session = Depends(get_db)):
+    result = db.execute(text('SELECT c.id, u.name from candidate c JOIN user u ON c.user_id = u.id'))
+    candidates = result.fetchall()
+    candidate_list = [{"id": row[0], "name": row[1]} for row in candidates]
+    return {"candidates": candidate_list}
+    
 
 @app.get("/", tags=["Health Check"])
 async def root():
