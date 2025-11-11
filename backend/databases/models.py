@@ -4,6 +4,9 @@ from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, Foreig
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from backend.roles import ROLE_ADMIN
+from backend.utils import hash_password
+
 # Get the absolute path to the current directory (where this file lives)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -109,8 +112,8 @@ def init_admin():
         admin = User(
             id=1,
             email="admin@company.com",
-            password="admin123",
-            role="admin",
+            password=hash_password("admin123"),
+            role=ROLE_ADMIN,
             name="Admin User"
         )
         db.add(admin)

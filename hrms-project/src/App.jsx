@@ -18,6 +18,8 @@ import InterviewPrep from "./pages/InterviewPrep";
 import KanbanBoard from "./pages/KanbanBoard";
 import CandidateProfilePage from "./components/CandidateProfile";
 import HRProfilePage from "./components/HRProfile";
+import PrivateRoute from "./components/PrivateRoute";
+import { ROLE_ADMIN, ROLE_CANDIDATE, ROLE_HR } from "./constants/roles";
 
 function App() {
   return (
@@ -25,23 +27,127 @@ function App() {
       <AuthProvider>
       <Routes>
         <Route path="/" element={<TalentFlowLanding />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/hr-dashboard" element={<HRDashboard />} />
-        <Route path="/candidate-dashboard" element={<CandidateDashboard />} />
-
+        <Route
+          path="/admin-dashboard"
+          element={
+            <PrivateRoute roles={[ROLE_ADMIN]}>
+              <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/hr-dashboard"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <HRDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/candidate-dashboard"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE]}>
+              <CandidateDashboard />
+            </PrivateRoute>
+          }
+        />
         <Route path="/login-signup" element={<AuthSystem />} />
-        <Route path="/job-creator" element={<JobCreater />} />
-        <Route path="/candidates" element={<Candidates />} />
-        <Route path="/communications" element={<Communications />} />
-        <Route path="/hr-jobs" element={<Jobs />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/schedule" element={<Schedule />} />
-        <Route path="/candidate-jobs" element={<CandidateJobs />} />
-        <Route path="/candidate-applications" element={<CandidateApplications />} />
-        <Route path="/interview-prep" element={<InterviewPrep />} />
-        <Route path="/kanban-board" element={<KanbanBoard />} />
-        <Route path="/candidate-profile" element={<CandidateProfilePage />} />
-        <Route path="/hr-profile" element={<HRProfilePage />} />
+        <Route
+          path="/job-creator"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <JobCreater />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/candidates"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <Candidates />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/communications"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <Communications />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/hr-jobs"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <Jobs />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <Analytics />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/schedule"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <Schedule />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/kanban-board"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <KanbanBoard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/hr-profile"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <HRProfilePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/candidate-jobs"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE]}>
+              <CandidateJobs />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/candidate-applications"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE]}>
+              <CandidateApplications />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/interview-prep"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE]}>
+              <InterviewPrep />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/candidate-profile"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE]}>
+              <CandidateProfilePage />
+            </PrivateRoute>
+          }
+        />
       </Routes>
       </AuthProvider>
     </Router>

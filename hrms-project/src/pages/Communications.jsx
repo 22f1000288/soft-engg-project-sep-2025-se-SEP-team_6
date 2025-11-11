@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/HRNavbar";
 import { Send } from "lucide-react";
+import useAuth from "../contexts/useAuth";
 
 export default function Communications(props) {
   const userName = props?.userName ?? "Jane Recruiter";
+  const { authFetch } = useAuth();
 
   // Form state
   const [selectedCandidate, setSelectedCandidate] = useState("");
@@ -52,7 +54,7 @@ export default function Communications(props) {
     },
   ];
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!selectedCandidate || !messageType || message.trim().length === 0) {
       alert("Please choose a candidate, message type and write a message.");
       return;
@@ -64,44 +66,38 @@ export default function Communications(props) {
     );
     const candidateEmail = selectedCandidateData ? selectedCandidateData.email : "";
 
-    // Prepare the data to send
     const emailData = {
-      recipient_email: candidateEmail,
-      subject: subject,
+      candidate_email: candidateEmail,
+      subject,
+      body: message,
       message_type: messageType,
-      message_content: message,
       auto_translate: autoTranslate,
-      scheduled: scheduled,
+      scheduled,
     };
 
-    // Send the data to the backend
-    fetch("http://localhost:8000/notify-candidate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(emailData),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to send email");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
-        // Reset form state
-        setSelectedCandidate("");
-        setMessageType("");
-        setSubject("");
-        setMessage("");
-        setAutoTranslate(false);
-        setScheduled(false);
-      })
-      .catch((err) => {
-        console.error("Error sending email:", err);
-        alert("Error sending email. Please try again.");
+    try {
+      const res = await authFetch("/notify-candidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
       });
+      if (!res.ok) {
+        throw new Error("Failed to send email");
+      }
+      await res.json();
+      alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
+      setSelectedCandidate("");
+      setMessageType("");
+      setSubject("");
+      setMessage("");
+      setAutoTranslate(false);
+      setScheduled(false);
+    } catch (err) {
+      console.error("Error sending email:", err);
+      alert("Error sending email. Please try again.");
+    }
   };
 
   const handlePreview = () => {
@@ -109,16 +105,20 @@ export default function Communications(props) {
   };
 
   useEffect(() => {
-    fetch("http://localhost:8000/candidate-list")
-      .then((res) => res.json())
+    authFetch("/candidate-list")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch candidates");
+        }
+        return res.json();
+      })
       .then((data) => {
-        setCandidateList(data.candidates);
-        console.log("Fetched candidate list:", data.candidates);
+        setCandidateList(data.candidates ?? []);
       })
       .catch((err) => {
         console.error("Error fetching candidate list:", err);
       });
-  }, [setCandidateList]);
+  }, [authFetch]);
 
   return (
     <div className="min-h-screen bg-gray-50">

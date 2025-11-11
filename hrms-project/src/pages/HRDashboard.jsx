@@ -9,9 +9,11 @@ import {
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/HRNavbar";
 import { useEffect, useState } from "react";
+import useAuth from "../contexts/useAuth";
 
 export default function RecruitmentDashboard(props) {
   const navigate = useNavigate();
+  const { authFetch } = useAuth();
   const userName = props?.userName ?? "Jane Recruiter";
   const [activeJobs, setActiveJobs] = useState(0);
   const [candidateCount, setCandidateCount] = useState(0);
@@ -22,25 +24,26 @@ export default function RecruitmentDashboard(props) {
   };
 
   useEffect(() => {
-    fetch("http://localhost:8000/active-jobs")
-    .then((response) => response.json())
-    .then((data) => setActiveJobs(data.active_jobs_count))
-    .catch((error) => console.error("Error fetching active jobs:", error));
-  },[activeJobs]);
+    const fetchStats = async () => {
+      try {
+        const [activeRes, candidateRes, hiredRes] = await Promise.all([
+          authFetch("/active-jobs"),
+          authFetch("/candidate-count"),
+          authFetch("/hired-count"),
+        ]);
+        const activeData = await activeRes.json();
+        const candidateData = await candidateRes.json();
+        const hiredData = await hiredRes.json();
+        setActiveJobs(activeData.active_jobs_count ?? 0);
+        setCandidateCount(candidateData.candidate_count ?? 0);
+        setHiredCount(hiredData.hired_count ?? 0);
+      } catch (error) {
+        console.error("Error loading HR dashboard stats:", error);
+      }
+    };
 
-  useEffect(() => {
-    fetch("http://localhost:8000/candidate-count")
-    .then((response) => response.json())
-    .then((data) => setCandidateCount(data.candidate_count))
-    .catch((error) => console.error("Error fetching candidate count:", error));
-  },[candidateCount])
-
-  useEffect(() => {
-    fetch("http://localhost:8000/hired-count")
-    .then((response) => response.json())
-    .then((data) => setHiredCount(data.hired_count))
-    .catch((error) => console.error("Error fetching hired count:", error));
-  },[hiredCount])
+    fetchStats();
+  }, [authFetch]);
 
   const stats = [
     {
