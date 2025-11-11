@@ -1,7 +1,10 @@
 import sys
 import os
+from dotenv import load_dotenv
 from resume_extractor import ResumeParser
 import json
+
+load_dotenv()  # Load environment variables from .env file
 
 def main():
     if len(sys.argv) < 2:

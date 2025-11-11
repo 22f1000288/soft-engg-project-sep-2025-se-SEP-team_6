@@ -57,15 +57,51 @@ export default function Communications(props) {
       alert("Please choose a candidate, message type and write a message.");
       return;
     }
-    // Dummy send action
-    alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
-    // reset
-    setSelectedCandidate("");
-    setMessageType("");
-    setSubject("");
-    setMessage("");
-    setAutoTranslate(false);
-    setScheduled(false);
+
+    // Find the selected candidate's email
+    const selectedCandidateData = candidateList.find(
+      (c) => c.name === selectedCandidate
+    );
+    const candidateEmail = selectedCandidateData ? selectedCandidateData.email : "";
+
+    // Prepare the data to send
+    const emailData = {
+      recipient_email: candidateEmail,
+      subject: subject,
+      message_type: messageType,
+      message_content: message,
+      auto_translate: autoTranslate,
+      scheduled: scheduled,
+    };
+
+    // Send the data to the backend
+    fetch("http://localhost:8000/notify-candidate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(emailData),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to send email");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
+        // Reset form state
+        setSelectedCandidate("");
+        setMessageType("");
+        setSubject("");
+        setMessage("");
+        setAutoTranslate(false);
+        setScheduled(false);
+      })
+      .catch((err) => {
+        console.error("Error sending email:", err);
+        alert("Error sending email. Please try again.");
+      });
   };
 
   const handlePreview = () => {
@@ -74,15 +110,15 @@ export default function Communications(props) {
 
   useEffect(() => {
     fetch("http://localhost:8000/candidate-list")
-    .then((res) => res.json())
-    .then((data) => {
-      setCandidateList(data.candidates);
-      console.log("Fetched candidate list:", data.candidates);
-    })
-    .catch((err) => {
-      console.error("Error fetching candidate list:", err);
-    });
-  },[])
+      .then((res) => res.json())
+      .then((data) => {
+        setCandidateList(data.candidates);
+        console.log("Fetched candidate list:", data.candidates);
+      })
+      .catch((err) => {
+        console.error("Error fetching candidate list:", err);
+      });
+  }, [setCandidateList]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,7 +144,6 @@ export default function Communications(props) {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Send Message
                 </h3>
-                
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -217,8 +252,6 @@ export default function Communications(props) {
                 <div className="lg:col-span-5"></div>
               </div>
             </div>
-
-            
           </div>
         </section>
 
@@ -229,7 +262,6 @@ export default function Communications(props) {
               <h3 className="text-lg font-semibold text-gray-900">
                 Recent Communications
               </h3>
-              
             </div>
 
             <div className="space-y-4">
@@ -256,8 +288,6 @@ export default function Communications(props) {
                         <div className="text-sm text-gray-600 mt-2">
                           {r.snippet}
                         </div>
-
-                        
                       </div>
                     </div>
 

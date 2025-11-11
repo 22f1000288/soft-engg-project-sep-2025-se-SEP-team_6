@@ -1,11 +1,12 @@
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from backend.databases.models import SessionLocal, User, Application
 from backend.utils import verify_password, hash_password
+from backend.mailUtils.sendMail import send_email
 
 app = FastAPI(
     title="TalentForm HRMS API",
@@ -167,11 +168,23 @@ async def get_job_offered_count(db: Session = Depends(get_db)):
 
 @app.get('/candidate-list', tags=["Candidates"])
 async def get_candidate_list(db: Session = Depends(get_db)):
-    result = db.execute(text('SELECT c.id, u.name from candidate c JOIN user u ON c.user_id = u.id'))
+    result = db.execute(text('SELECT c.id, u.email, u.name from candidate c JOIN user u ON c.user_id = u.id'))
     candidates = result.fetchall()
-    candidate_list = [{"id": row[0], "name": row[1]} for row in candidates]
+    candidate_list = [{"id": row[0], "email": row[1], "name": row[2]} for row in candidates]
     return {"candidates": candidate_list}
     
+@app.post('/notify-candidate', tags=["Communications"])
+async def notify_candidate(request: Request, candidate_email: str, subject: str, body: str):
+    # Get candidate email from request and send email
+    data = await request.json()
+    candidate_email = data.get("candidate_email")
+    subject = data.get("subject")
+    body = data.get("body")
+    try:
+        send_email(recipient_email=candidate_email, subject=subject, body=body)
+        return {"message": "Notification email sent successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {e}")
 
 @app.get("/", tags=["Health Check"])
 async def root():

@@ -8,8 +8,12 @@ from docx import Document
 from groq import Groq
 from collections import defaultdict
 import numpy as np
-from env import GROQ_API_KEY
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 class ResumeParser:
     def __init__(self, api_key: str):
