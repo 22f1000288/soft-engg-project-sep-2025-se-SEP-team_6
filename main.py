@@ -123,7 +123,7 @@ def require_roles(*allowed_roles: str):
 
 @app.get("/users", tags=["Users"])
 async def read_users(
-    _: User = Depends(require_roles(ROLE_ADMIN)),
+    # User = Depends(require_roles(ROLE_ADMIN)),
     db: Session = Depends(get_db),
 ):
     users = db.query(User).all()
@@ -139,7 +139,7 @@ async def read_users(
 
 @app.get("/applications", tags=["Applications"])
 async def read_apps(
-    _: User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     apps = db.query(Application).all()
@@ -210,7 +210,7 @@ async def refresh_token(
 
 @app.get("/active-jobs",tags=["Jobs"])
 async def get_active_jobs(
-    _: User = Depends(require_roles(ROLE_HR)),
+    User = Depends(require_roles(ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     # Use named parameters in the SQL query
@@ -220,7 +220,7 @@ async def get_active_jobs(
 
 @app.get('/candidate-count', tags=["Candidates"])
 async def get_all_candidates(
-    _: User = Depends(require_roles(ROLE_HR)),
+    User = Depends(require_roles(ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     result = db.execute(text('SELECT COUNT(*) FROM candidate'))
@@ -229,7 +229,7 @@ async def get_all_candidates(
 
 @app.get('/hired-count', tags=["Hires"])
 async def get_hired_candidates(
-    _: User = Depends(require_roles(ROLE_HR)),
+    User = Depends(require_roles(ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     result = db.execute(text("SELECT COUNT(*) FROM application WHERE status_offered = :status"), {"status": 1})
@@ -238,7 +238,7 @@ async def get_hired_candidates(
 
 @app.get('/application-count', tags=["Applications"])
 async def get_application_count(
-    _: User = Depends(require_roles(ROLE_CANDIDATE)),
+    User = Depends(require_roles(ROLE_CANDIDATE)),
     db: Session = Depends(get_db),
 ):
     result = db.execute(text('SELECT COUNT(*) FROM application'))
@@ -247,7 +247,7 @@ async def get_application_count(
 
 @app.get('/interview-count', tags=["Interviews"])
 async def get_interview_count(
-    _: User = Depends(require_roles(ROLE_CANDIDATE)),
+    User = Depends(require_roles(ROLE_CANDIDATE)),
     db: Session = Depends(get_db),
 ):
     result = db.execute(text('SELECT COUNT(*) FROM interview'))
@@ -256,7 +256,7 @@ async def get_interview_count(
 
 @app.get('/job-offered-count', tags=["Jobs"])
 async def get_job_offered_count(
-    _: User = Depends(require_roles(ROLE_CANDIDATE)),
+    User = Depends(require_roles(ROLE_CANDIDATE)),
     db: Session = Depends(get_db),
 ):
     result = db.execute(text("SELECT COUNT(*) FROM application WHERE status_offered = :status"), {"status": 1})
@@ -265,7 +265,7 @@ async def get_job_offered_count(
 
 @app.get('/candidate-list', tags=["Candidates"])
 async def get_candidate_list(
-    _: User = Depends(require_roles(ROLE_HR)),
+    User = Depends(require_roles(ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     result = db.execute(text('SELECT c.id, u.email, u.name from candidate c JOIN user u ON c.user_id = u.id'))
@@ -279,7 +279,7 @@ async def notify_candidate(
     candidate_email: str,
     subject: str,
     body: str,
-    _: User = Depends(require_roles(ROLE_HR)),
+    User = Depends(require_roles(ROLE_HR)),
 ):
     # Get candidate email from request and send email
     data = await request.json()
