@@ -38,3 +38,7 @@ groq==0.11.0
 python-dateutil==2.8.2
 regex==2023.10.3
 PyJWT==2.9.0
+livekit-agents
+livekit-plugins-openai
+livekit-plugins-silero
+livekit-api
