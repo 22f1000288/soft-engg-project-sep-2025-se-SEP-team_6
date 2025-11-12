@@ -16,3 +16,4 @@ backend/databases/*.db-*
 .DS_Store
 
 .env
+backend/.env
