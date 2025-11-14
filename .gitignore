@@ -12,3 +12,8 @@ node_modules/
 # SQLite artifacts
 backend/databases/*.db
 backend/databases/*.db-*
+
+.DS_Store
+
+.env
+backend/.env
