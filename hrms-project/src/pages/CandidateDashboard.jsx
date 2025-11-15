@@ -6,50 +6,36 @@ import {
   HelpCircle,
 } from "lucide-react";
 import CandidateNavbar from "../components/CandidateNavbar";
-import {useState} from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import useAuth from "../contexts/useAuth";
 
 export default function CandidateDashboard() {
-
+  const { authFetch } = useAuth();
   const [applicationCount, setApplicationCount] = useState(0);
   const [interviewCount, setInterviewCount] = useState(0);
   const [jobOfferedCount, setjobOfferedCount] = useState(0);
 
-  useEffect(() => { 
-    // Fetch application count from backend API
-    fetch('http://localhost:8000/application-count')
-    .then(res => res.json())
-    .then(data => {
-      setApplicationCount(data.application_count);
-    })
-    .catch(err => {
-      console.error("Error fetching application count:", err);
-    });
-  },[applicationCount])
-
-  useEffect(() => { 
-    // Fetch interview count from backend API
-    fetch('http://localhost:8000/interview-count')
-    .then(res => res.json())
-    .then(data => {
-      setInterviewCount(data.interview_count);
-    })
-    .catch(err => {
-      console.error("Error fetching interview count:", err);
-    });
-  },[interviewCount])
-
   useEffect(() => {
-    // Fetch job offered count from backend API
-    fetch('http://localhost:8000/job-offered-count')
-    .then(res => res.json())
-    .then(data => {
-      setjobOfferedCount(data.offer_count);
-    })
-    .catch(err => {
-      console.error("Error fetching job offered count:", err);
-    });
-  },[jobOfferedCount]);
+    const fetchStats = async () => {
+      try {
+        const [applicationsRes, interviewsRes, offersRes] = await Promise.all([
+          authFetch("/application-count"),
+          authFetch("/interview-count"),
+          authFetch("/job-offered-count"),
+        ]);
+        const applicationsData = await applicationsRes.json();
+        const interviewsData = await interviewsRes.json();
+        const offersData = await offersRes.json();
+        setApplicationCount(applicationsData.application_count ?? 0);
+        setInterviewCount(interviewsData.interview_count ?? 0);
+        setjobOfferedCount(offersData.offer_count ?? 0);
+      } catch (err) {
+        console.error("Error loading candidate dashboard stats:", err);
+      }
+    };
+
+    fetchStats();
+  }, [authFetch]);
 
   const stats = [
     {

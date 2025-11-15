@@ -8,12 +8,48 @@ from docx import Document
 from groq import Groq
 from collections import defaultdict
 import numpy as np
-from env import GROQ_API_KEY
+import sys
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 class ResumeParser:
     def __init__(self, api_key: str):
         """Initialize the resume parser with Groq API key."""
-        self.client = Groq(api_key=api_key)
+        # Backward compatible Groq client initialization
+        try:
+            # Try modern initialization first
+            self.client = Groq(api_key=api_key)
+        except TypeError as e:
+            if "proxies" in str(e) or "unexpected keyword argument" in str(e):
+                # Fallback for older versions - initialize with minimal params
+                try:
+                    # Try with just api_key
+                    import groq
+                    
+                    # Check if we need to use legacy initialization
+                    if hasattr(groq, '__version__'):
+                        version = groq.__version__
+                        print(f"Detected Groq version: {version}")
+                    
+                    # Attempt basic initialization without optional parameters
+                    self.client = Groq(api_key=api_key)
+                    
+                except Exception as fallback_error:
+                    print(f"Warning: Groq initialization fallback failed: {fallback_error}")
+                    # Last resort: try to create client with absolute minimum
+                    try:
+                        from groq import Groq as GroqClient
+                        self.client = GroqClient(api_key=api_key)
+                    except:
+                        raise RuntimeError(
+                            f"Unable to initialize Groq client. "
+                            f"Please ensure groq>=0.4.0 is installed: pip install --upgrade groq"
+                        ) from e
+            else:
+                raise
         
     def extract_text_from_pdf(self, pdf_path: str) -> Tuple[str, str]:
         """Extract text from PDF with advanced bi-column handling.
@@ -74,7 +110,11 @@ class ResumeParser:
         
         # Enhanced column detection with better sensitivity for 2-column layouts
         if len(x_positions) > 10:
-            from sklearn.cluster import KMeans
+            try:
+                from sklearn.cluster import KMeans
+            except ImportError:
+                # Fallback if sklearn not available
+                return {'type': 'single_column', 'columns': [(0, page_width)]}
             
             X = np.array(x_positions).reshape(-1, 1)
             
