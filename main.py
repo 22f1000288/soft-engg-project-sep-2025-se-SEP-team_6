@@ -1,7 +1,9 @@
+import os
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, Request, status
+from fastapi import FastAPI, HTTPException, Depends, Request, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -16,12 +18,15 @@ from backend.security import (
 )
 from backend.utils import verify_password, hash_password
 from backend.mailUtils.sendMail import send_email
+from backend.interviewBot import GroqInterview, AUDIO_FOLDER
 
 app = FastAPI(
     title="TalentForm HRMS API",
     description="API documentation for HRMS application",
     version="1.0.0"
 )
+
+groq_instance = GroqInterview()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -32,7 +37,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173"
         ],
-    # allow_credentials=True,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -250,9 +255,13 @@ async def get_interview_count(
     User = Depends(require_roles(ROLE_CANDIDATE)),
     db: Session = Depends(get_db),
 ):
-    result = db.execute(text('SELECT COUNT(*) FROM interview'))
-    count = result.scalar()
-    return {"interview_count": count}
+    try:
+        result = db.execute(text('SELECT COUNT(*) FROM interview'))
+        count = result.scalar()
+        return {"interview_count": count}
+    except Exception:
+        # interview table doesn't exist yet
+        return {"interview_count": 0}
 
 @app.get('/job-offered-count', tags=["Jobs"])
 async def get_job_offered_count(
@@ -299,5 +308,81 @@ async def notify_candidate(
 async def root():
     return {"message": "Hello World"}
 
+
+
+@app.post("/talk", tags=["Interview"])
+async def post_audio(file: UploadFile = File(...)):
+    """Accept audio file and return transcription + response."""
+    if not file or file.filename == "":
+        raise HTTPException(status_code=400, detail="No file provided")
+    
+    global groq_instance
+    try:
+        # Read file into memory
+        file_content = await file.read()
+        
+        # Create a BytesIO wrapper for groq transcription
+        import io
+        audio_file = io.BytesIO(file_content)
+        audio_file.seek(0)  # Ensure pointer is at start
+        audio_file.name = file.filename
+        
+        # Transcribe
+        user_message = await groq_instance.transcribe_audio(audio_file)
+        
+        # Get chat response
+        chat_response = await groq_instance.get_chat_response(user_message)
+        print(chat_response['content'])
+        
+        # Text to speech
+        audio_response = await groq_instance.text_to_speech(chat_response['content'])
+        print(audio_response)
+        
+        # Return response
+        return {
+            "audio_file": f"/temp_audio/{audio_response}",
+            "transcript": user_message['content'],
+            "response": chat_response['content']
+        }
+    except Exception as e:
+        print(f"Error in /talk: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+TEMP_AUDIO_DIR = os.path.abspath(os.path.join(os.getcwd(), "temp_audio"))
+
+@app.get("/temp_audio/{file_path:path}")
+def serve_temp_audio(file_path: str):
+    requested_path = os.path.abspath(os.path.join(TEMP_AUDIO_DIR, file_path))
+
+    # Prevent path traversal
+    if os.path.commonpath([TEMP_AUDIO_DIR, requested_path]) != TEMP_AUDIO_DIR:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # Ensure file exists and is a file
+    if not os.path.exists(requested_path) or not os.path.isfile(requested_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Return file (browser will stream it inline)
+    return FileResponse(requested_path, media_type="audio/wav")
+
+# ensure AUDIO_FOLDER is defined somewhere; if not set it explicitly:
+# AUDIO_FOLDER = os.path.abspath(os.path.join(os.getcwd(), "audio"))
+
+@app.get("/audio/{file_path:path}")
+def serve_audio(file_path: str):
+    base = os.path.abspath(AUDIO_FOLDER)
+    requested_path = os.path.abspath(os.path.join(base, file_path))
+
+    # Prevent path traversal
+    if os.path.commonpath([base, requested_path]) != base:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if not os.path.exists(requested_path) or not os.path.isfile(requested_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(requested_path, media_type="application/octet-stream")
+
+
 if __name__ == "__main__":
+    
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
+RUN pip install --upgrade groq
+RUN pip install python-multipart
 
 COPY . .
 

@@ -1,5 +1,5 @@
-
 import React, { useState, useRef } from "react";
+import config from '../../public/config.json'
 
 const InterviewBot = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -15,6 +15,14 @@ const InterviewBot = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingInterval = useRef(null);
   const audioPlayer = useRef(null);
+
+  // Helper to safely join base + path avoiding duplicate slashes
+  const joinUrl = (base, path) => {
+    if (!base) return path;
+    const b = base.replace(/\/+$/g, "");
+    const p = (path || "").replace(/^\/+/g, "");
+    return `${b}/${p}`;
+  };
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -34,9 +42,12 @@ const InterviewBot = () => {
       setAudioChunks([]);
 
       recorder.ondataavailable = (event) => {
-        setAudioChunks((prev) => [...prev, event.data]);
+        if (event.data && event.data.size > 0) {
+          setAudioChunks((prev) => [...prev, event.data]);
+        }
       };
-      recorder.onstop = () => sendAudioToBackend(recorder);
+      // when stop fires we will send the gathered chunks
+      recorder.onstop = () => sendAudioToBackend();
 
       recorder.start();
       setIsRecording(true);
@@ -51,7 +62,11 @@ const InterviewBot = () => {
 
   const stopRecording = () => {
     if (mediaRecorder) {
-      mediaRecorder.stop();
+      try {
+        mediaRecorder.stop();
+      } catch (e) {
+        // ignore if already stopped
+      }
       setIsRecording(false);
       if (recordingInterval.current) {
         clearInterval(recordingInterval.current);
@@ -63,23 +78,51 @@ const InterviewBot = () => {
     }
   };
 
-  const sendAudioToBackend = async (recorder) => {
+  const sendAudioToBackend = async () => {
+    // if no chunks, nothing to send
+    if (!audioChunks || audioChunks.length === 0) {
+      setErrorMessage("No audio recorded.");
+      return;
+    }
+
     setIsProcessing(true);
-    const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-    const formData = new FormData();
-    formData.append("file", audioBlob, "recording.wav");
+    setErrorMessage(null);
+
     try {
-      const response = await fetch("http://127.0.0.1:5001/talk", {
+      // prefer recording as webm/ogg if produced by browser, but backend expects a wav - backend has fallback
+      const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+      const formData = new FormData();
+      formData.append("file", audioBlob, "recording.wav");
+
+      const backendBase = `${config.backend}${config.port ? `:${config.port}` : ""}`;
+      const response = await fetch(joinUrl(backendBase, "/talk"), {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(`Backend returned ${response.status} ${text}`);
+      }
+
       const data = await response.json();
+
       // transcript fallback chain (user)
       const transcript = data?.transcript || data?.user_transcript || lastTranscript || "Transcript unavailable";
       // assistant text — try several likely field names
       const assistantText = data?.text || data?.assistant_text || data?.reply || data?.message || data?.assistant?.text || lastResponse || "";
+
       setLastTranscript(transcript);
       setLastResponse(assistantText);
+
+      const audioPath = data?.audio_file || data?.audio_url || "";
+      const audioUrl = audioPath
+        ? audioPath.startsWith("http")
+          ? audioPath
+          : joinUrl(backendBase, audioPath)
+        : null;
+
+      // update conversation history
       setConversationHistory((prev) => [
         ...prev,
         { type: "user", time: new Date().toLocaleTimeString(), text: transcript },
@@ -87,34 +130,64 @@ const InterviewBot = () => {
           type: "assistant",
           time: new Date().toLocaleTimeString(),
           text: assistantText && assistantText.trim().length ? assistantText : "[Audio response — no transcript available]",
-          audioUrl: data?.audio_file || data?.audio_url || null,
+          audioUrl: audioUrl,
         },
       ]);
-      // Construct audio URL
-      const audioPath = data?.audio_file || data?.audio_url || "";
-      const audioUrl = audioPath.startsWith("http") ? audioPath : `http://127.0.0.1:5001${audioPath}`;
-      if (audioUrl) setAudioResponse(audioUrl);
-      setTimeout(() => {
-        playAudio();
-      }, 100);
+
+      // if audioUrl present, attach and play
+      if (audioUrl) {
+        setAudioResponse(audioUrl);
+        // ensure audio element updated before play
+        if (audioPlayer.current) {
+          audioPlayer.current.src = audioUrl;
+          // small delay to allow setting src to take effect on some browsers
+          setTimeout(async () => {
+            try {
+              await audioPlayer.current.play();
+              setIsSpeaking(true);
+            } catch (playErr) {
+              // autoplay may be blocked; user can click replay manually
+              console.warn("Auto-play prevented:", playErr);
+              setErrorMessage("Audio ready — click replay to listen.");
+            }
+          }, 120);
+        }
+      } else {
+        setErrorMessage(null);
+      }
+
+      // clear recorded chunks for next recording
+      setAudioChunks([]);
     } catch (error) {
+      console.error("sendAudioToBackend error:", error);
       setErrorMessage("Failed to process the audio. Please try again.");
-      console.error(error);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const playAudio = () => {
+  const playAudio = async () => {
     if (audioPlayer.current) {
-      audioPlayer.current.play();
+      try {
+        await audioPlayer.current.play();
+        setIsSpeaking(true);
+      } catch (err) {
+        console.warn("Play failed:", err);
+        setErrorMessage("Failed to play audio automatically. Click Replay.");
+      }
     }
   };
 
-  const replayAudio = () => {
+  const replayAudio = async () => {
     if (audioPlayer.current) {
       audioPlayer.current.currentTime = 0;
-      audioPlayer.current.play();
+      try {
+        await audioPlayer.current.play();
+        setIsSpeaking(true);
+      } catch (err) {
+        console.warn("Replay failed:", err);
+        setErrorMessage("Failed to play audio. Please try again.");
+      }
     }
   };
 
