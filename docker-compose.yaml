@@ -22,4 +22,14 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - db_data:/data/db     # <-- new named volume for sqlite
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+  
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+volumes:
+  db_data:

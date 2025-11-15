@@ -8,27 +8,54 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/HRNavbar";
+import { useEffect, useState } from "react";
+import useAuth from "../contexts/useAuth";
 
 export default function RecruitmentDashboard(props) {
   const navigate = useNavigate();
+  const { authFetch } = useAuth();
   const userName = props?.userName ?? "Jane Recruiter";
-
+  const [activeJobs, setActiveJobs] = useState(0);
+  const [candidateCount, setCandidateCount] = useState(0);
+  const [hiredCount, setHiredCount] = useState(0);
 
   const createJobHandler = () => {
     navigate("/job-creator");
   };
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [activeRes, candidateRes, hiredRes] = await Promise.all([
+          authFetch("/active-jobs"),
+          authFetch("/candidate-count"),
+          authFetch("/hired-count"),
+        ]);
+        const activeData = await activeRes.json();
+        const candidateData = await candidateRes.json();
+        const hiredData = await hiredRes.json();
+        setActiveJobs(activeData.active_jobs_count ?? 0);
+        setCandidateCount(candidateData.candidate_count ?? 0);
+        setHiredCount(hiredData.hired_count ?? 0);
+      } catch (error) {
+        console.error("Error loading HR dashboard stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, [authFetch]);
+
   const stats = [
     {
       label: "Active Jobs",
-      value: "24",
+      value: activeJobs,
       icon: Briefcase,
       color: "bg-blue-100",
       iconColor: "text-blue-600",
     },
     {
       label: "Candidates",
-      value: "156",
+      value: candidateCount,
       icon: Users,
       color: "bg-green-100",
       iconColor: "text-green-600",
@@ -41,8 +68,8 @@ export default function RecruitmentDashboard(props) {
       iconColor: "text-yellow-600",
     },
     {
-      label: "Hired This Month",
-      value: "12",
+      label: "Hired",
+      value: hiredCount,
       icon: CheckCircle,
       color: "bg-purple-100",
       iconColor: "text-purple-600",

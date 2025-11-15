@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Edit2, Calendar, MapPin } from 'lucide-react';
 import HRNavbar from '../components/HRNavbar';
+import useAuth from '../contexts/useAuth';
 
 // Mock profile data (replace with props or API response)
 const initialProfile = {
@@ -11,10 +12,31 @@ const initialProfile = {
   location: 'New Delhi, India',
 };
 
-export default function HRProfilePage(props) {
-  const [profile, setProfile] = useState(initialProfile);
+export default function HRProfilePage() {
+  const { user } = useAuth();
+  const derived = {
+    name: user?.name || initialProfile.name,
+    email: user?.email || initialProfile.email,
+    password: '********',
+    company: user?.company || initialProfile.company,
+    location: user?.location || initialProfile.location,
+  };
+  const [profile, setProfile] = useState(derived);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState(profile);
+  const [editForm, setEditForm] = useState(derived);
+
+  useEffect(() => {
+    // keep local profile in sync if auth user changes
+    const next = {
+      name: user?.name || initialProfile.name,
+      email: user?.email || initialProfile.email,
+      password: '********',
+      company: user?.company || initialProfile.company,
+      location: user?.location || initialProfile.location,
+    };
+    setProfile(next);
+    setEditForm(next);
+  }, [user]);
 
   // For Edit logic
   const handleEditChange = (e) => {
@@ -31,8 +53,8 @@ export default function HRProfilePage(props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <HRNavbar userName={props?.userName || "John HR"} />
+  {/* Header */}
+  <HRNavbar />
 
       {/* Main Profile Content */}
       <main className="max-w-3xl mx-auto px-6 py-12">

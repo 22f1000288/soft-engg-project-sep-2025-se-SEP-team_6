@@ -1,7 +1,11 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, Float, DateTime, ForeignKey
+from sqlalchemy import create_engine, event
+from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+from backend.roles import ROLE_ADMIN
+from backend.utils import hash_password
 
 # Get the absolute path to the current directory (where this file lives)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -10,6 +14,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'users.db')}"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+
+# enable WAL and foreign_keys on each sqlite connection
+@event.listens_for(engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA foreign_keys=ON;")
+    cursor.close()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -99,8 +112,8 @@ def init_admin():
         admin = User(
             id=1,
             email="admin@company.com",
-            password="admin123",
-            role="admin",
+            password=hash_password("admin123"),
+            role=ROLE_ADMIN,
             name="Admin User"
         )
         db.add(admin)

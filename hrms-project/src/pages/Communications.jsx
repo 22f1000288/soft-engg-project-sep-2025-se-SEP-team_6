@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../components/HRNavbar";
 import { Send } from "lucide-react";
+import useAuth from "../contexts/useAuth";
 
 export default function Communications(props) {
   const userName = props?.userName ?? "Jane Recruiter";
+  const { authFetch } = useAuth();
 
   // Form state
   const [selectedCandidate, setSelectedCandidate] = useState("");
@@ -12,13 +14,7 @@ export default function Communications(props) {
   const [message, setMessage] = useState("");
   const [autoTranslate, setAutoTranslate] = useState(false);
   const [scheduled, setScheduled] = useState(false);
-
-  // Sample data
-  const candidates = [
-    { id: "c1", name: "Sarah Chen", status: "Interview Feedback Sent" },
-    { id: "c2", name: "Michael Rodriguez", status: "Interview Scheduled" },
-    { id: "c3", name: "Emily Johnson", status: "Application Follow-up" },
-  ];
+  const [candidateList, setCandidateList] = useState([]);
 
   const messageTypes = [
     "Select type",
@@ -58,25 +54,71 @@ export default function Communications(props) {
     },
   ];
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!selectedCandidate || !messageType || message.trim().length === 0) {
       alert("Please choose a candidate, message type and write a message.");
       return;
     }
-    // Dummy send action
-    alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
-    // reset
-    setSelectedCandidate("");
-    setMessageType("");
-    setSubject("");
-    setMessage("");
-    setAutoTranslate(false);
-    setScheduled(false);
+
+    // Find the selected candidate's email
+    const selectedCandidateData = candidateList.find(
+      (c) => c.name === selectedCandidate
+    );
+    const candidateEmail = selectedCandidateData ? selectedCandidateData.email : "";
+
+    const emailData = {
+      candidate_email: candidateEmail,
+      subject,
+      body: message,
+      message_type: messageType,
+      auto_translate: autoTranslate,
+      scheduled,
+    };
+
+    try {
+      const res = await authFetch("/notify-candidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to send email");
+      }
+      await res.json();
+      alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
+      setSelectedCandidate("");
+      setMessageType("");
+      setSubject("");
+      setMessage("");
+      setAutoTranslate(false);
+      setScheduled(false);
+    } catch (err) {
+      console.error("Error sending email:", err);
+      alert("Error sending email. Please try again.");
+    }
   };
 
   const handlePreview = () => {
     alert("Preview\n\n" + message);
   };
+
+  useEffect(() => {
+    authFetch("/candidate-list")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch candidates");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setCandidateList(data.candidates ?? []);
+      })
+      .catch((err) => {
+        console.error("Error fetching candidate list:", err);
+      });
+  }, [authFetch]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -102,7 +144,6 @@ export default function Communications(props) {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Send Message
                 </h3>
-                
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -117,7 +158,7 @@ export default function Communications(props) {
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 bg-white"
                     >
                       <option value="">Choose candidate</option>
-                      {candidates.map((c) => (
+                      {candidateList.map((c) => (
                         <option key={c.id} value={c.name}>
                           {c.name}
                         </option>
@@ -211,8 +252,6 @@ export default function Communications(props) {
                 <div className="lg:col-span-5"></div>
               </div>
             </div>
-
-            
           </div>
         </section>
 
@@ -223,7 +262,6 @@ export default function Communications(props) {
               <h3 className="text-lg font-semibold text-gray-900">
                 Recent Communications
               </h3>
-              
             </div>
 
             <div className="space-y-4">
@@ -250,8 +288,6 @@ export default function Communications(props) {
                         <div className="text-sm text-gray-600 mt-2">
                           {r.snippet}
                         </div>
-
-                        
                       </div>
                     </div>
 

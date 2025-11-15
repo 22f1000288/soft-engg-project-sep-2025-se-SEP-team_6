@@ -1,12 +1,8 @@
 import React, { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-
-//sample use of this component is following(if you want to use this navbar in other pages  )
-
-//import CandidateNavbar from "../components/CandidateNavbar";
-//<CandidateNavbar userName={userName} />
-//see pages like CandidateJobs.jsx , CandidateApplications.jsx etc for reference
+import { Link, useLocation } from "react-router-dom";
+import useAuth from "../contexts/useAuth";
+import { useNavigate } from "react-router-dom";
 
 export default function CandidateNavbar({
   //Navbar props for candidate
@@ -17,14 +13,18 @@ export default function CandidateNavbar({
     { label: "Interview Prep", to: "/interview-prep" },
     { label: "Profile", to: "/candidate-profile" },
   ],
-  userName = "Pralhad Singh",
+  userName = "User",
   brand = { title: "TalentFlow" },
 }) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const displayName = user?.name || userName;
+
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    logout();
     navigate("/");
   };
 
@@ -44,13 +44,10 @@ export default function CandidateNavbar({
             <div className="flex items-center gap-3">
               {/* logo */}
               <img
-                src="/hrms-logo.webp"
+                src="/icon.png"
                 alt="TalentFlow Logo"
-                className="w-8 h-8 rounded-lg object-cover"
+                className="w-20 h-20 rounded-lg object-cover"
               />
-              <span className="text-xl font-semibold text-gray-900">
-                {brand.title}
-              </span>
             </div>
 
             <nav className="hidden md:flex items-center gap-14">
@@ -72,7 +69,7 @@ export default function CandidateNavbar({
 
           {/* actions */}
           <div className="hidden md:flex items-center gap-4">
-            <div className="text-sm text-gray-700">{userName}</div>
+            <div className="text-sm text-gray-700">{displayName}</div>
             <button
               onClick={() => {
                 handleLogout();
@@ -117,7 +114,7 @@ export default function CandidateNavbar({
             ))}
 
             <div className="flex items-center justify-between pt-2">
-              <div className="text-sm text-gray-700">{userName}</div>
+              <div className="text-sm text-gray-700">{displayName}</div>
               <button
                 onClick={() => {
                   setOpen(false);

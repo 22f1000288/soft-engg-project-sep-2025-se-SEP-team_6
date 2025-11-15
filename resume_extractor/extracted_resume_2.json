@@ -1,0 +1,179 @@
+{
+  "personal_info": {
+    "name": "Soham Saha",
+    "email": "sohamsaha99@gmail.com",
+    "phone": "74396 21575",
+    "location": "Halisahar, West Bengal",
+    "linkedin": "https://www.linkedin.com/in/soham-saha-a87900209",
+    "github": null,
+    "portfolio": null,
+    "other_links": []
+  },
+  "sections": [
+    {
+      "section_name": "PROFILE",
+      "content_type": "summary",
+      "column": "left",
+      "items": [
+        "A 4th year B.Tech student from the field of knowledge in programming languages like C, C++, JAVA, PYTHON. And wish to achieve something in field of MATHEMATICS as it is no less,"
+      ]
+    },
+    {
+      "section_name": "EDUCATION",
+      "content_type": "education",
+      "column": "left",
+      "items": [
+        {
+          "institution": "JIS College of Engineering, Kalyani",
+          "degree": "B.Tech in Information Technology (4th year)"
+        },
+        {
+          "institution": "Springdale High School(H.S.)",
+          "degree": "Higher Secondary Education"
+        }
+      ]
+    },
+    {
+      "section_name": "SKILLS",
+      "content_type": "skills",
+      "column": "left",
+      "items": [
+        {
+          "category": "Language",
+          "skills": [
+            "C",
+            "JAVA",
+            "PYTHON",
+            "HTML",
+            "CSS"
+          ]
+        },
+        {
+          "category": "Technologies",
+          "skills": [
+            "DATA STRUCTURE",
+            "WEB",
+            "SYSTEM (WINDOWS, LINUX)"
+          ]
+        }
+      ]
+    },
+    {
+      "section_name": "PROJECTS",
+      "content_type": "projects",
+      "column": "left",
+      "items": [
+        {
+          "project_name": "SELF-POWER GENERATING CAR",
+          "description": "Development of a car using the piezo-electric effect.",
+          "purpose": "Caused due to car",
+          "role": "Design and Architecture"
+        },
+        {
+          "project_name": "SMART BLIND STICK",
+          "description": "Can read papers or notices",
+          "purpose": "To make their daily life smoother",
+          "role": "Design and Architecture"
+        }
+      ]
+    },
+    {
+      "section_name": "RESEARCH WORKS",
+      "content_type": "research",
+      "column": "left",
+      "items": [
+        "WATER QUALITY OF GANGA AFTER DURGA PUJA"
+      ]
+    },
+    {
+      "section_name": "ADDITIONAL SKILLS",
+      "content_type": "skills",
+      "column": "left",
+      "items": [
+        "Persued ARTS(painting) upto MASTERs",
+        {
+          "category": "Languages",
+          "skills": [
+            "English",
+            "Bengali",
+            "Hindi"
+          ]
+        },
+        "Taste for analytical thinking",
+        "Lead co-ordiantor in events of college"
+      ]
+    },
+    {
+      "section_name": "EXPERIENCE",
+      "content_type": "experience",
+      "column": "left",
+      "items": [
+        {
+          "role": "Intern",
+          "company": "Highradius",
+          "dates": "02/08/21 - present",
+          "description": "Working to develop Robots to help alone ones in the time of Emergency"
+        },
+        {
+          "role": "Participant",
+          "event": "Codathons and Hackathons",
+          "description": "Participated in few Codathons and Hackathons"
+        }
+      ]
+    },
+    {
+      "section_name": "ACHIEVEMENTS",
+      "content_type": "awards",
+      "column": "left",
+      "items": [
+        "Hosted an exhibition with group of artists, 'VIBES' at Art gallery",
+        "Completed MASTERS in arts and painting",
+        "Secured first and second rank in the fourth and fifth sem"
+      ]
+    },
+    {
+      "section_name": "INTERESTS",
+      "content_type": "custom",
+      "column": "left",
+      "items": [
+        "Painting",
+        "Photography",
+        "Mathematics (love studying mathematics and solving problems in leisure times)"
+      ]
+    }
+  ],
+  "metadata": {
+    "file_path": "Resume.pdf",
+    "layout_info": [
+      {
+        "page": 1,
+        "layout_type": "2_column",
+        "columns": [
+          [
+            0,
+            293.1710088395118
+          ],
+          [
+            293.1710088395118,
+            595.32
+          ]
+        ]
+      },
+      {
+        "page": 2,
+        "layout_type": "2_column",
+        "columns": [
+          [
+            0,
+            262.15935151343706
+          ],
+          [
+            262.15935151343706,
+            595.32
+          ]
+        ]
+      }
+    ],
+    "parsed_at": "2025-11-03T15:13:50.922390"
+  }
+}
