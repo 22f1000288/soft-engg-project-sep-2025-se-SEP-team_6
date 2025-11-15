@@ -6,6 +6,7 @@ COPY backend/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 RUN pip install --upgrade groq
 RUN pip install python-multipart
+RUN pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
 COPY . .
 
