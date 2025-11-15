@@ -4,6 +4,9 @@ from typing import Any, Dict
 
 import jwt
 from jwt import PyJWTError
+from dotenv import load_dotenv
+
+load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me")
 JWT_REFRESH_SECRET_KEY = os.getenv("JWT_REFRESH_SECRET_KEY", JWT_SECRET_KEY)
