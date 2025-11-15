@@ -273,21 +273,24 @@ async def get_candidate_list(
     candidate_list = [{"id": row[0], "email": row[1], "name": row[2]} for row in candidates]
     return {"candidates": candidate_list}
     
+
+# Pydantic model for notify-candidate request
+class NotifyCandidateRequest(BaseModel):
+    candidate_email: str
+    subject: str
+    body: str
+
 @app.post('/notify-candidate', tags=["Communications"])
 async def notify_candidate(
-    request: Request,
-    candidate_email: str,
-    subject: str,
-    body: str,
+    payload: NotifyCandidateRequest,
     User = Depends(require_roles(ROLE_HR)),
 ):
-    # Get candidate email from request and send email
-    data = await request.json()
-    candidate_email = data.get("candidate_email")
-    subject = data.get("subject")
-    body = data.get("body")
     try:
-        send_email(recipient_email=candidate_email, subject=subject, body=body)
+        send_email(
+            recipient_email=payload.candidate_email,
+            subject=payload.subject,
+            body=payload.body
+        )
         return {"message": "Notification email sent successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send email: {e}")

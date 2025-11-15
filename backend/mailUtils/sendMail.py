@@ -26,7 +26,7 @@ def send_email(recipient_email: str, subject: str, body: str, attachment_path: s
 
     # Send the email
     try:
-        with smtplib.SMTP('localhost', 1025) as server:  # Use MailHog's SMTP server
+        with smtplib.SMTP('mailhog', 1025) as server:  # Use MailHog's SMTP server via Docker Compose service name
             server.send_message(msg)
             print("Email sent successfully!")
     except Exception as e:
