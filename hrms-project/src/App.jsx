@@ -12,6 +12,7 @@ import Communications from "./pages/Communications";
 import Jobs from "./pages/Jobs";
 import Analytics from "./pages/Analytics";
 import Schedule from "./pages/Schedule";
+import Applicants from "./pages/Applicants";
 import CandidateJobs from "./pages/CandidateJobs";
 import CandidateApplications from "./pages/CandidateApplications";
 import InterviewPrep from "./pages/InterviewPrep";
@@ -61,6 +62,14 @@ function App() {
           }
         />
         <Route
+          path="/job-creator/:id"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <JobCreater />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/candidates"
           element={
             <PrivateRoute roles={[ROLE_HR]}>
@@ -81,6 +90,14 @@ function App() {
           element={
             <PrivateRoute roles={[ROLE_HR]}>
               <Jobs />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/job-applicants/:id"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <Applicants />
             </PrivateRoute>
           }
         />

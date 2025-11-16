@@ -1,6 +1,6 @@
 import os
 from sqlalchemy import create_engine, event
-from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -37,9 +37,12 @@ class User(Base):
 class Application(Base):
 
     __tablename__ = 'application'
-    id = Column(Integer, unique=True, nullable=False)
-    candidate_id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(Integer, nullable=True)
+    # Autoincrementing primary key for applications
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    # Candidate/user id
+    candidate_id = Column(Integer, nullable=False, index=True)
+    # Job id — candidate may apply to multiple jobs, but only once per job
+    job_id = Column(Integer, nullable=False, index=True)
     status_applied = Column(Boolean, nullable=True)
     status_shortlisted = Column(Boolean, nullable=True)
     status_interviewed = Column(Boolean, nullable=True)
@@ -47,6 +50,8 @@ class Application(Base):
     status_rejected = Column(Boolean, nullable=True)
     score = Column(Float, nullable=True)
     submitted_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (UniqueConstraint('candidate_id', 'job_id', name='uix_candidate_job'),)
 
 class Job(Base):
     __tablename__ = 'job'

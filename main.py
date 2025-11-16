@@ -1,11 +1,34 @@
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+import traceback
 from sqlalchemy import text
-from backend.databases.models import SessionLocal, User, Application
+from backend.databases.models import SessionLocal, User, Application, Job
+from backend.databases.controller import (
+    create_job,
+    create_application,
+    list_users,
+    list_applications_for_admin,
+    get_job_applications_with_candidate,
+    get_candidate_applications,
+    withdraw_application_by_candidate,
+    get_job,
+    list_jobs,
+    update_job,
+    delete_job,
+    search_jobs,
+    find_jobs_by_poster,
+)
+from typing import Optional, List
+from pydantic import Field
+from datetime import datetime
+from typing import Any
 from backend.roles import ROLE_ADMIN, ROLE_CANDIDATE, ROLE_HR, is_valid_role
 from backend.security import (
     TokenValidationError,
@@ -59,6 +82,23 @@ class AuthResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+# Job Pydantic models for request/response validation
+class JobCreate(BaseModel):
+    posted_by: int
+    title: str
+    description: str
+    skills_required: str
+    qualification: str
+    location: str
+    employment_type: str
+    status: str = Field(default="open")
+    created_at: Optional[datetime] = None
+
+
+class JobResponse(JobCreate):
+    id: int
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
@@ -126,38 +166,14 @@ async def read_users(
     # User = Depends(require_roles(ROLE_ADMIN)),
     db: Session = Depends(get_db),
 ):
-    users = db.query(User).all()
-    return [
-        {
-            "id": user.id,
-            "email": user.email,
-            "role": user.role,
-            "name": user.name
-        }
-        for user in users
-    ]
+    return await list_users()
 
 @app.get("/applications", tags=["Applications"])
 async def read_apps(
     User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
     db: Session = Depends(get_db),
 ):
-    apps = db.query(Application).all()
-    return [
-        {
-            "id": app.id,
-            "candidate_id": app.candidate_id,
-            "job_id": app.job_id,
-            "status_applied": app.status_applied,
-            "status_shortlisted": app.status_shortlisted,
-            "status_interviewed": app.status_interviewed,
-            "status_offered": app.status_offered,
-            "status_rejected": app.status_rejected,
-            "score": app.score,
-            "submitted_at": app.submitted_at
-        }
-        for app in apps
-    ]
+    return await list_applications_for_admin()
 
 @app.post("/login", tags=["Authentication"])
 async def login(request: Login, db: Session = Depends(get_db)) -> AuthResponse:
@@ -214,9 +230,183 @@ async def get_active_jobs(
     db: Session = Depends(get_db),
 ):
     # Use named parameters in the SQL query
-    result = db.execute(text('SELECT COUNT(*) FROM job WHERE status = :status'), {"status": "active"})
+    # jobs are created with status 'open' in the API, so count those
+    result = db.execute(text('SELECT COUNT(*) FROM job WHERE status = :status'), {"status": "open"})
     count = result.scalar()
     return {"active_jobs_count": count}
+
+
+# --- Jobs CRUD endpoints ---
+
+# Create a new job
+@app.post("/jobs", tags=["Jobs"], status_code=201)
+async def api_create_job(
+    payload: JobCreate,
+    user: User = Depends(require_roles(ROLE_HR)),
+):
+    """Create a job. Only HR users may create jobs."""
+    try:
+        data = payload.dict()
+        # ensure created_at is set server-side when not provided
+        created_at = data.get("created_at")
+        if created_at is None:
+            data["created_at"] = datetime.utcnow()
+        # if created_at is a string, try to parse it
+        elif isinstance(created_at, str):
+            try:
+                data["created_at"] = datetime.fromisoformat(created_at)
+            except Exception:
+                data["created_at"] = datetime.utcnow()
+
+        job = await create_job(Job(**data))
+        return JobResponse(**job.__dict__)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# List or search jobs
+
+@app.get("/jobs", tags=["Jobs"])
+async def api_list_jobs(q: Optional[str] = None, location: Optional[str] = None, limit: int = 100, db: Session = Depends(get_db)):
+    """List or search jobs. Public endpoint. Returns job objects with an `applicants` count."""
+    try:
+        if q or location:
+            jobs = await search_jobs(query=q, location=location, limit=limit)
+        else:
+            jobs = await list_jobs(limit=limit)
+
+        out = []
+        for j in jobs:
+            count = db.query(Application).filter(Application.job_id == j.id).count()
+            job_dict = j.__dict__.copy()
+            job_dict["applicants"] = count
+            out.append(job_dict)
+        return out
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+#get job by id
+@app.get("/jobs/{job_id}", tags=["Jobs"], response_model=JobResponse)
+async def api_get_job(job_id: int):
+    job = await get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return JobResponse(**job.__dict__)
+
+# Apply to a job
+@app.post("/jobs/{job_id}/apply", tags=["Applications"], status_code=201)
+async def api_apply_job(
+    job_id: int,
+    user: User = Depends(require_roles(ROLE_CANDIDATE)),
+    db: Session = Depends(get_db),
+):
+    """Candidate applies to a job. Creates an Application record."""
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    try:
+        result = await create_application(user.id, job_id)
+        if result.get("status") == "exists":
+            existing_job_id = result.get("existing_job_id")
+            if existing_job_id == job_id:
+                raise HTTPException(status_code=409, detail="Already applied to this job")
+            else:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "Candidate already has an application (schema prevents multiple applications)."
+                        f" existing_job_id={existing_job_id}"
+                    ),
+                )
+
+        app = result.get("application")
+        return {"detail": "Application submitted", "id": getattr(app, "id", None)}
+    except HTTPException:
+        # pass through HTTP errors raised above
+        raise
+    except IntegrityError as ie:
+        # Print full traceback and the DB integrity error to the server console
+        print("IntegrityError while applying to job:")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(ie))
+    except Exception as e:
+        print("Unexpected error while applying to job:")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get applications for a job
+
+@app.get("/jobs/{job_id}/applications", tags=["Applications"])
+async def api_get_job_applications(job_id: int, user: User = Depends(require_roles(ROLE_HR, ROLE_ADMIN)), db: Session = Depends(get_db)):
+    """Return applications for a job along with candidate info. HR/Admin only."""
+    # validate job exists using controller
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    try:
+        return await get_job_applications_with_candidate(job_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get applications for the current candidate
+
+@app.get("/candidate/applications", tags=["Applications"])
+async def api_candidate_applications(user: User = Depends(require_roles(ROLE_CANDIDATE)), db: Session = Depends(get_db)):
+    """Return the current candidate's applications along with basic job info."""
+    try:
+        return await get_candidate_applications(user.id)
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Withdraw (delete) an application
+
+@app.delete("/applications/{application_id}", tags=["Applications"]) 
+async def api_withdraw_application(application_id: int, user: User = Depends(require_roles(ROLE_CANDIDATE)), db: Session = Depends(get_db)):
+    """Allow a candidate to withdraw (delete) their application."""
+    try:
+        res = await withdraw_application_by_candidate(application_id, user.id)
+        if not res.get("ok"):
+            if res.get("reason") == "not_found":
+                raise HTTPException(status_code=404, detail="Application not found")
+            if res.get("reason") == "forbidden":
+                raise HTTPException(status_code=403, detail="Not authorized to withdraw this application")
+            raise HTTPException(status_code=400, detail="Unable to withdraw application")
+        return {"detail": "Application withdrawn"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Update a job
+
+@app.put("/jobs/{job_id}", tags=["Jobs"], response_model=JobResponse)
+async def api_update_job(job_id: int, updates: dict, user: User = Depends(require_roles(ROLE_HR))):
+    job = await update_job(job_id, updates)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return JobResponse(**job.__dict__)
+
+# Delete a job
+
+@app.delete("/jobs/{job_id}", tags=["Jobs"], status_code=204)
+async def api_delete_job(job_id: int, user: User = Depends(require_roles(ROLE_HR))):
+    ok = await delete_job(job_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {"detail": "Deleted"}
+
+# Get jobs posted by a specific poster(hr user)
+
+@app.get("/jobs/by-poster/{poster_id}", tags=["Jobs"], response_model=List[JobResponse])
+async def api_jobs_by_poster(poster_id: int, user: User = Depends(require_roles(ROLE_HR, ROLE_ADMIN))):
+    jobs = await find_jobs_by_poster(poster_id)
+    return [JobResponse(**j.__dict__) for j in jobs]
+
+#--- Analytics and Communications endpoints ---
+
+#get candidate count
 
 @app.get('/candidate-count', tags=["Candidates"])
 async def get_all_candidates(
@@ -227,6 +417,8 @@ async def get_all_candidates(
     count = result.scalar()
     return {"candidate_count": count}
 
+#get hired count
+
 @app.get('/hired-count', tags=["Hires"])
 async def get_hired_candidates(
     User = Depends(require_roles(ROLE_HR)),
@@ -235,6 +427,9 @@ async def get_hired_candidates(
     result = db.execute(text("SELECT COUNT(*) FROM application WHERE status_offered = :status"), {"status": 1})
     count = result.scalar()
     return {"hired_count": count}
+
+#get application count
+
 
 @app.get('/application-count', tags=["Applications"])
 async def get_application_count(
@@ -245,6 +440,8 @@ async def get_application_count(
     count = result.scalar()
     return {"application_count": count}
 
+#get interview count
+
 @app.get('/interview-count', tags=["Interviews"])
 async def get_interview_count(
     User = Depends(require_roles(ROLE_CANDIDATE)),
@@ -253,6 +450,8 @@ async def get_interview_count(
     result = db.execute(text('SELECT COUNT(*) FROM interview'))
     count = result.scalar()
     return {"interview_count": count}
+
+#get job offered count
 
 @app.get('/job-offered-count', tags=["Jobs"])
 async def get_job_offered_count(
@@ -263,6 +462,8 @@ async def get_job_offered_count(
     count = result.scalar()
     return {"offer_count": count}
 
+#get candidate list
+
 @app.get('/candidate-list', tags=["Candidates"])
 async def get_candidate_list(
     User = Depends(require_roles(ROLE_HR)),
@@ -272,29 +473,27 @@ async def get_candidate_list(
     candidates = result.fetchall()
     candidate_list = [{"id": row[0], "email": row[1], "name": row[2]} for row in candidates]
     return {"candidates": candidate_list}
-    
-@app.post('/notify-candidate', tags=["Communications"])
-async def notify_candidate(
-    request: Request,
-    candidate_email: str,
-    subject: str,
-    body: str,
-    User = Depends(require_roles(ROLE_HR)),
-):
-    # Get candidate email from request and send email
-    data = await request.json()
-    candidate_email = data.get("candidate_email")
-    subject = data.get("subject")
-    body = data.get("body")
-    try:
-        send_email(recipient_email=candidate_email, subject=subject, body=body)
-        return {"message": "Notification email sent successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {e}")
+
 
 @app.get("/", tags=["Health Check"])
 async def root():
     return {"message": "Hello World"}
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Log details server-side for debugging
+    try:
+        raw = await request.body()
+        raw_text = raw.decode('utf-8') if raw else ''
+    except Exception:
+        raw_text = ''
+    print("Request validation error:", exc.errors())
+    print("Raw body:", raw_text)
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "raw_body": raw_text},
+    )
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
