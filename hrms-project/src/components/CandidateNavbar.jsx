@@ -12,6 +12,7 @@ export default function CandidateNavbar({
     { label: "Applications", to: "/candidate-applications" },
     { label: "Interview Prep", to: "/interview-prep" },
     { label: "Profile", to: "/candidate-profile" },
+    { label: "Calendar", to: "/candidate-calendar" },
   ],
   userName = "User",
   brand = { title: "TalentFlow" },

@@ -174,6 +174,15 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/candidate-calendar"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE,ROLE_HR]}>
+              <Schedule />
+            </PrivateRoute>
+          }
+        />
+        
       </Routes>
       </AuthProvider>
     </Router>

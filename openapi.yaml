@@ -241,6 +241,95 @@ paths:
           content:
             application/json:
               schema: {}
+  /talk:
+    post:
+      tags:
+        - Interviews
+      summary: Post Audio
+      description: Accept audio file and return transcription + response.
+      operationId: post_audio_talk_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_post_audio_talk_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/temp_audio/{file_path}':
+    get:
+      tags:
+        - Interviews
+      summary: Serve Temp Audio
+      operationId: serve_temp_audio_temp_audio__file_path__get
+      parameters:
+        - name: file_path
+          in: path
+          required: true
+          schema:
+            type: string
+            title: File Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/audio/{file_path}':
+    get:
+      tags:
+        - Interviews
+      summary: Serve Audio
+      operationId: serve_audio_audio__file_path__get
+      parameters:
+        - name: file_path
+          in: path
+          required: true
+          schema:
+            type: string
+            title: File Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /create-calendar-event:
+    post:
+      tags:
+        - Calendar
+      summary: Create Calendar Event Endpoint
+      operationId: create_calendar_event_endpoint_create_calendar_event_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+        - OAuth2PasswordBearer: []
 components:
   schemas:
     AuthResponse:
@@ -263,6 +352,16 @@ components:
         - refresh_token
         - user
       title: AuthResponse
+    Body_post_audio_talk_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+        - file
+      title: Body_post_audio_talk_post
     HTTPValidationError:
       properties:
         detail:

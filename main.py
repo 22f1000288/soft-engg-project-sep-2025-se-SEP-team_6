@@ -1,5 +1,6 @@
 import os
 import uvicorn
+import webbrowser
 from fastapi import FastAPI, HTTPException, Depends, Request, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
@@ -40,6 +41,7 @@ from backend.security import (
 from backend.utils import verify_password, hash_password
 from backend.mailUtils.sendMail import send_email
 from backend.interviewBot import GroqInterview, AUDIO_FOLDER
+from backend.eventCreator import main as create_calendar_event
 
 app = FastAPI(
     title="TalentForm HRMS API",
@@ -105,6 +107,12 @@ class JobResponse(JobCreate):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class NotifyCandidateRequest(BaseModel):
+    candidate_email: str
+    subject: str
+    body: str
 
 # Dependency to get DB session
 def get_db():
@@ -482,11 +490,7 @@ async def get_candidate_list(
     return {"candidates": candidate_list}
     
 
-# Pydantic model for notify-candidate request
-class NotifyCandidateRequest(BaseModel):
-    candidate_email: str
-    subject: str
-    body: str
+
 
 @app.post('/notify-candidate', tags=["Communications"])
 async def notify_candidate(
@@ -509,7 +513,7 @@ async def root():
 
 
 
-@app.post("/talk", tags=["Interview"])
+@app.post("/talk", tags=["Interviews"])
 async def post_audio(file: UploadFile = File(...)):
     """Accept audio file and return transcription + response."""
     if not file or file.filename == "":
@@ -548,7 +552,7 @@ async def post_audio(file: UploadFile = File(...)):
 
 TEMP_AUDIO_DIR = os.path.abspath(os.path.join(os.getcwd(), "temp_audio"))
 
-@app.get("/temp_audio/{file_path:path}")
+@app.get("/temp_audio/{file_path:path}", tags=["Interviews"])
 def serve_temp_audio(file_path: str):
     requested_path = os.path.abspath(os.path.join(TEMP_AUDIO_DIR, file_path))
 
@@ -566,7 +570,7 @@ def serve_temp_audio(file_path: str):
 # ensure AUDIO_FOLDER is defined somewhere; if not set it explicitly:
 # AUDIO_FOLDER = os.path.abspath(os.path.join(os.getcwd(), "audio"))
 
-@app.get("/audio/{file_path:path}")
+@app.get("/audio/{file_path:path}",tags=["Interviews"])
 def serve_audio(file_path: str):
     base = os.path.abspath(AUDIO_FOLDER)
     requested_path = os.path.abspath(os.path.join(base, file_path))
@@ -580,6 +584,17 @@ def serve_audio(file_path: str):
 
     return FileResponse(requested_path, media_type="application/octet-stream")
 
+
+@app.post("/create-calendar-event", tags=["Calendar"])
+async def create_calendar_event_endpoint(
+    User = Depends(require_roles(ROLE_HR)),
+):
+    try:
+        create_calendar_event()
+        webbrowser.open("https://calendar.google.com/calendar/u/0/r")
+        return {"message": "Calendar event created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create calendar event: {e}")
 
 if __name__ == "__main__":
     
