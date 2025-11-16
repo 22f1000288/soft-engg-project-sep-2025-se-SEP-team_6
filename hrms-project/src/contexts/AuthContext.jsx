@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     persistUser(null);
     persistTokens(null);
-    navigate('/login-signup', { replace: true });
+    navigate('/', { replace: true });
   }, [navigate, persistTokens, persistUser]);
 
   const callAuthEndpoint = useCallback(async (path, body) => {

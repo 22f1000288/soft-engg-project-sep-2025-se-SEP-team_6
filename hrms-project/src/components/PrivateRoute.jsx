@@ -11,7 +11,7 @@ export default function PrivateRoute({ children, roles }) {
 
   // redirect to login if not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login-signup" replace />;
+    return <Navigate to="/" replace />;
   }
   // redirect to login if role not authorized
   if (roles && roles.length && !roles.includes(user.role)) {

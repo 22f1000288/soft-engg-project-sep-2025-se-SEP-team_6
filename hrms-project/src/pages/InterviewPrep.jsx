@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import CandidateNavbar from "../components/CandidateNavbar";
+import { useNavigate } from "react-router-dom";
 
 export default function InterviewPrep() {
   const [company, setCompany] = useState("");
@@ -8,7 +9,10 @@ export default function InterviewPrep() {
   const [yoe, setYoe] = useState("");
   const [skillsText, setSkillsText] = useState("");
 
+  const navigate = useNavigate();
+
   const startInterview = (e) => {
+    navigate('/interview-bot');
     e?.preventDefault();
     const skills = skillsText
       .split(",")

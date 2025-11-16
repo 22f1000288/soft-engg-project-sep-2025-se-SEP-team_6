@@ -21,6 +21,7 @@ import CandidateProfilePage from "./components/CandidateProfile";
 import HRProfilePage from "./components/HRProfile";
 import PrivateRoute from "./components/PrivateRoute";
 import { ROLE_ADMIN, ROLE_CANDIDATE, ROLE_HR } from "./constants/roles";
+import InterviewBot from './pages/InterviewBot';
 
 function App() {
   return (
@@ -154,6 +155,14 @@ function App() {
           element={
             <PrivateRoute roles={[ROLE_CANDIDATE]}>
               <InterviewPrep />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/interview-bot"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE]}>
+              <InterviewBot />
             </PrivateRoute>
           }
         />
