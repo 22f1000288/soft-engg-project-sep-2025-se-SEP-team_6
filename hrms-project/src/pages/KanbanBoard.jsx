@@ -1,93 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import "../styles/kanban.css";
 import Navbar from "../components/HRNavbar";
-import { Users, Clock, CheckCircle, Plus, Calendar, Mail, Phone, MapPin, GraduationCap, Briefcase } from "lucide-react";
+import { Users, Clock, CheckCircle, Calendar, Mail, Phone, MapPin, GraduationCap, Briefcase, Search, Filter } from "lucide-react";
+import { useAuth } from "../contexts/useAuth";
 
+// Empty initial state - data will be loaded from API
 const initialApplications = {
-  "new-applications": [
-    {
-      id: 1,
-      name: "John Smith",
-      position: "Senior Frontend Developer",
-      email: "john.smith@email.com",
-      phone: "+1 (555) 123-4567",
-      location: "San Francisco, CA",
-      experience: "5 years",
-      education: "BS Computer Science",
-      appliedDate: "2024-11-01",
-      status: "new"
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      position: "Product Manager",
-      email: "sarah.j@email.com",
-      phone: "+1 (555) 234-5678",
-      location: "New York, NY",
-      experience: "3 years",
-      education: "MBA, Marketing",
-      appliedDate: "2024-11-02",
-      status: "new"
-    }
-  ],
-  "under-review": [
-    {
-      id: 3,
-      name: "Mike Chen",
-      position: "Backend Developer",
-      email: "mike.chen@email.com",
-      phone: "+1 (555) 345-6789",
-      location: "Seattle, WA",
-      experience: "4 years",
-      education: "MS Software Engineering",
-      appliedDate: "2024-10-28",
-      status: "under-review"
-    }
-  ],
-  "interview-scheduled": [
-    {
-      id: 4,
-      name: "Emily Davis",
-      position: "UX Designer",
-      email: "emily.davis@email.com",
-      phone: "+1 (555) 456-7890",
-      location: "Austin, TX",
-      experience: "6 years",
-      education: "BFA Design",
-      appliedDate: "2024-10-25",
-      status: "interview-scheduled",
-      interviewDate: "2024-11-05"
-    }
-  ],
-  "final-review": [
-    {
-      id: 5,
-      name: "Alex Rodriguez",
-      position: "Data Scientist",
-      email: "alex.r@email.com",
-      phone: "+1 (555) 567-8901",
-      location: "Boston, MA",
-      experience: "2 years",
-      education: "PhD Data Science",
-      appliedDate: "2024-10-20",
-      status: "final-review"
-    }
-  ],
-  "hired": [
-    {
-      id: 6,
-      name: "Lisa Wang",
-      position: "DevOps Engineer",
-      email: "lisa.wang@email.com",
-      phone: "+1 (555) 678-9012",
-      location: "Denver, CO",
-      experience: "4 years",
-      education: "BS Computer Engineering",
-      appliedDate: "2024-10-15",
-      status: "hired",
-      hiredDate: "2024-11-01"
-    }
-  ]
+  "new-applications": [],
+  "under-review": [],
+  "interview-scheduled": [],
+  "final-review": [],
+  "hired": [],
+  "rejected": []
 };
 
 const columns = [
@@ -95,13 +20,211 @@ const columns = [
   { id: "under-review", title: "Screened", color: "bg-yellow-50 border-yellow-200" },
   { id: "interview-scheduled", title: "Interviewed", color: "bg-purple-50 border-purple-200" },
   { id: "final-review", title: "Under Review", color: "bg-orange-50 border-orange-200" },
-  { id: "hired", title: "Offered", color: "bg-green-50 border-green-200" }
+  { id: "hired", title: "Offered", color: "bg-green-50 border-green-200" },
+  { id: "rejected", title: "Rejected", color: "bg-red-50 border-red-200" }
 ];
 
 export default function KanbanBoard(props) {
+  const { authFetch } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const userName = props?.userName ?? "Jane Recruiter";
   const [applications, setApplications] = useState(initialApplications);
   const [draggedItem, setDraggedItem] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [jobFilter, setJobFilter] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [availableJobs, setAvailableJobs] = useState([]);
+
+  // API integration functions
+  const fetchAllApplications = async () => {
+    setIsLoading(true);
+    try {
+      const response = await authFetch('/applications/all', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Transform API response to match Kanban structure
+        const transformedApplications = {
+          "new-applications": [],
+          "under-review": [],
+          "interview-scheduled": [],
+          "final-review": [],
+          "hired": [],
+          "rejected": []
+        };
+        
+        data.applications.forEach(app => {
+          // Transform the comprehensive API data to match the Kanban card structure
+          const transformedApp = {
+            id: app.id,
+            name: app.candidate_name,
+            position: app.job_title,
+            email: app.candidate_email,
+            phone: app.phone || "N/A",
+            location: app.job_location || "N/A",
+            experience: app.experience || "N/A",
+            education: app.education || "N/A",
+            skills: app.skills || "N/A",
+            appliedDate: app.submitted_at ? app.submitted_at.split('T')[0] : new Date().toISOString().split('T')[0],
+            status: app.status,
+            resume_url: app.resume_url,
+            profile_summary: app.profile_summary,
+            job_description: app.job_description,
+            job_requirements: app.job_requirements,
+            employment_type: app.employment_type,
+            score: app.score,
+            status_flags: app.status_flags
+          };
+          
+          if (transformedApplications[app.status]) {
+            transformedApplications[app.status].push(transformedApp);
+          }
+        });
+        
+        setApplications(transformedApplications);
+        
+        // Extract unique job titles for filter dropdown
+        const jobs = [...new Set(data.applications.map(app => app.job_title).filter(Boolean))];
+        setAvailableJobs(jobs);
+      } else {
+        console.error('Failed to fetch applications');
+        // Fallback to initial data on error
+        setApplications(initialApplications);
+      }
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      // Fallback to initial data on error
+      setApplications(initialApplications);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Search and filter applications
+  const searchApplications = async (query = "", jobFilter = "") => {
+    setIsLoading(true);
+    try {
+      const response = await authFetch('/applications/all', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        let filteredApplications = data.applications;
+        
+        // Apply search query filter
+        if (query.trim()) {
+          const searchTerm = query.toLowerCase();
+          filteredApplications = filteredApplications.filter(app => 
+            app.candidate_name?.toLowerCase().includes(searchTerm) ||
+            app.candidate_email?.toLowerCase().includes(searchTerm) ||
+            app.skills?.toLowerCase().includes(searchTerm) ||
+            app.experience?.toLowerCase().includes(searchTerm) ||
+            app.job_title?.toLowerCase().includes(searchTerm)
+          );
+        }
+        
+        // Apply job filter
+        if (jobFilter.trim()) {
+          filteredApplications = filteredApplications.filter(app => 
+            app.job_title === jobFilter
+          );
+        }
+        
+        // Transform filtered results to match Kanban structure
+        const transformedApplications = {
+          "new-applications": [],
+          "under-review": [],
+          "interview-scheduled": [],
+          "final-review": [],
+          "hired": [],
+          "rejected": []
+        };
+        
+        filteredApplications.forEach(app => {
+          const transformedApp = {
+            id: app.id,
+            name: app.candidate_name,
+            position: app.job_title,
+            email: app.candidate_email,
+            phone: app.phone || "N/A",
+            location: app.job_location || "N/A",
+            experience: app.experience || "N/A",
+            education: app.education || "N/A",
+            skills: app.skills || "N/A",
+            appliedDate: app.submitted_at ? app.submitted_at.split('T')[0] : new Date().toISOString().split('T')[0],
+            status: app.status,
+            resume_url: app.resume_url,
+            profile_summary: app.profile_summary,
+            job_description: app.job_description,
+            job_requirements: app.job_requirements,
+            employment_type: app.employment_type,
+            score: app.score,
+            status_flags: app.status_flags
+          };
+          
+          if (transformedApplications[app.status]) {
+            transformedApplications[app.status].push(transformedApp);
+          }
+        });
+        
+        setApplications(transformedApplications);
+        
+        // Extract unique job titles for filter dropdown from all data
+        const jobs = [...new Set(data.applications.map(app => app.job_title).filter(Boolean))];
+        setAvailableJobs(jobs);
+      } else {
+        console.error('Failed to search applications');
+        setApplications(initialApplications);
+      }
+    } catch (error) {
+      console.error('Error searching applications:', error);
+      setApplications(initialApplications);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle query parameters on component mount
+  useEffect(() => {
+    const jobParam = searchParams.get('job');
+    if (jobParam) {
+      setJobFilter(jobParam);
+      // Fetch applications and then filter by job
+      fetchAllApplications().then(() => {
+        searchApplications("", jobParam);
+      });
+    } else {
+      fetchAllApplications();
+    }
+  }, [searchParams]);
+
+  // Update URL when job filter changes
+  useEffect(() => {
+    if (jobFilter) {
+      setSearchParams({ job: jobFilter });
+    } else {
+      setSearchParams({});
+    }
+  }, [jobFilter, setSearchParams]);
+
+  // Handle search
+  const handleSearch = () => {
+    searchApplications(searchQuery, jobFilter);
+  };
+
+  // Handle clear filters
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setJobFilter("");
+    fetchAllApplications();
+  };
 
   const handleDragStart = (e, application, sourceColumn) => {
     setDraggedItem({ application, sourceColumn });
@@ -113,7 +236,7 @@ export default function KanbanBoard(props) {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = (e, targetColumn) => {
+  const handleDrop = async (e, targetColumn) => {
     e.preventDefault();
     
     if (!draggedItem || draggedItem.sourceColumn === targetColumn) {
@@ -121,6 +244,7 @@ export default function KanbanBoard(props) {
       return;
     }
 
+    // Optimistically update UI first
     const updatedApplications = { ...applications };
     
     // Remove from source column
@@ -134,6 +258,54 @@ export default function KanbanBoard(props) {
     
     setApplications(updatedApplications);
     setDraggedItem(null);
+
+    // Call API to update status in backend
+    try {
+      const response = await authFetch(`/applications/${draggedItem.application.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: targetColumn
+        }),
+      });
+
+      if (!response.ok) {
+        // If API call fails, revert the UI changes
+        console.error('Failed to update application status');
+        
+        // Revert UI changes
+        const revertedApplications = { ...applications };
+        
+        // Remove from target column
+        revertedApplications[targetColumn] = revertedApplications[targetColumn].filter(
+          app => app.id !== draggedItem.application.id
+        );
+        
+        // Add back to source column
+        revertedApplications[draggedItem.sourceColumn] = [...revertedApplications[draggedItem.sourceColumn], draggedItem.application];
+        
+        setApplications(revertedApplications);
+        alert('Failed to update application status. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating application status:', error);
+      
+      // Revert UI changes on error
+      const revertedApplications = { ...applications };
+      
+      // Remove from target column
+      revertedApplications[targetColumn] = revertedApplications[targetColumn].filter(
+        app => app.id !== draggedItem.application.id
+      );
+      
+      // Add back to source column
+      revertedApplications[draggedItem.sourceColumn] = [...revertedApplications[draggedItem.sourceColumn], draggedItem.application];
+      
+      setApplications(revertedApplications);
+      alert('Failed to update application status. Please try again.');
+    }
   };
 
   const totalApplications = Object.values(applications).flat().length;
@@ -169,15 +341,6 @@ export default function KanbanBoard(props) {
       <Navbar userName={userName} />
 
       <main className="py-6 sm:pt-12 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] overflow-auto bg-gray-50">
-        {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-blue-700 mb-2">
-            HR Application Management
-          </h1>
-          <p className="text-gray-600">
-            Track and manage job applications through the hiring process
-          </p>
-        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -201,20 +364,74 @@ export default function KanbanBoard(props) {
           })}
         </div>
 
+        {/* Search and Filter Section */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, skills, or experience..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            
+            <div className="flex-shrink-0">
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <select
+                  value={jobFilter}
+                  onChange={(e) => setJobFilter(e.target.value)}
+                  className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-w-[200px]"
+                >
+                  <option value="">All Positions</option>
+                  {availableJobs.map((job, index) => (
+                    <option key={index} value={job}>{job}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={handleSearch}
+                disabled={isLoading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Searching..." : "Search"}
+              </button>
+              <button
+                onClick={handleClearFilters}
+                disabled={isLoading}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Kanban Board */}
         <div className="bg-white rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-blue-700">
               Application Pipeline
             </h2>
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition font-medium">
-              <Plus className="w-4 h-4" />
-              Add Application
-            </button>
           </div>
 
-          <div className="kanban-board">
-            {columns.map((column) => (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-600">Loading applications...</span>
+            </div>
+          ) : (
+            <div className="kanban-board">
+              {columns.map((column) => (
               <div
                 key={column.id}
                 className={`kanban-column ${column.color}`}
@@ -288,8 +505,10 @@ export default function KanbanBoard(props) {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </div>
+
       </main>
     </div>
   );

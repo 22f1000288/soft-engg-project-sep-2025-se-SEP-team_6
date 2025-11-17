@@ -18,25 +18,34 @@ export default function RecruitmentDashboard(props) {
   const [activeJobs, setActiveJobs] = useState(0);
   const [candidateCount, setCandidateCount] = useState(0);
   const [hiredCount, setHiredCount] = useState(0);
+  const [jobs, setJobs] = useState([]);
 
   const createJobHandler = () => {
     navigate("/job-creator");
   };
 
+  const handleJobClick = (jobTitle) => {
+    navigate(`/kanban-board?job=${encodeURIComponent(jobTitle)}`);
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [activeRes, candidateRes, hiredRes] = await Promise.all([
+        const [activeRes, candidateRes, hiredRes, jobsRes] = await Promise.all([
           authFetch("/active-jobs"),
           authFetch("/candidate-count"),
           authFetch("/hired-count"),
+          authFetch("/jobs"),
         ]);
         const activeData = await activeRes.json();
         const candidateData = await candidateRes.json();
         const hiredData = await hiredRes.json();
+        const jobsData = await jobsRes.json();
+        
         setActiveJobs(activeData.active_jobs_count ?? 0);
         setCandidateCount(candidateData.candidate_count ?? 0);
         setHiredCount(hiredData.hired_count ?? 0);
+        setJobs(jobsData || []);
       } catch (error) {
         console.error("Error loading HR dashboard stats:", error);
       }
@@ -76,30 +85,6 @@ export default function RecruitmentDashboard(props) {
     },
   ];
 
-  const jobs = [
-    {
-      title: "Senior Frontend Developer",
-      status: "Active",
-      statusColor: "bg-green-100 text-green-700",
-      applied: 45,
-      screened: 12,
-      interviewed: 5,
-      offered: 1,
-      progress: 65,
-      progressColor: "bg-blue-500",
-    },
-    {
-      title: "Product Manager",
-      status: "Review",
-      statusColor: "bg-yellow-100 text-yellow-700",
-      applied: 32,
-      screened: 8,
-      interviewed: 3,
-      offered: 0,
-      progress: 35,
-      progressColor: "bg-yellow-500",
-    },
-  ];
 
   const interviews = [
     {
@@ -230,55 +215,55 @@ export default function RecruitmentDashboard(props) {
             <div className="space-y-6">
               {jobs.map((job, index) => (
                 <div
-                  key={index}
-                  className="border border-gray-200 rounded-xl p-5"
+                  key={job.id || index}
+                  onClick={() => handleJobClick(job.title)}
+                  className="border border-gray-200 rounded-xl p-5 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <h3 className="text-lg font-bold text-gray-900 hover:text-blue-700 transition-colors">
                       {job.title}
                     </h3>
                     <span
-                      className={`${job.statusColor} px-3 py-1 rounded-full text-xs font-semibold`}
+                      className={`${job.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'} px-3 py-1 rounded-full text-xs font-semibold`}
                     >
-                      {job.status}
+                      {job.status || 'Active'}
                     </span>
                   </div>
 
                   <div className="flex gap-6 text-sm text-gray-600 mb-4">
                     <span>
-                      Applied:{" "}
+                      Location:{" "}
                       <span className="font-semibold text-gray-900">
-                        {job.applied}
+                        {job.location}
                       </span>
                     </span>
                     <span>
-                      Screened:{" "}
+                      Type:{" "}
                       <span className="font-semibold text-gray-900">
-                        {job.screened}
-                      </span>
-                    </span>
-                    <span>
-                      Interviewed:{" "}
-                      <span className="font-semibold text-gray-900">
-                        {job.interviewed}
-                      </span>
-                    </span>
-                    <span>
-                      Offered:{" "}
-                      <span className="font-semibold text-gray-900">
-                        {job.offered}
+                        {job.employment_type}
                       </span>
                     </span>
                   </div>
 
-                  <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`absolute top-0 left-0 h-full ${job.progressColor} rounded-full transition-all duration-500`}
-                      style={{ width: `${job.progress}%` }}
-                    ></div>
+                  <div className="text-sm text-gray-600 mb-4">
+                    <p className="line-clamp-2">{job.description}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-blue-600 font-medium">
+                      Click to view applications →
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      Posted: {job.created_at ? new Date(job.created_at).toLocaleDateString() : 'Recently'}
+                    </span>
                   </div>
                 </div>
               ))}
+              {jobs.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No jobs found. Create your first job to get started!</p>
+                </div>
+              )}
             </div>
           </div>
 

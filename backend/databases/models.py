@@ -35,12 +35,12 @@ class User(Base):
     name = Column(String, nullable=False)
 
 class Application(Base):
-
     __tablename__ = 'application'
-    id = Column(Integer, unique=True, nullable=False)
-    candidate_id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(Integer, nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(Integer, primary_key=True)
+    job_id = Column(Integer, primary_key=True)
     status_applied = Column(Boolean, nullable=True)
+    status_under_review = Column(Boolean, nullable=True)
     status_shortlisted = Column(Boolean, nullable=True)
     status_interviewed = Column(Boolean, nullable=True)
     status_offered = Column(Boolean, nullable=True)
