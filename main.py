@@ -42,12 +42,17 @@ from backend.utils import verify_password, hash_password
 from backend.mailUtils.sendMail import send_email
 from backend.interviewBot import GroqInterview, AUDIO_FOLDER
 from backend.eventCreator import main as create_calendar_event
+from backend.databases.seed_users import seed_all
 
 app = FastAPI(
     title="TalentForm HRMS API",
     description="API documentation for HRMS application",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+def on_startup():
+    seed_all()
 
 groq_instance = GroqInterview()
 
