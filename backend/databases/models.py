@@ -110,23 +110,3 @@ class Recruiter(Base):
 Base.metadata.create_all(bind=engine)
 
 # Insert admin user if not exists
-def init_admin():
-    db = SessionLocal()
-    admin = db.query(User).filter(User.email == "admin@company.com").first()
-    if not admin:
-        admin = User(
-            id=1,
-            email="admin@company.com",
-            password=hash_password("admin123"),
-            role=ROLE_ADMIN,
-            name="Admin User"
-        )
-        db.add(admin)
-        db.commit()
-    db.close()
-
-if __name__ == "__main__":
-    init_admin()
-
-
-    
