@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 import traceback
 from sqlalchemy import text
 from resume_extractor.job_descriptor import create_job_summary
-from backend.databases.models import SessionLocal, User, Application, Job, Scores, Candidate
+from backend.databases.models import SessionLocal, User, Application, Job, Scores, Candidate, Communication
 from backend.databases.controller import (
     create_job,
     create_application,
@@ -537,17 +537,57 @@ async def get_candidate_list(
 @app.post('/notify-candidate', tags=["Communications"])
 async def notify_candidate(
     payload: NotifyCandidateRequest,
-    User = Depends(require_roles(ROLE_HR)),
+    hr_user: User = Depends(require_roles(ROLE_HR)),
+    db: Session = Depends(get_db),
 ):
+    """
+    Send notification email to candidate (HR only) and persist the communication record.
+    """
     try:
+        print(f"[DEBUG] notify_candidate called by hr_user.id={hr_user.id} for {payload.candidate_email}")
+        # send the email first
         send_email(
             recipient_email=payload.candidate_email,
             subject=payload.subject,
             body=payload.body
         )
-        return {"message": "Notification email sent successfully"}
+
+        # find candidate user by email
+        candidate_user = db.query(User).filter(User.email == payload.candidate_email).first()
+        if not candidate_user:
+            print("[DEBUG] Candidate user not found for email:", payload.candidate_email)
+            return {"message": "Notification sent but candidate record not found, communication not recorded"}
+
+        # Create communication record (use None for optional fields)
+        comm = Communication(
+            sender_id=hr_user.id,
+            receiver_id=candidate_user.id,
+            message_id=None,
+            content=payload.body,
+            timestamp=datetime.utcnow(),
+            type="email",
+            application_id=None
+        )
+        db.add(comm)
+        try:
+            db.commit()
+        except Exception as commit_err:
+            db.rollback()
+            print("[DEBUG] DB commit error while saving communication:", commit_err)
+            raise HTTPException(status_code=500, detail="Failed to record communication in DB")
+
+        db.refresh(comm)
+        print(f"[DEBUG] Communication saved id={comm.id} sender={comm.sender_id} receiver={comm.receiver_id}")
+        return {"message": "Notification email sent successfully", "communication_id": comm.id}
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {e}")
+        try:
+            db.rollback()
+        except:
+            pass
+        print("[DEBUG] Exception in notify_candidate:", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail=f"Failed to send email or record communication: {e}")
 
 @app.get("/", tags=["Health Check"])
 async def root():
@@ -968,6 +1008,100 @@ async def get_user(
         "name": user.name,
         "email": user.email,
         "role": user.role,
+    }
+
+
+from typing import Optional
+from pydantic import BaseModel
+from backend.databases.models import Candidate
+from backend.roles import ROLE_CANDIDATE
+
+class CandidateUpdate(BaseModel):
+    resume_url: Optional[str] = None
+    skills: Optional[str] = None
+    experience: Optional[str] = None
+    education: Optional[str] = None
+    profile_summary: Optional[str] = None
+
+@app.get("/candidates/me", tags=["Candidates"])
+async def get_my_candidate_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return candidate profile for the authenticated user. Create default row if missing."""
+    if current_user.role != ROLE_CANDIDATE:
+        raise HTTPException(status_code=403, detail="Only candidates have candidate profiles")
+
+    candidate = db.query(Candidate).filter(Candidate.user_id == current_user.id).first()
+    if not candidate:
+        candidate = Candidate(
+            user_id=current_user.id,
+            candidate_id=current_user.id,
+            resume_url="",
+            skills="",
+            experience="",
+            education="",
+            profile_summary=""
+        )
+        db.add(candidate)
+        db.commit()
+        db.refresh(candidate)
+
+    return {
+        "id": candidate.id,
+        "user_id": candidate.user_id,
+        "resume_url": candidate.resume_url,
+        "skills": candidate.skills,
+        "experience": candidate.experience,
+        "education": candidate.education,
+        "profile_summary": candidate.profile_summary,
+    }
+
+@app.put("/candidates/me", tags=["Candidates"])
+async def update_my_candidate_profile(
+    payload: CandidateUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update candidate profile for authenticated user. Uses PUT semantics (replace/set provided fields)."""
+    if current_user.role != ROLE_CANDIDATE:
+        raise HTTPException(status_code=403, detail="Only candidates can update profile")
+
+    candidate = db.query(Candidate).filter(Candidate.user_id == current_user.id).first()
+    if not candidate:
+        candidate = Candidate(
+            user_id=current_user.id,
+            candidate_id=current_user.id,
+            resume_url="",
+            skills="",
+            experience="",
+            education="",
+            profile_summary=""
+        )
+        db.add(candidate)
+
+    update_data = payload.dict(exclude_unset=True)
+    for k, v in update_data.items():
+        setattr(candidate, k, v)
+
+    try:
+        db.commit()
+        db.refresh(candidate)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save candidate profile")
+
+    return {
+        "message": "Candidate profile updated",
+        "candidate": {
+            "id": candidate.id,
+            "user_id": candidate.user_id,
+            "resume_url": candidate.resume_url,
+            "skills": candidate.skills,
+            "experience": candidate.experience,
+            "education": candidate.education,
+            "profile_summary": candidate.profile_summary,
+        },
     }
 
 

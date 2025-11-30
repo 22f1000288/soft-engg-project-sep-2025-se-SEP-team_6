@@ -60,11 +60,15 @@ export default function Communications(props) {
       return;
     }
 
-    // Find the selected candidate's email
     const selectedCandidateData = candidateList.find(
       (c) => c.name === selectedCandidate
     );
     const candidateEmail = selectedCandidateData ? selectedCandidateData.email : "";
+
+    if (!candidateEmail) {
+      alert("Selected candidate has no email");
+      return;
+    }
 
     const emailData = {
       candidate_email: candidateEmail,
@@ -76,17 +80,34 @@ export default function Communications(props) {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/notify-candidate", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(emailData),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to send email");
+      // Prefer authFetch (adds Authorization header). If not available, attach token from tf_tokens.
+      let res;
+      if (typeof authFetch === "function") {
+        res = await authFetch("/notify-candidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(emailData),
+        });
+      } else {
+        const tokenData = localStorage.getItem("tf_tokens");
+        if (!tokenData) throw new Error("Not authenticated");
+        const token = JSON.parse(tokenData).accessToken;
+        res = await fetch("http://localhost:8000/notify-candidate", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify(emailData),
+        });
       }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || `Status ${res.status}`);
+      }
+
       await res.json();
       alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
       setSelectedCandidate("");

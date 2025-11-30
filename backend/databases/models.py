@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append('..')
 from sqlalchemy import create_engine, event
-from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey, UniqueConstraint, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -94,11 +94,13 @@ class Communication(Base):
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, nullable=False)
     receiver_id = Column(Integer, nullable=False)
-    message_id = Column(Integer, nullable=False)
-    content = Column(String, nullable=False)
-    timestamp = Column(DateTime, nullable=False)
+    # allow message_id to be optional
+    message_id = Column(Integer, nullable=True)
+    content = Column(Text, nullable=False)
+    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
     type = Column(String, nullable=False)
-    application_id = Column(Integer, nullable=False)
+    # allow application_id to be optional
+    application_id = Column(Integer, nullable=True)
 
 class Scores(Base):
     __tablename__ = "scores"
