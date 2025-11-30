@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Edit2, Calendar, MapPin, Linkedin } from 'lucide-react';
 import CandidateNavbar from './CandidateNavbar';
 import useAuth from '../contexts/useAuth';
+import ResumeUpload from './ResumeUpload';
+import ResumeDisplay from './ResumeDisplay';
 
 // Mock profile data (replace with props or API response)
 const initialProfile = {
@@ -28,6 +30,8 @@ export default function CandidateProfilePage() {
   const [profile, setProfile] = useState(derived);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(derived);
+  const [resumeData, setResumeData] = useState(null);
+  const [loadingResume, setLoadingResume] = useState(true);
 
   useEffect(() => {
     const next = {
@@ -41,7 +45,31 @@ export default function CandidateProfilePage() {
     };
     setProfile(next);
     setEditForm(next);
+    
+    // Fetch resume data
+    fetchResumeData();
   }, [user]);
+
+  const fetchResumeData = async () => {
+    try {
+      setLoadingResume(true);
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('http://localhost:8000/resume', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setResumeData(data.resume_data);
+      }
+    } catch (error) {
+      console.error('Error fetching resume:', error);
+    } finally {
+      setLoadingResume(false);
+    }
+  };
 
   // For Edit logic
   const handleEditChange = (e) => {
@@ -54,6 +82,14 @@ export default function CandidateProfilePage() {
   const handleEditSave = () => {
     setProfile(editForm);
     setIsEditing(false);
+  };
+
+  const handleUploadSuccess = (newResumeData) => {
+    setResumeData(newResumeData);
+  };
+
+  const handleResumeUpdate = (updatedResumeData) => {
+    setResumeData(updatedResumeData);
   };
   
 
@@ -192,6 +228,29 @@ export default function CandidateProfilePage() {
                 </button>
               </div>
             </>
+          )}
+        </div>
+
+        {/* Resume Section */}
+        <div className="mt-8">
+          <h2 className="text-3xl font-bold text-blue-600 mb-4">Resume</h2>
+          <p className="text-gray-600 mb-6">Upload and manage your resume</p>
+          
+          {/* Resume Upload Section */}
+          <div className="mb-6">
+            <ResumeUpload onUploadSuccess={handleUploadSuccess} />
+          </div>
+
+          {/* Resume Display Section */}
+          {loadingResume ? (
+            <div className="bg-white rounded-xl p-8 shadow-md text-center">
+              <p className="text-gray-500">Loading resume...</p>
+            </div>
+          ) : (
+            <ResumeDisplay 
+              resumeData={resumeData} 
+              onUpdate={handleResumeUpdate}
+            />
           )}
         </div>
       </main>

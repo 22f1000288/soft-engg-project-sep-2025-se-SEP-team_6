@@ -33,6 +33,7 @@ class User(Base):
     password = Column(String, nullable=False)
     role = Column(String, nullable=False)
     name = Column(String, nullable=False)
+    resume_json = Column(String, nullable=True)
 
 class Application(Base):
 

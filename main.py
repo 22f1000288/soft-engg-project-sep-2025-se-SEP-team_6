@@ -27,6 +27,8 @@ from backend.databases.controller import (
     delete_job,
     search_jobs,
     find_jobs_by_poster,
+    update_user_resume,
+    get_user_resume,
 )
 from typing import Optional, List
 from pydantic import Field
@@ -45,6 +47,9 @@ from backend.mailUtils.sendMail import send_email
 from backend.interviewBot import GroqInterview, AUDIO_FOLDER
 from backend.eventCreator import main as create_calendar_event
 from backend.databases.seed_users import seed_all
+from resume_extractor.resume_extractor import ResumeParser
+import json as json_module
+import tempfile
 
 load_dotenv()
 
@@ -640,6 +645,123 @@ async def create_calendar_event_endpoint(
         return {"message": "Calendar event created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create calendar event: {e}")
+
+
+# Resume endpoints
+@app.post("/resume/upload", tags=["Resume"])
+async def upload_resume(
+    file: UploadFile = File(...),
+    user: User = Depends(require_roles(ROLE_CANDIDATE)),
+    db: Session = Depends(get_db)
+):
+    """Upload and parse a PDF resume for the current candidate."""
+    if not file or file.filename == "":
+        raise HTTPException(status_code=400, detail="No file provided")
+    
+    # Validate file type
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    
+    try:
+        # Read file content
+        file_content = await file.read()
+        
+        # Save to temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            tmp_file.write(file_content)
+            tmp_file_path = tmp_file.name
+        
+        try:
+            # Initialize resume parser
+            api_key = os.getenv("GROQ_API_KEY")
+            if not api_key:
+                raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured")
+            
+            parser = ResumeParser(api_key)
+            
+            # Parse the resume
+            resume_data = parser.parse_resume(tmp_file_path)
+            
+            # Convert to JSON string
+            resume_json = json_module.dumps(resume_data, ensure_ascii=False)
+            
+            # Update user's resume_json in database
+            updated_user = await update_user_resume(user.id, resume_json)
+            
+            if not updated_user:
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            return {
+                "message": "Resume uploaded and parsed successfully",
+                "resume_data": resume_data
+            }
+        finally:
+            # Clean up temporary file
+            import os as os_module
+            try:
+                os_module.unlink(tmp_file_path)
+            except:
+                pass
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error parsing resume: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to parse resume: {str(e)}")
+
+
+@app.get("/resume", tags=["Resume"])
+async def get_resume(
+    user: User = Depends(require_roles(ROLE_CANDIDATE)),
+    db: Session = Depends(get_db)
+):
+    """Get the parsed resume JSON for the current candidate."""
+    try:
+        resume_json = await get_user_resume(user.id)
+        
+        if not resume_json:
+            return {"message": "No resume found", "resume_data": None}
+        
+        # Parse JSON string to object
+        resume_data = json_module.loads(resume_json)
+        
+        return {
+            "message": "Resume retrieved successfully",
+            "resume_data": resume_data
+        }
+    except Exception as e:
+        print(f"Error retrieving resume: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve resume: {str(e)}")
+
+
+@app.put("/resume", tags=["Resume"])
+async def update_resume(
+    resume_data: dict,
+    user: User = Depends(require_roles(ROLE_CANDIDATE)),
+    db: Session = Depends(get_db)
+):
+    """Update the parsed resume JSON for the current candidate."""
+    try:
+        # Convert to JSON string
+        resume_json = json_module.dumps(resume_data, ensure_ascii=False)
+        
+        # Update user's resume_json in database
+        updated_user = await update_user_resume(user.id, resume_json)
+        
+        if not updated_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "message": "Resume updated successfully",
+            "resume_data": resume_data
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating resume: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update resume: {str(e)}")
+
 
 if __name__ == "__main__":
     
