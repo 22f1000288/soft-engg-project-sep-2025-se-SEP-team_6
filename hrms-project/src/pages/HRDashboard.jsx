@@ -115,8 +115,8 @@ export default function RecruitmentDashboard(props) {
       color: "border-green-500",
     },
     {
-      name: "Amitabh Bachchan",
-      role: "Backend Developer",
+      name: "Saurabh Singh",
+      role: "FullStack Developer",
       time: "4:00 PM - 5:00 PM",
       color: "border-purple-500",
     },
