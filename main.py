@@ -576,7 +576,6 @@ async def notify_candidate(
         comm = Communication(
             sender_id=hr_user.id,
             receiver_id=candidate_user.id,
-            message_id=None,
             content=payload.body,
             timestamp=datetime.utcnow(),
             type="email",
@@ -1175,6 +1174,32 @@ async def reschedule_interview(
     db.commit()
     db.refresh(interview)
     return {"message": "Interview rescheduled", "interview_id": interview.id}
+
+@app.get("/recent-communications", tags=["Communications"])
+async def get_recent_communications(db: Session = Depends(get_db)):
+    """
+    Return the last 3 communications, newest first.
+    """
+    # Join communication with user table to get candidate name/email
+    results = (
+        db.query(Communication, User)
+        .join(User, Communication.receiver_id == User.id)
+        .order_by(Communication.timestamp.desc())
+        .limit(3)
+        .all()
+    )
+    out = []
+    for comm, user in results:
+        out.append({
+            "id": comm.id,
+            "name": user.name,
+            "email": user.email,
+            "snippet": comm.content[:120] + ("..." if len(comm.content) > 120 else ""),
+            "time": comm.timestamp.strftime("%Y-%m-%d %H:%M"),
+            "tags": [comm.type.capitalize()],
+            "color": "text-blue-600",
+        })
+    return {"recent": out}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

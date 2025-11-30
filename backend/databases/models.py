@@ -94,12 +94,9 @@ class Communication(Base):
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, nullable=False)
     receiver_id = Column(Integer, nullable=False)
-    # allow message_id to be optional
-    message_id = Column(Integer, nullable=True)
     content = Column(Text, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
     type = Column(String, nullable=False)
-    # allow application_id to be optional
     application_id = Column(Integer, nullable=True)
 
 class Scores(Base):

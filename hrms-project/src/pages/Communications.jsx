@@ -15,6 +15,7 @@ export default function Communications(props) {
   const [autoTranslate, setAutoTranslate] = useState(false);
   const [scheduled, setScheduled] = useState(false);
   const [candidateList, setCandidateList] = useState([]);
+  const [recent, setRecent] = useState([]);
 
   const messageTypes = [
     "Select type",
@@ -24,35 +25,24 @@ export default function Communications(props) {
     "Other",
   ];
 
-  const recent = [
-    {
-      id: 1,
-      name: "Sarah Chen",
-      snippet:
-        "Thank you for interviewing with us. We were impressed with your technical skills and problem-solving approach...",
-      time: "2 hours ago",
-      tags: ["Delivered", "Translated"],
-      color: "text-green-600",
-    },
-    {
-      id: 2,
-      name: "Michael Rodriguez",
-      snippet:
-        "We'd like to invite you for a technical interview. Please confirm your availability for the proposed time slots...",
-      time: "Tomorrow 9:00 AM",
-      tags: ["Scheduled"],
-      color: "text-yellow-600",
-    },
-    {
-      id: 3,
-      name: "Emily Johnson",
-      snippet:
-        "Thank you for your application. We're currently reviewing your profile and will update you on next steps...",
-      time: "1 day ago",
-      tags: ["Delivered", "Auto-sent"],
-      color: "text-green-600",
-    },
-  ];
+  useEffect(() => {
+    authFetch("/candidate-list")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch candidates");
+        return res.json();
+      })
+      .then((data) => setCandidateList(data.candidates ?? []))
+      .catch((err) => console.error("Error fetching candidate list:", err));
+
+    // Fetch recent communications
+    authFetch("/recent-communications")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch recent communications");
+        return res.json();
+      })
+      .then((data) => setRecent(data.recent ?? []))
+      .catch((err) => console.error("Error fetching recent communications:", err));
+  }, [authFetch]);
 
   const handleSend = async () => {
     if (!selectedCandidate || !messageType || message.trim().length === 0) {
@@ -125,22 +115,6 @@ export default function Communications(props) {
   const handlePreview = () => {
     alert("Preview\n\n" + message);
   };
-
-  useEffect(() => {
-    authFetch("/candidate-list")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch candidates");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setCandidateList(data.candidates ?? []);
-      })
-      .catch((err) => {
-        console.error("Error fetching candidate list:", err);
-      });
-  }, [authFetch]);
 
   return (
     <div className="min-h-screen bg-gray-50">
