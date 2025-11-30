@@ -598,8 +598,7 @@ def serve_audio(file_path: str):
 @app.post("/generate-job-summary", tags=["Job Description"])
 async def generate_job_summary_endpoint(
     request: Request,
-    User = Depends(require_roles(ROLE_HR)),
-    db: Session = Depends(get_db)):
+    ):
     
     try:
         data = await request.json()

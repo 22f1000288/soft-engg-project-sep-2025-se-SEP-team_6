@@ -76,15 +76,15 @@ export default function JobCreater() {
         // create mode
         res = await authFetch('/generate-job-summary', {
           method: 'POST',
-          credentials : 'include',
+          // credentials : 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 
         if (res.ok){
           const data =  await res.json();
-          setAiJobDescription(data);
-          console.log("Generated Job Summary:", data);
+          setAiJobDescription(JSON.stringify(data.job_summary));
+          // console.log("Generated Job Summary:", JSON.stringify(data));
         }
 
       }
@@ -294,10 +294,10 @@ export default function JobCreater() {
                   <path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
                   <path d="M17 21v-8h-6"></path>
                 </svg>
-                <p className="text-sm">
-                  {/* Fill out the form to generate an AI-powered job description */}
-                  {aiJobDescription || "Fill out the form to generate an AI-powered job description"}
-                </p>
+                <textarea className="text-sm"
+                rows={15}
+                cols={100}
+                value={aiJobDescription}/>
                 {error && (
                   <p className="mt-3 text-sm text-red-600">{error}</p>
                 )}

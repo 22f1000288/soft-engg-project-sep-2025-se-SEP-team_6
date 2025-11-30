@@ -18,7 +18,7 @@ load_dotenv()
 AUDIO_FOLDER = os.path.abspath(os.path.join(os.getcwd(), "temp_audio"))
 
 # Initialize Groq client (may or may not provide audio features in your environment)
-client = Groq(api_key=base64.b64decode(os.environ.get("GROQ_API_KEY")).decode('utf-8'))
+client = Groq(api_key=(os.environ.get("GROQ_API_KEY")))
 
 
 class GroqInterview:
