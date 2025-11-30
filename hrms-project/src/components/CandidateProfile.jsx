@@ -122,14 +122,35 @@ export default function CandidateProfilePage() {
                       className="text-sm"
                     />
                     <button
-                      onClick={() => {
-                        // dummy handler for now
+                      onClick={async () => {
                         if (!resumeFile) {
                           alert('No file selected.');
                           return;
                         }
-                        console.log('Selected resume file:', resumeFile);
-                        alert(`Resume "${resumeFile.name}" ready to upload (dummy).`);
+                        try {
+                          const formData = new FormData();
+                          formData.append('file', resumeFile, resumeFile.name);
+
+                          const res = await fetch('http://localhost:8000/resumes/upload', {
+                            method: 'POST',
+                            body: formData,
+                          });
+
+                          if (!res.ok) {
+                            const errText = await res.text();
+                            console.error('Upload error:', errText);
+                            alert('Upload failed: ' + res.statusText);
+                            return;
+                          }
+
+                          const parsed = await res.json();
+                          console.log('Parsed resume JSON:', parsed);
+                          // Replace with nicer UI as needed
+                          alert('Resume parsed successfully. Check console for JSON.');
+                        } catch (err) {
+                          console.error('Upload exception:', err);
+                          alert('Upload failed: ' + err.message);
+                        }
                       }}
                       className="bg-indigo-600 text-white px-3 py-1 rounded-md text-sm"
                     >

@@ -45,6 +45,10 @@ from backend.mailUtils.sendMail import send_email
 from backend.interviewBot import GroqInterview, AUDIO_FOLDER
 from backend.eventCreator import main as create_calendar_event
 from backend.databases.seed_users import seed_all
+import tempfile
+import asyncio
+from pathlib import Path
+from resume_extractor.resume_extractor import ResumeParser
 
 load_dotenv()
 
@@ -630,6 +634,7 @@ async def generate_job_summary_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate job summary: {e}")
 
+
 @app.post("/create-calendar-event", tags=["Calendar"])
 async def create_calendar_event_endpoint(
     User = Depends(require_roles(ROLE_HR)),
@@ -640,6 +645,49 @@ async def create_calendar_event_endpoint(
         return {"message": "Calendar event created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create calendar event: {e}")
+
+@app.post("/resumes/upload", tags=["Resumes"])
+async def upload_resume(file: UploadFile = File(...)):
+    """Upload resume (pdf/docx/doc), parse it with ResumeParser, and return JSON."""
+    if not file or file.filename == "":
+        raise HTTPException(status_code=400, detail="No file provided")
+
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".pdf", ".docx", ".doc"]:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    temp_dir = tempfile.mkdtemp(prefix="resume_")
+    tmp_path = os.path.join(temp_dir, file.filename)
+
+    try:
+        # Save uploaded file to temp path
+        content = await file.read()
+        with open(tmp_path, "wb") as f:
+            f.write(content)
+
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="GROQ_API_KEY not set in environment")
+
+        # Create parser and run parse_resume in a thread to avoid blocking
+        parser = ResumeParser(api_key=api_key)
+        parsed = await asyncio.to_thread(parser.parse_resume, tmp_path)
+
+        return parsed
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # cleanup temp files
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            if os.path.exists(temp_dir):
+                os.rmdir(temp_dir)
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     
