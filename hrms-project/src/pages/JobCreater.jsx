@@ -268,66 +268,39 @@ export default function JobCreater() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
               <h3 className="text-lg font-medium">Generated Job Description</h3>
               <div className="flex items-center gap-2">
-                <button className="text-sm px-3 py-1 border rounded text-gray-600">
-                  Edit
-                </button>
-                <button onClick={handleGenerate
-                } className="text-sm px-3 py-1 bg-green-600 text-white rounded">
+                <button onClick={handleGenerate} className="text-sm px-3 py-1 bg-green-600 text-white rounded">
                   Publish
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 min-h-[260px] sm:min-h-[420px] border-2 border-dashed border-gray-200 rounded-md p-6 overflow-auto">
-              <div className="w-full text-left">
-                {aiJobDescription ? (
-                  <div className="space-y-4">
-                    {aiJobDescription.split('\n').map((line, index) => {
-                      const trimmedLine = line.trim();
-                      if (!trimmedLine) return null;
-                      
-                      // Check if line has bold markdown
-                      const boldMatch = trimmedLine.match(/^\*\*(.*?)\*\*$/);
-                      if (boldMatch) {
-                        return (
-                          <h3 key={index} className="text-lg font-semibold text-gray-900 mt-4 first:mt-0">
-                            {boldMatch[1]}
-                          </h3>
-                        );
-                      }
-                      
-                      // Regular paragraph
-                      return (
-                        <p key={index} className="text-gray-700 leading-relaxed">
-                          {trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').split('<strong>').map((part, i) => {
-                            if (i === 0) return part;
-                            const [bold, ...rest] = part.split('</strong>');
-                            return <span key={i}><strong>{bold}</strong>{rest.join('</strong>')}</span>;
-                          })}
-                        </p>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-gray-400 text-center h-full">
-                    <svg
-                      className="mx-auto mb-3"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#cbd5e1"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
-                      <path d="M17 21v-8h-6"></path>
-                    </svg>
-                    <p className="text-sm">Your AI-generated job description will appear here...</p>
-                  </div>
-                )}
-              </div>
+            <div className="flex-1 min-h-[260px] sm:min-h-[420px] border-2 border-gray-200 rounded-md overflow-auto">
+              {aiJobDescription ? (
+                <textarea
+                  value={aiJobDescription}
+                  onChange={(e) => setAiJobDescription(e.target.value)}
+                  className="w-full h-full p-6 text-gray-700 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Your AI-generated job description will appear here..."
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-gray-400 text-center h-full p-6">
+                  <svg
+                    className="mx-auto mb-3"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#cbd5e1"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <path d="M17 21v-8h-6"></path>
+                  </svg>
+                  <p className="text-sm">Your AI-generated job description will appear here...</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
