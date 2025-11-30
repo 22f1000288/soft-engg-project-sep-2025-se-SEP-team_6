@@ -5,7 +5,7 @@ from email.mime.application import MIMEApplication
 
 def send_email(recipient_email: str, subject: str, body: str, attachment_path: str = None):
     """Send an email with an optional attachment."""
-    sender_email = "Kantara@hr.com"  # Replace with your email (not used in MailHog)
+    sender_email = "talentflow@hr.com"  # Replace with your email (not used in MailHog)
     # sender_password = ""  # No password needed for MailHog
 
     # Create the email message
