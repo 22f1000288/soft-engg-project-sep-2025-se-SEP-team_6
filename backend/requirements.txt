@@ -26,11 +26,11 @@ httpx==0.28.1
 idna==3.10
 iniconfig==2.3.0
 isort==7.0.0
-jwt==1.4.0
+PyJWT==2.8.0
 lxml==6.0.2
 mando==0.7.1
 mccabe==0.7.0
-numpy==2.3.4
+numpy
 oauthlib==3.3.1
 packaging==25.0
 passlib==1.7.4
