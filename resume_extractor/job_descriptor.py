@@ -7,6 +7,8 @@ load_dotenv()  # Load environment variables from .env file
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 import json
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
 def create_job_summary(
     job_title: str,
     department: str,

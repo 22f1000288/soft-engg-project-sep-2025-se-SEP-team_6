@@ -6,6 +6,8 @@ import useAuth from "../contexts/useAuth";
 export default function JobCreater() {
   const { id } = useParams(); // optional job id for edit
 
+  const [aiJobDescription, setAiJobDescription] = useState("");
+
   const [form, setForm] = useState({
     title: "",
     department: "",
@@ -49,7 +51,7 @@ export default function JobCreater() {
     const payload = {
       posted_by: user.id,
       title: form.title,
-      description: `${form.title} — ${form.level} in ${form.department}. Skills: ${form.skills}.`,
+      // description: `${form.title} — ${form.level} in ${form.department}. Skills: ${form.skills}.`,
       skills_required: form.skills,
       qualification: form.level,
       location: form.location,
@@ -65,18 +67,26 @@ export default function JobCreater() {
       let res;
       if (id) {
         // edit mode
-        res = await authFetch(`/jobs/${id}`, {
+        res = await authFetch(`/generate-job-summary/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       } else {
         // create mode
-        res = await authFetch('/jobs', {
+        res = await authFetch('/generate-job-summary', {
           method: 'POST',
+          credentials : 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
+
+        if (res.ok){
+          const data =  await res.json();
+          setAiJobDescription(data);
+          console.log("Generated Job Summary:", data);
+        }
+
       }
 
       setLoading(false);
@@ -285,7 +295,8 @@ export default function JobCreater() {
                   <path d="M17 21v-8h-6"></path>
                 </svg>
                 <p className="text-sm">
-                  Fill out the form to generate an AI-powered job description
+                  {/* Fill out the form to generate an AI-powered job description */}
+                  {aiJobDescription || "Fill out the form to generate an AI-powered job description"}
                 </p>
                 {error && (
                   <p className="mt-3 text-sm text-red-600">{error}</p>

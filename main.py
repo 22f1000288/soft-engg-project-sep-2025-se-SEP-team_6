@@ -7,9 +7,11 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 from sqlalchemy.exc import IntegrityError
 import traceback
 from sqlalchemy import text
+from resume_extractor.job_descriptor import create_job_summary
 from backend.databases.models import SessionLocal, User, Application, Job
 from backend.databases.controller import (
     create_job,
@@ -43,6 +45,8 @@ from backend.mailUtils.sendMail import send_email
 from backend.interviewBot import GroqInterview, AUDIO_FOLDER
 from backend.eventCreator import main as create_calendar_event
 from backend.databases.seed_users import seed_all
+
+load_dotenv()
 
 app = FastAPI(
     title="TalentForm HRMS API",
@@ -589,6 +593,43 @@ def serve_audio(file_path: str):
 
     return FileResponse(requested_path, media_type="application/octet-stream")
 
+
+# Ai Job Description
+@app.post("/generate-job-summary", tags=["Job Description"])
+async def generate_job_summary_endpoint(
+    request: Request,
+    User = Depends(require_roles(ROLE_HR)),
+    db: Session = Depends(get_db)):
+    
+    try:
+        data = await request.json()
+        print("Received data for job summary generation:", data)
+        
+        print("Before extracting parameters")
+        job_title = data.get("job_title")
+        department = data.get("department")
+        experience_level = data.get("experience_level")
+        required_skills = data.get("required_skills", [])
+        company_culture_keywords = data.get("company_culture_keywords", [])
+        location = data.get("location")
+        print("Before API key retrieval")
+        api_key = os.getenv("GROQ_API_KEY")
+        print(api_key)
+        if not api_key:
+            raise HTTPException(status_code=500, detail="GROQ_API_KEY not set in environment")
+
+        summary = create_job_summary(
+            job_title=job_title,
+            department=department,
+            experience_level=experience_level,
+            required_skills=required_skills,
+            company_culture_keywords=company_culture_keywords,
+            location=location,
+            api_key=api_key,
+        )
+        return {"job_summary": summary}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate job summary: {e}")
 
 @app.post("/create-calendar-event", tags=["Calendar"])
 async def create_calendar_event_endpoint(

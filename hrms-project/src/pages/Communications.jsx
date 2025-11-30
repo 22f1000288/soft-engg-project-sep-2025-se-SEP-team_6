@@ -76,8 +76,9 @@ export default function Communications(props) {
     };
 
     try {
-      const res = await authFetch("/notify-candidate", {
+      const res = await fetch("http://localhost:8000/notify-candidate", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
