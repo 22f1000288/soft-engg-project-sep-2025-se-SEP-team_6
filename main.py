@@ -637,8 +637,28 @@ async def generate_job_summary_endpoint(
 
 @app.post("/create-calendar-event", tags=["Calendar"])
 async def create_calendar_event_endpoint(
-    User = Depends(require_roles(ROLE_HR)),
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
 ):
+    """Create a calendar event. HR users only."""
+    # Try to authenticate user from token
+    user = None
+    if token:
+        try:
+            payload = decode_access_token(token)
+            user_id = payload.get("sub")
+            if user_id:
+                user = db.query(User).filter(User.id == int(user_id)).first()
+        except (TokenValidationError, ValueError):
+            pass
+    
+    # Check if user is HR
+    if not user or user.role != ROLE_HR:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only HR users can create calendar events",
+        )
+    
     try:
         create_calendar_event()
         webbrowser.open("https://calendar.google.com/calendar/u/0/r")
@@ -647,8 +667,12 @@ async def create_calendar_event_endpoint(
         raise HTTPException(status_code=500, detail=f"Failed to create calendar event: {e}")
 
 @app.post("/resumes/upload", tags=["Resumes"])
-async def upload_resume(file: UploadFile = File(...)):
-    """Upload resume (pdf/docx/doc), parse it with ResumeParser, and return JSON."""
+async def upload_resume(
+    file: UploadFile = File(...),
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+):
+    """Upload resume (pdf/docx/doc), parse it with ResumeParser, and save JSON to user.resume_json."""
     if not file or file.filename == "":
         raise HTTPException(status_code=400, detail="No file provided")
 
@@ -660,7 +684,6 @@ async def upload_resume(file: UploadFile = File(...)):
     tmp_path = os.path.join(temp_dir, file.filename)
 
     try:
-        # Save uploaded file to temp path
         content = await file.read()
         with open(tmp_path, "wb") as f:
             f.write(content)
@@ -669,18 +692,46 @@ async def upload_resume(file: UploadFile = File(...)):
         if not api_key:
             raise HTTPException(status_code=500, detail="GROQ_API_KEY not set in environment")
 
-        # Create parser and run parse_resume in a thread to avoid blocking
         parser = ResumeParser(api_key=api_key)
         parsed = await asyncio.to_thread(parser.parse_resume, tmp_path)
 
-        return parsed
+        # Authenticate user from token
+        user = None
+        if token:
+            try:
+                payload = decode_access_token(token)
+                user_id = payload.get("sub")
+                if user_id:
+                    user = db.query(User).filter(User.id == int(user_id)).first()
+            except (TokenValidationError, ValueError):
+                pass
+
+        if not user:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        # Save parsed JSON
+        import json
+        user.resume_json = json.dumps(parsed)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        # Verify the save by querying the database directly
+        verified_user = db.query(User).filter(User.id == user.id).first()
+        print(f"[DEBUG] Verified in DB - resume_json saved: {bool(verified_user.resume_json)}")
+        print(f"[DEBUG] Resume JSON length in DB: {len(verified_user.resume_json) if verified_user.resume_json else 0}")
+
+        print("\n=== Extracted Resume Data ===")
+        print(json.dumps(parsed, indent=2, ensure_ascii=False))
+
+        return {"message": "Resume parsed and saved successfully", "data": parsed}
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        # cleanup temp files
         try:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)

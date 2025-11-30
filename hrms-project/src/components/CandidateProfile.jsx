@@ -131,22 +131,41 @@ export default function CandidateProfilePage() {
                           const formData = new FormData();
                           formData.append('file', resumeFile, resumeFile.name);
 
+                          const tokenData = localStorage.getItem('tf_tokens');
+                          if (!tokenData) {
+                            alert('Not authenticated. Please log in.');
+                            return;
+                          }
+
+                          const tokens = JSON.parse(tokenData);
+                          const token = tokens.accessToken;
+
+                          if (!token) {
+                            alert('No access token found. Please log in again.');
+                            return;
+                          }
+
                           const res = await fetch('http://localhost:8000/resumes/upload', {
                             method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                            },
                             body: formData,
                           });
 
                           if (!res.ok) {
-                            const errText = await res.text();
-                            console.error('Upload error:', errText);
-                            alert('Upload failed: ' + res.statusText);
+                            const errData = await res.json();
+                            console.error('Upload error:', errData);
+                            alert('Upload failed: ' + (errData.detail || res.statusText));
                             return;
                           }
 
                           const parsed = await res.json();
                           console.log('Parsed resume JSON:', parsed);
-                          // Replace with nicer UI as needed
-                          alert('Resume parsed successfully. Check console for JSON.');
+                          alert('Resume parsed successfully and saved to profile.');
+                          setResumeFile(null);
+                          document.getElementById('resume-upload').value = '';
                         } catch (err) {
                           console.error('Upload exception:', err);
                           alert('Upload failed: ' + err.message);
@@ -229,13 +248,54 @@ export default function CandidateProfilePage() {
                       className="text-sm"
                     />
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (!resumeFile) {
                           alert('No file selected.');
                           return;
                         }
-                        console.log('Selected resume file (edit):', resumeFile);
-                        alert(`Resume "${resumeFile.name}" ready to upload (dummy).`);
+                        try {
+                          const formData = new FormData();
+                          formData.append('file', resumeFile, resumeFile.name);
+
+                          const tokenData = localStorage.getItem('tf_tokens');
+                          if (!tokenData) {
+                            alert('Not authenticated. Please log in.');
+                            return;
+                          }
+
+                          const tokens = JSON.parse(tokenData);
+                          const token = tokens.accessToken;
+
+                          if (!token) {
+                            alert('No access token found. Please log in again.');
+                            return;
+                          }
+
+                          const res = await fetch('http://localhost:8000/resumes/upload', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                            },
+                            body: formData,
+                          });
+
+                          if (!res.ok) {
+                            const errData = await res.json();
+                            console.error('Upload error:', errData);
+                            alert('Upload failed: ' + (errData.detail || res.statusText));
+                            return;
+                          }
+
+                          const parsed = await res.json();
+                          console.log('Parsed resume JSON:', parsed);
+                          alert('Resume parsed successfully and saved to profile.');
+                          setResumeFile(null);
+                          document.getElementById('resume-upload-edit').value = '';
+                        } catch (err) {
+                          console.error('Upload exception:', err);
+                          alert('Upload failed: ' + err.message);
+                        }
                       }}
                       className="bg-indigo-600 text-white px-3 py-1 rounded-md text-sm"
                     >
@@ -246,16 +306,16 @@ export default function CandidateProfilePage() {
               </div>
               <div className="flex gap-2">
                 <button
-                  className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-medium"
-                  onClick={handleEditSave}
-                >
-                  Save
-                </button>
-                <button
-                  className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-medium"
                   onClick={() => setIsEditing(false)}
+                  className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-medium"
                 >
                   Cancel
+                </button>
+                <button
+                  onClick={handleEditSave}
+                  className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-medium"
+                >
+                  Save
                 </button>
               </div>
             </>
