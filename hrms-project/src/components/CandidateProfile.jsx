@@ -28,6 +28,7 @@ export default function CandidateProfilePage() {
   const [profile, setProfile] = useState(derived);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(derived);
+  const [resumeFile, setResumeFile] = useState(null);
 
   useEffect(() => {
     const next = {
@@ -112,6 +113,29 @@ export default function CandidateProfilePage() {
                     <Linkedin className="w-5 h-5 text-gray-500" />
                     <span className="font-medium text-blue-600">{profile.url}</span>
                   </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <input
+                      id="resume-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                      className="text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        // dummy handler for now
+                        if (!resumeFile) {
+                          alert('No file selected.');
+                          return;
+                        }
+                        console.log('Selected resume file:', resumeFile);
+                        alert(`Resume "${resumeFile.name}" ready to upload (dummy).`);
+                      }}
+                      className="bg-indigo-600 text-white px-3 py-1 rounded-md text-sm"
+                    >
+                      Upload Resume
+                    </button>
+                  </div>
                 </div>
               </div>
             </>
@@ -175,6 +199,28 @@ export default function CandidateProfilePage() {
                     value={editForm.url}
                     onChange={handleEditChange}
                   />
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      id="resume-upload-edit"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                      className="text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        if (!resumeFile) {
+                          alert('No file selected.');
+                          return;
+                        }
+                        console.log('Selected resume file (edit):', resumeFile);
+                        alert(`Resume "${resumeFile.name}" ready to upload (dummy).`);
+                      }}
+                      className="bg-indigo-600 text-white px-3 py-1 rounded-md text-sm"
+                    >
+                      Upload Resume
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2">
