@@ -279,18 +279,35 @@ export default function JobCreater() {
             </div>
 
             <div className="flex-1 min-h-[260px] sm:min-h-[420px] border-2 border-dashed border-gray-200 rounded-md p-6 overflow-auto">
-              <div className="w-full">
+              <div className="w-full text-left">
                 {aiJobDescription ? (
-                  <div 
-                    className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ 
-                      __html: aiJobDescription
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\n\n/g, '</p><p>')
-                        .replace(/\n/g, '<br/>')
-                        .replace(/^(.*)$/, '<p>$1</p>')
-                    }}
-                  />
+                  <div className="space-y-4">
+                    {aiJobDescription.split('\n').map((line, index) => {
+                      const trimmedLine = line.trim();
+                      if (!trimmedLine) return null;
+                      
+                      // Check if line has bold markdown
+                      const boldMatch = trimmedLine.match(/^\*\*(.*?)\*\*$/);
+                      if (boldMatch) {
+                        return (
+                          <h3 key={index} className="text-lg font-semibold text-gray-900 mt-4 first:mt-0">
+                            {boldMatch[1]}
+                          </h3>
+                        );
+                      }
+                      
+                      // Regular paragraph
+                      return (
+                        <p key={index} className="text-gray-700 leading-relaxed">
+                          {trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').split('<strong>').map((part, i) => {
+                            if (i === 0) return part;
+                            const [bold, ...rest] = part.split('</strong>');
+                            return <span key={i}><strong>{bold}</strong>{rest.join('</strong>')}</span>;
+                          })}
+                        </p>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-gray-400 text-center h-full">
                     <svg
