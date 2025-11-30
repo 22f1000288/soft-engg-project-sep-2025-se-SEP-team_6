@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 import traceback
 from sqlalchemy import text
 from resume_extractor.job_descriptor import create_job_summary
-from backend.databases.models import SessionLocal, User, Application, Job, Scores
+from backend.databases.models import SessionLocal, User, Application, Job, Scores, Candidate
 from backend.databases.controller import (
     create_job,
     create_application,
@@ -242,6 +242,22 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)) -> AuthR
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    # If the new user is a candidate, create a Candidate row with sane defaults
+    if new_user.role == ROLE_CANDIDATE:
+        candidate = Candidate(
+            resume_url="",
+            skills="",
+            experience="",
+            education="",
+            profile_summary="",
+            user_id=new_user.id,
+            candidate_id=new_user.id,
+        )
+        db.add(candidate)
+        db.commit()
+        db.refresh(candidate)
+
     return build_auth_response(new_user)
 
 @app.post("/refresh", tags=["Authentication"])
