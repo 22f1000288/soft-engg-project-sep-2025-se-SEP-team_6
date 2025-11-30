@@ -124,5 +124,15 @@ class Recruiter(Base):
     permissions_level = Column(String, nullable=False)
 
 
+class Interview(Base):
+    __tablename__ = 'interview'
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(Integer, nullable=False, index=True)
+    hr_id = Column(Integer, nullable=False, index=True)
+    scheduled_time = Column(DateTime, nullable=False)
+    calendar_event_id = Column(String, nullable=True)  # Google Calendar event ID
+    status = Column(String, default="scheduled")  # scheduled, rescheduled, cancelled
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # Create the table
 Base.metadata.create_all(bind=engine)
