@@ -107,48 +107,9 @@ export default function Candidates(props) {
               </select>
             </div>
 
-            {/* Upload area */}
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              className="lg:col-span-5 border border-dashed border-gray-300 rounded-md p-6 flex items-center justify-center bg-gray-50"
-            >
-              <div className="w-full text-center">
-                <input
-                  type="file"
-                  ref={inputRef}
-                  multiple
-                  className="hidden"
-                  onChange={(e) => onFilesAdded(e.target.files)}
-                />
-                <div className="flex flex-col items-center gap-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Upload Resumes
-                  </label>
-                  <CloudUpload className="w-8 h-1 text-gray-400" />
-                  <p className="text-gray-600">Upload multiple resumes</p>
-                  <div className="mt-1">
-                    <button
-                      onClick={handleUploadClick}
-                      className="text-sm px-3 py-1 border rounded-md text-gray-700"
-                    >
-                      Select files
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
 
-            {/* Start button */}
-            <div className="lg:col-span-3 flex items-center justify-end">
-              <button
-                onClick={handleStartScreening}
-                className="ml-auto w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white px-10 py-2 rounded-md inline-flex items-center gap-3"
-              >
-                <Plus className="w-5 h-5" />
-                Start AI Screening
-              </button>
-            </div>
+            
           </div>
         </section>
 
