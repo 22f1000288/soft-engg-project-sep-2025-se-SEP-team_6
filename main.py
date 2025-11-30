@@ -140,6 +140,14 @@ class ScoreUpdate(BaseModel):
     job_id: int
     score: float = Field(..., ge=0, le=100)
 
+class InterviewRequest(BaseModel):
+    candidate_id: int
+    scheduled_time: Optional[datetime] = None  # If not provided, default to 5 days from now
+
+class InterviewRescheduleRequest(BaseModel):
+    interview_id: int
+    new_time: datetime
+
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()
@@ -523,12 +531,18 @@ async def get_job_offered_count(
 
 @app.get('/candidate-list', tags=["Candidates"])
 async def get_candidate_list(
-    User = Depends(require_roles(ROLE_HR)),
     db: Session = Depends(get_db),
+    user: User = Depends(require_roles(ROLE_HR))
 ):
-    result = db.execute(text('SELECT c.id, u.email, u.name from candidate c JOIN user u ON c.user_id = u.id'))
+    # Join candidate and user tables
+    result = db.execute(
+        text('SELECT c.id, u.name, u.email FROM candidate c JOIN user u ON c.user_id = u.id')
+    )
     candidates = result.fetchall()
-    candidate_list = [{"id": row[0], "email": row[1], "name": row[2]} for row in candidates]
+    candidate_list = [
+        {"id": row[0], "name": row[1], "email": row[2]}
+        for row in candidates
+    ]
     return {"candidates": candidate_list}
     
 
@@ -1104,6 +1118,63 @@ async def update_my_candidate_profile(
         },
     }
 
+@app.post("/schedule-interview", tags=["Interviews"])
+async def schedule_interview(
+    payload: InterviewRequest,
+    hr_user: User = Depends(require_roles(ROLE_HR)),
+    db: Session = Depends(get_db),
+):
+    candidate = db.query(User).filter(User.id == payload.candidate_id).first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    # Default scheduled_time to 5 days from now
+    scheduled_time = payload.scheduled_time or (datetime.utcnow() + timedelta(days=5))
+
+    # Call your Google Calendar API logic here (implement event creation)
+    event_id = create_google_calendar_event(
+        candidate_email=candidate.email,
+        hr_email=hr_user.email,
+        scheduled_time=scheduled_time,
+    )
+
+    interview = Interview(
+        candidate_id=candidate.id,
+        hr_id=hr_user.id,
+        scheduled_time=scheduled_time,
+        calendar_event_id=event_id,
+        status="scheduled"
+    )
+    db.add(interview)
+    db.commit()
+    db.refresh(interview)
+
+    return {"message": "Interview scheduled", "interview_id": interview.id}
+
+@app.post("/reschedule-interview", tags=["Interviews"])
+async def reschedule_interview(
+    payload: InterviewRescheduleRequest,
+    candidate_user: User = Depends(require_roles(ROLE_CANDIDATE)),
+    db: Session = Depends(get_db),
+):
+    interview = db.query(Interview).filter(
+        Interview.id == payload.interview_id,
+        Interview.candidate_id == candidate_user.id
+    ).first()
+    if not interview:
+        raise HTTPException(status_code=404, detail="Interview not found")
+
+    # Update Google Calendar event here
+    update_google_calendar_event(
+        event_id=interview.calendar_event_id,
+        new_time=payload.new_time
+    )
+
+    interview.scheduled_time = payload.new_time
+    interview.status = "rescheduled"
+    db.commit()
+    db.refresh(interview)
+    return {"message": "Interview rescheduled", "interview_id": interview.id}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
