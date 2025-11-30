@@ -1,7 +1,11 @@
 import os
 import json
 from groq import Groq
-from env import GROQ_API_KEY
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 def load_json_file(file_path):
     """Load and parse a JSON file."""

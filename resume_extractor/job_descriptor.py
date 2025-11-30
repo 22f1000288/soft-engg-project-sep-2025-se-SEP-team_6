@@ -1,6 +1,10 @@
 import os
 from groq import Groq
-from env import GROQ_API_KEY
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 import json
 
 def create_job_summary(
@@ -62,7 +66,7 @@ Keep it professional, concise, and under 300 words."""
 
 
 if __name__ == "__main__":
-    with open('job_details.json', 'r') as f:
+    with open('resume_extractor\\job_details.json', 'r') as f:
         job_data = json.load(f)
     
     job_summary = create_job_summary(
