@@ -295,12 +295,11 @@ export default function JobCreater() {
                   <path d="M17 21v-8h-6"></path>
                 </svg>
                 <textarea className="text-sm"
+                readOnly={false}
                 rows={15}
                 cols={100}
                 value={aiJobDescription}/>
-                {error && (
-                  <p className="mt-3 text-sm text-red-600">{error}</p>
-                )}
+                
               </div>
             </div>
           </div>
