@@ -278,31 +278,38 @@ export default function JobCreater() {
               </div>
             </div>
 
-            <div className="flex-1 min-h-[260px] sm:min-h-[420px] border-2 border-dashed border-gray-200 rounded-md flex items-center justify-center text-gray-400 p-6 overflow-auto">
-              <div className="text-center w-full">
-                <svg
-                  className="mx-auto mb-3"
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#cbd5e1"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <path d="M17 21v-8h-6"></path>
-                </svg>
-                <textarea 
-                  className="text-sm w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  readOnly={false}
-                  rows={15}
-                  value={aiJobDescription}
-                  onChange={(e) => setAiJobDescription(e.target.value)}
-                  placeholder="Your AI-generated job description will appear here..."
-                />
-                
+            <div className="flex-1 min-h-[260px] sm:min-h-[420px] border-2 border-dashed border-gray-200 rounded-md p-6 overflow-auto">
+              <div className="w-full">
+                {aiJobDescription ? (
+                  <div 
+                    className="prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ 
+                      __html: aiJobDescription
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n\n/g, '</p><p>')
+                        .replace(/\n/g, '<br/>')
+                        .replace(/^(.*)$/, '<p>$1</p>')
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-gray-400 text-center h-full">
+                    <svg
+                      className="mx-auto mb-3"
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#cbd5e1"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
+                      <path d="M17 21v-8h-6"></path>
+                    </svg>
+                    <p className="text-sm">Your AI-generated job description will appear here...</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
