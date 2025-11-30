@@ -183,32 +183,7 @@ export default function Communications(props) {
                       </select>
                     </div>
 
-                    <div>
-                      <label className="text-sm text-gray-700">
-                        Message Options
-                      </label>
-                      <div className="mt-1 flex gap-4">
-                        <label className="inline-flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={autoTranslate}
-                            onChange={() => setAutoTranslate((s) => !s)}
-                            className="rounded"
-                          />
-                          Auto-translate
-                        </label>
-                        <label className="inline-flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={scheduled}
-                            onChange={() => setScheduled((s) => !s)}
-                            className="rounded"
-                          />
-                          Schedule
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+                    
 
                   <div>
                     <label className="text-sm text-gray-700">Subject</label>
