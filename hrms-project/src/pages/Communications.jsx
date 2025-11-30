@@ -70,21 +70,23 @@ export default function Communications(props) {
       candidate_email: candidateEmail,
       subject,
       body: message,
+      message_type: messageType,
+      auto_translate: autoTranslate,
+      scheduled,
     };
 
     try {
-      // Use authFetch so Authorization header (tf_tokens) is sent
-      const res = await authFetch("/notify-candidate", {
+      const res = await fetch("http://localhost:8000/notify-candidate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(emailData),
       });
-
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(err.detail || `Status ${res.status}`);
+        throw new Error("Failed to send email");
       }
-
       await res.json();
       alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
       setSelectedCandidate("");
@@ -182,8 +184,8 @@ export default function Communications(props) {
                         ))}
                       </select>
                     </div>
-
-                    
+                
+                  </div>
 
                   <div>
                     <label className="text-sm text-gray-700">Subject</label>
