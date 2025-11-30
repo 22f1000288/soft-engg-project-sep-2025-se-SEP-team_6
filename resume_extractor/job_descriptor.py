@@ -80,6 +80,9 @@ if __name__ == "__main__":
         location=job_data['location'],
         api_key=GROQ_API_KEY,
     )
-    with open('job_summary.md', 'w') as f:
+
+    # Format markdown to plain string by removing markdown syntax
+    job_summary = job_summary.replace('**', '').replace('*', '').replace('#', '').replace('- ', '')
+    with open('job_summary.txt', 'w') as f:
         f.write(job_summary)
-    print("Job summary written to job_summary.md")
+    print("Job summary written to job_summary.txt")
