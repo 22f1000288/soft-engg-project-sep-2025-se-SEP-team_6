@@ -2,8 +2,8 @@ import os
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, Float, DateTime, ForeignKey
 from datetime import datetime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from .models import User, Application, Job
+from sqlalchemy.orm import sessionmaker, Session
+from .models import User, Application, Job, Scores
 from sqlalchemy import or_
 
 # Get the absolute path to the current directory (where this file lives)
@@ -306,3 +306,44 @@ if __name__ == "__main__":
     add_application(Application(id=1, candidateName="John Doe", email="candidate@example.com", position="Software Engineer", status="under-review", appliedDate="2025-10-01"))
     add_application(Application(id=2, candidateName="Jane Smith", email="jane@example.com", position="Product Manager", status="approved", appliedDate="2025-09-28"))
     add_application(Application(id=3, candidateName="Mike Johnson", email="mike@example.com", position="UX Designer", status="rejected", appliedDate="2025-09-25"))
+
+
+from sqlalchemy.orm import Session
+from datetime import datetime
+from backend.databases.models import Scores
+
+def create_or_update_score(db: Session, candidate_id: int, job_id: int, score: float) -> Scores:
+    """Create or update a candidate's score for a job."""
+    existing = db.query(Scores).filter(
+        Scores.candidate_id == candidate_id,
+        Scores.job_id == job_id
+    ).first()
+    
+    if existing:
+        existing.score = score
+        existing.updated_at = datetime.utcnow()
+    else:
+        existing = Scores(candidate_id=candidate_id, job_id=job_id, score=score)
+        db.add(existing)
+    
+    db.commit()
+    db.refresh(existing)
+    return existing
+
+
+def get_scores_for_job(db: Session, job_id: int):
+    """Get all scores for a specific job."""
+    return db.query(Scores).filter(Scores.job_id == job_id).all()
+
+
+def get_scores_for_candidate(db: Session, candidate_id: int):
+    """Get all scores for a specific candidate."""
+    return db.query(Scores).filter(Scores.candidate_id == candidate_id).all()
+
+
+def get_candidate_score_for_job(db: Session, candidate_id: int, job_id: int):
+    """Get a specific candidate's score for a job."""
+    return db.query(Scores).filter(
+        Scores.candidate_id == candidate_id,
+        Scores.job_id == job_id
+    ).first()

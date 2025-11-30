@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 import traceback
 from sqlalchemy import text
 from resume_extractor.job_descriptor import create_job_summary
-from backend.databases.models import SessionLocal, User, Application, Job
+from backend.databases.models import SessionLocal, User, Application, Job, Scores
 from backend.databases.controller import (
     create_job,
     create_application,
@@ -27,6 +27,10 @@ from backend.databases.controller import (
     delete_job,
     search_jobs,
     find_jobs_by_poster,
+    create_or_update_score,
+    get_scores_for_job,
+    get_scores_for_candidate,
+    get_candidate_score_for_job,
 )
 from typing import Optional, List
 from pydantic import Field
@@ -49,6 +53,10 @@ import tempfile
 import asyncio
 from pathlib import Path
 from resume_extractor.resume_extractor import ResumeParser
+import json
+from resume_extractor.resume_job_json_comparator import compare_resume_job
+from groq import Groq
+
 
 load_dotenv()
 
@@ -126,6 +134,11 @@ class NotifyCandidateRequest(BaseModel):
     candidate_email: str
     subject: str
     body: str
+
+class ScoreUpdate(BaseModel):
+    candidate_id: int
+    job_id: int
+    score: float = Field(..., ge=0, le=100)
 
 # Dependency to get DB session
 def get_db():
@@ -263,7 +276,7 @@ async def get_active_jobs(
 # --- Jobs CRUD endpoints ---
 
 # Create a new job
-@app.post("/jobs", tags=["Jobs"], status_code=201)
+@app.post("/create-job", tags=["Jobs"], status_code=201)
 async def api_create_job(
     payload: JobCreate,
     user: User = Depends(require_roles(ROLE_HR)),
@@ -701,34 +714,49 @@ async def upload_resume(
             try:
                 payload = decode_access_token(token)
                 user_id = payload.get("sub")
+                print(f"[DEBUG] Token decoded. user_id: {user_id}")
                 if user_id:
                     user = db.query(User).filter(User.id == int(user_id)).first()
-            except (TokenValidationError, ValueError):
+                    print(f"[DEBUG] User found: {user.email if user else 'None'}")
+            except (TokenValidationError, ValueError) as e:
+                print(f"[DEBUG] Token validation error: {e}")
                 pass
 
         if not user:
             raise HTTPException(status_code=401, detail="Not authenticated")
 
         # Save parsed JSON
-        import json
         user.resume_json = json.dumps(parsed)
         db.add(user)
         db.commit()
         db.refresh(user)
-
-        # Verify the save by querying the database directly
-        verified_user = db.query(User).filter(User.id == user.id).first()
-        print(f"[DEBUG] Verified in DB - resume_json saved: {bool(verified_user.resume_json)}")
-        print(f"[DEBUG] Resume JSON length in DB: {len(verified_user.resume_json) if verified_user.resume_json else 0}")
+        print(f"[DEBUG] Resume JSON saved for user {user.id}")
 
         print("\n=== Extracted Resume Data ===")
         print(json.dumps(parsed, indent=2, ensure_ascii=False))
 
-        return {"message": "Resume parsed and saved successfully", "data": parsed}
+        # Check if there are jobs to score against
+        job_count = db.query(Job).filter(Job.status == "open").count()
+        print(f"[DEBUG] Found {job_count} active jobs")
+
+        # Automatically process resume and generate scores
+        print(f"[DEBUG] Starting automatic score generation for user {user.id}...")
+        try:
+            scoring_result = await process_resume_and_score(user=user, db=db)
+            print(f"[DEBUG] Scoring result: {scoring_result}")
+        except Exception as score_err:
+            print(f"[DEBUG] Scoring error: {score_err}")
+            traceback.print_exc()
+
+        return {
+            "message": "Resume parsed, saved, and scored successfully",
+            "data": parsed
+        }
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
+        print(f"[DEBUG] Exception in upload_resume: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -740,6 +768,173 @@ async def upload_resume(
         except Exception:
             pass
 
-if __name__ == "__main__":
+@app.post("/scores", tags=["Scores"])
+async def update_score(
+    score_data: ScoreUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update or create a candidate's score for a job. HR/Admin only."""
+    if user.role not in [ROLE_HR, ROLE_ADMIN]:
+        raise HTTPException(status_code=403, detail="Only HR/Admin can update scores")
     
+    try:
+        score = create_or_update_score(
+            db,
+            score_data.candidate_id,
+            score_data.job_id,
+            score_data.score
+        )
+        return {"message": "Score updated", "score": score.score}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/scores/job/{job_id}", tags=["Scores"])
+async def get_job_scores(
+    job_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get all candidate scores for a job."""
+    scores = get_scores_for_job(db, job_id)
+    return {"job_id": job_id, "scores": scores}
+
+
+@app.get("/scores/candidate/{candidate_id}", tags=["Scores"])
+async def get_candidate_scores(
+    candidate_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get all scores for a candidate."""
+    scores = get_scores_for_candidate(db, candidate_id)
+    return {"candidate_id": candidate_id, "scores": scores}
+
+@app.post("/resumes/process-and-score", tags=["Resumes"])
+async def process_resume_and_score(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Process the candidate's resume_json and compare it with all jobs.
+    Generate similarity scores and store them in the scores table.
+    """
+    # Check if user has resume_json
+    if not user.resume_json:
+        raise HTTPException(status_code=400, detail="No resume found for this user")
+    
+    try:
+        # Parse resume JSON
+        resume_data = json.loads(user.resume_json)
+        
+        # Get all active jobs
+        jobs = db.query(Job).filter(Job.status == "open").all()
+        
+        if not jobs:
+            return {"message": "No active jobs found", "scores_created": 0}
+        
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
+        
+        # Initialize Groq client
+        groq_client = Groq(api_key=api_key)
+        scores_created = 0
+        
+        # Compare resume with each job
+        for job in jobs:
+            try:
+                # Create temporary job JSON
+                job_data = {
+                    "id": job.id,
+                    "title": job.title,
+                    "description": job.description,
+                    "skills_required": job.skills_required,
+                    "qualification": job.qualification,
+                    "location": job.location,
+                    "employment_type": job.employment_type,
+                }
+                
+                # Create prompt for LLM comparison
+                prompt = f"""You are an expert recruiter. Compare this resume with the job description and provide ONLY a similarity score (0-100).
+
+Resume:
+{json.dumps(resume_data, indent=2)}
+
+Job Description:
+{json.dumps(job_data, indent=2)}
+
+Analyze the match based on:
+1. Skills alignment
+2. Experience relevance
+3. Education requirements
+4. Qualifications match
+
+Respond with ONLY a JSON object like this (no other text):
+{{"similarity_score": <number between 0-100>}}"""
+
+                print(f"[DEBUG] Calling Groq API for job {job.id}...")
+                
+                # Call Groq API
+                chat_completion = groq_client.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an expert recruiter. Always respond with valid JSON only."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    model="llama-3.3-70b-versatile",
+                    temperature=0.3,
+                    max_tokens=100
+                )
+                
+                # Parse response
+                response_text = chat_completion.choices[0].message.content.strip()
+                print(f"[DEBUG] Groq response for job {job.id}: {response_text}")
+                result = json.loads(response_text)
+                similarity_score = result.get("similarity_score", 0)
+                
+                # Ensure score is between 0-100
+                similarity_score = max(0, min(100, float(similarity_score)))
+                
+                # Create or update score in database
+                score = create_or_update_score(
+                    db,
+                    user.id,
+                    job.id,
+                    similarity_score
+                )
+                
+                print(f"[DEBUG] Score created for job {job.id}: {similarity_score}")
+                scores_created += 1
+                
+            except json.JSONDecodeError as je:
+                print(f"[DEBUG] JSON decode error for job {job.id}: {je}")
+                continue
+            except Exception as je:
+                print(f"[DEBUG] Error processing job {job.id}: {type(je).__name__}: {je}")
+                traceback.print_exc()
+                continue
+        
+        return {
+            "message": "Resume processed and scores generated",
+            "candidate_id": user.id,
+            "scores_created": scores_created,
+            "total_jobs": len(jobs)
+        }
+        
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid resume JSON format")
+    except Exception as e:
+        print(f"[DEBUG] Exception in process_resume_and_score: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

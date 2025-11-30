@@ -1,8 +1,11 @@
 import os
+import sys
+sys.path.append('..')
 from sqlalchemy import create_engine, event
 from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 from backend.roles import ROLE_ADMIN
 from backend.utils import hash_password
@@ -97,6 +100,18 @@ class Communication(Base):
     type = Column(String, nullable=False)
     application_id = Column(Integer, nullable=False)
 
+class Scores(Base):
+    __tablename__ = "scores"
+
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
+    job_id = Column(Integer, ForeignKey("job.id"), nullable=False, index=True)
+    score = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (UniqueConstraint('candidate_id', 'job_id', name='unique_candidate_job_score'),)
+
 class Recruiter(Base):
     __tablename__ = 'recruiter'
     id = Column(Integer, primary_key=True, index=True)
@@ -109,5 +124,3 @@ class Recruiter(Base):
 
 # Create the table
 Base.metadata.create_all(bind=engine)
-
-# Insert admin user if not exists

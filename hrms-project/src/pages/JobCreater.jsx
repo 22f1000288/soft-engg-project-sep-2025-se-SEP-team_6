@@ -268,8 +268,51 @@ export default function JobCreater() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
               <h3 className="text-lg font-medium">Generated Job Description</h3>
               <div className="flex items-center gap-2">
-                <button onClick={handleGenerate} className="text-sm px-3 py-1 bg-green-600 text-white rounded">
-                  Publish
+                <button 
+                  onClick={async () => {
+                    if (!aiJobDescription || !form.title) {
+                      alert('Please generate a job description first.');
+                      return;
+                    }
+
+                    const payload = {
+                      posted_by: user.id,
+                      title: form.title,
+                      description: aiJobDescription,
+                      skills_required: form.skills,
+                      qualification: form.level,
+                      location: form.location,
+                      employment_type: form.department,
+                      status: "open",
+                    };
+
+                    setLoading(true);
+                    try {
+                      const res = await authFetch('/create-job', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                      });
+
+                      if (!res.ok) {
+                        const errText = await res.text();
+                        throw new Error(errText || `Server returned ${res.status}`);
+                      }
+
+                      await res.json();
+                      alert('Job published successfully!');
+                      navigate('/hr-jobs');
+                    } catch (err) {
+                      setError(err.message || 'Failed to publish job');
+                      alert('Failed to publish job: ' + err.message);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="bg-green-600 text-white px-3 py-1 rounded"
+                  disabled={loading}
+                >
+                  {loading ? 'Publishing...' : 'Publish'}
                 </button>
               </div>
             </div>
