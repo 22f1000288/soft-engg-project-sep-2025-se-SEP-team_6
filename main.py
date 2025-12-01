@@ -1,5 +1,6 @@
 import os
 import uvicorn
+from datetime import datetime
 import webbrowser
 from fastapi import FastAPI, HTTPException, Depends, Request, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -148,6 +149,24 @@ class InterviewRescheduleRequest(BaseModel):
     interview_id: int
     new_time: datetime
 
+class ApplicationSearchRequest(BaseModel):
+    search_query: str = ""
+    job_filter: str = ""
+
+class CreateApplicationRequest(BaseModel):
+    candidate_name: str
+    candidate_email: str
+    job_id: int
+    phone: str = ""
+    skills: str = ""
+    experience: str = ""
+    education: str = ""
+    profile_summary: str = ""
+    resume_url: str = ""
+
+class UpdateApplicationStatusRequest(BaseModel):
+    status: str  # One of: "new-applications", "under-review", "interview-scheduled", "final-review", "hired"
+
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()
@@ -219,6 +238,314 @@ async def read_apps(
     db: Session = Depends(get_db),
 ):
     return await list_applications_for_admin()
+
+@app.get("/applications/all", tags=["Applications"])
+async def get_all_applications(
+    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    db: Session = Depends(get_db),
+):
+    """
+    Fetch all applications with complete candidate, user, and job information using SQL queries.
+    Returns comprehensive application data for HR management.
+    """
+    try:
+        # First, let's check if there are any records in each table
+        app_count = db.execute(text("SELECT COUNT(*) FROM application")).scalar()
+        candidate_count = db.execute(text("SELECT COUNT(*) FROM candidate")).scalar()
+        user_count = db.execute(text("SELECT COUNT(*) FROM user")).scalar()
+        job_count = db.execute(text("SELECT COUNT(*) FROM job")).scalar()
+        
+        print(f"Database counts - Applications: {app_count}, Candidates: {candidate_count}, Users: {user_count}, Jobs: {job_count}")
+        
+        # SQL query to join all related tables and get comprehensive application data
+        query = text("""
+            SELECT 
+                a.id as app_id,
+                a.candidate_id,
+                a.job_id,
+                a.status_applied,
+                a.status_under_review,
+                a.status_shortlisted,
+                a.status_interviewed,
+                a.status_offered,
+                a.status_rejected,
+                a.score,
+                a.submitted_at,
+                u.name as candidate_name,
+                u.email as candidate_email,
+                c.resume_url,
+                c.skills,
+                c.experience,
+                c.education,
+                c.profile_summary,
+                j.title as job_title,
+                j.location as job_location,
+                j.employment_type,
+                j.description as job_description,
+                j.qualification as job_requirements
+            FROM application a
+            JOIN candidate c ON a.candidate_id = c.candidate_id
+            JOIN user u ON c.user_id = u.id
+            JOIN job j ON a.job_id = j.id
+            ORDER BY a.submitted_at DESC
+        """)
+        
+        result = db.execute(query)
+        applications = result.fetchall()
+
+        print("result applications", applications)
+        print(f"Number of applications found: {len(applications)}")
+        
+        # Format the response
+        formatted_applications = []
+        for row in applications:
+            # Determine application status based on boolean flags
+            status = "new-applications"
+            if row.status_rejected:
+                status = "rejected"
+            elif row.status_offered:
+                status = "hired"
+            elif row.status_interviewed:
+                status = "final-review"
+            elif row.status_shortlisted:
+                status = "interview-scheduled"
+            elif row.status_under_review:
+                status = "under-review"
+            elif row.status_applied:
+                status = "new-applications"
+            
+            application_data = {
+                "id": row.app_id,
+                "candidate_id": row.candidate_id,
+                "job_id": row.job_id,
+                "candidate_name": row.candidate_name or "",
+                "candidate_email": row.candidate_email or "",
+                "job_title": row.job_title or "",
+                "job_location": row.job_location or "",
+                "employment_type": row.employment_type or "",
+                "job_description": row.job_description or "",
+                "job_requirements": row.job_requirements or "",
+                "resume_url": row.resume_url or "",
+                "skills": row.skills or "",
+                "experience": row.experience or "",
+                "education": row.education or "",
+                "profile_summary": row.profile_summary or "",
+                "status": status,
+                "score": row.score,
+                "submitted_at": str(row.submitted_at) if row.submitted_at else None,
+                "status_flags": {
+                    "applied": bool(row.status_applied),
+                    "under_review": bool(row.status_under_review),
+                    "shortlisted": bool(row.status_shortlisted),
+                    "interviewed": bool(row.status_interviewed),
+                    "offered": bool(row.status_offered),
+                    "rejected": bool(row.status_rejected)
+                }
+            }
+            formatted_applications.append(application_data)
+        
+        return {
+            "total_applications": len(formatted_applications),
+            "applications": formatted_applications
+        }
+        
+    except Exception as e:
+        print(f"Get all applications error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch applications: {str(e)}")
+
+
+
+@app.post("/applications", tags=["Applications"])
+async def create_application(
+    request: CreateApplicationRequest,
+    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    db: Session = Depends(get_db),
+):
+    """
+    Create a new application with candidate information.
+    Creates both User, Candidate, and Application records.
+    """
+    try:
+        # Check if user with this email already exists
+        existing_user = db.query(User).filter(User.email == request.candidate_email).first()
+        
+        if existing_user:
+            # Check if this user is already a candidate
+            existing_candidate = db.query(Candidate).filter(Candidate.user_id == existing_user.id).first()
+            if not existing_candidate:
+                raise HTTPException(status_code=400, detail="User exists but is not a candidate")
+            candidate_id = existing_candidate.id
+            user_id = existing_user.id
+        else:
+            # Create new user with candidate role
+            new_user = User(
+                name=request.candidate_name,
+                email=request.candidate_email,
+                password=hash_password("defaultpass123"),  # Default password, should be changed
+                role=ROLE_CANDIDATE
+            )
+            db.add(new_user)
+            db.flush()  # Get the ID without committing
+            user_id = new_user.id
+            
+            # Create candidate record
+            new_candidate = Candidate(
+                user_id=user_id,
+                candidate_id=user_id,  # Using user_id as candidate_id
+                resume_url=request.resume_url or "",
+                skills=request.skills or "",
+                experience=request.experience or "",
+                education=request.education or "",
+                profile_summary=request.profile_summary or ""
+            )
+            db.add(new_candidate)
+            db.flush()
+            candidate_id = new_candidate.id
+        
+        # Check if job exists
+        job = db.query(Job).filter(Job.id == request.job_id).first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        # Check if application already exists for this candidate and job
+        existing_application = db.query(Application).filter(
+            and_(Application.candidate_id == candidate_id, Application.job_id == request.job_id)
+        ).first()
+        
+        if existing_application:
+            raise HTTPException(status_code=400, detail="Application already exists for this candidate and job")
+        
+        # Create application
+        new_application = Application(
+            candidate_id=candidate_id,
+            job_id=request.job_id,
+            status_applied=True,
+            status_under_review=False,
+            status_shortlisted=False,
+            status_interviewed=False,
+            status_offered=False,
+            status_rejected=False,
+            score=None,
+            submitted_at=datetime.now()
+        )
+        db.add(new_application)
+        db.commit()
+        
+        # Return the created application with full details
+        return {
+            "message": "Application created successfully",
+            "application": {
+                "id": new_application.id,
+                "candidate_id": candidate_id,
+                "job_id": request.job_id,
+                "candidate_name": request.candidate_name,
+                "candidate_email": request.candidate_email,
+                "job_title": job.title,
+                "status": "new-applications",
+                "submitted_at": new_application.submitted_at.isoformat()
+            }
+        }
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Create application error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create application: {str(e)}")
+
+@app.put("/applications/{application_id}/status", tags=["Applications"])
+async def update_application_status(
+    application_id: int,
+    request: UpdateApplicationStatusRequest,
+    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    db: Session = Depends(get_db),
+):
+    """
+    Update the status of an application when moved in Kanban board.
+    Maps Kanban column status to database boolean flags.
+    """
+    try:
+        # Find the application
+        application = db.query(Application).filter(Application.id == application_id).first()
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+        
+        # Validate status
+        valid_statuses = ["new-applications", "under-review", "interview-scheduled", "final-review", "hired", "rejected"]
+        if request.status not in valid_statuses:
+            raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+        
+        # Reset all status flags first
+        application.status_applied = False
+        application.status_under_review = False
+        application.status_shortlisted = False
+        application.status_interviewed = False
+        application.status_offered = False
+        application.status_rejected = False
+        
+        # Set the appropriate status flag based on Kanban column
+        if request.status == "new-applications":
+            application.status_applied = True
+        elif request.status == "under-review":
+            application.status_applied = True
+            application.status_under_review = True
+        elif request.status == "interview-scheduled":
+            application.status_applied = True
+            application.status_under_review = True
+            application.status_shortlisted = True
+        elif request.status == "final-review":
+            application.status_applied = True
+            application.status_under_review = True
+            application.status_shortlisted = True
+            application.status_interviewed = True
+        elif request.status == "hired":
+            application.status_applied = True
+            application.status_under_review = True
+            application.status_shortlisted = True
+            application.status_interviewed = True
+            application.status_offered = True
+        elif request.status == "rejected":
+            application.status_applied = True
+            application.status_rejected = True
+        
+        db.commit()
+        
+        return {
+            "message": "Application status updated successfully",
+            "application_id": application_id,
+            "new_status": request.status
+        }
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Update application status error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update application status: {str(e)}")
+
+@app.get("/jobs", tags=["Jobs"])
+async def get_jobs(
+    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    db: Session = Depends(get_db),
+):
+    """Get all available jobs for application creation."""
+    try:
+        jobs = db.query(Job).filter(Job.status == "active").all()
+        return [
+            {
+                "id": job.id,
+                "title": job.title,
+                "location": job.location,
+                "employment_type": job.employment_type,
+                "description": job.description
+            }
+            for job in jobs
+        ]
+    except Exception as e:
+        print(f"Get jobs error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get jobs: {str(e)}")
 
 @app.post("/login", tags=["Authentication"])
 async def login(request: Login, db: Session = Depends(get_db)) -> AuthResponse:

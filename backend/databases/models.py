@@ -39,7 +39,6 @@ class User(Base):
     resume_json = Column(String, nullable=True)
 
 class Application(Base):
-
     __tablename__ = 'application'
     # Autoincrementing primary key for applications
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -48,6 +47,7 @@ class Application(Base):
     # Job id — candidate may apply to multiple jobs, but only once per job
     job_id = Column(Integer, nullable=False, index=True)
     status_applied = Column(Boolean, nullable=True)
+    status_under_review = Column(Boolean, nullable=True)
     status_shortlisted = Column(Boolean, nullable=True)
     status_interviewed = Column(Boolean, nullable=True)
     status_offered = Column(Boolean, nullable=True)

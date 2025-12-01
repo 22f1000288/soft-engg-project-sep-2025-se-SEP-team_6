@@ -79,18 +79,19 @@ async def list_applications_for_admin():
         apps = db.query(Application).all()
         return [
             {
-                "id": a.id,
-                "candidate_id": a.candidate_id,
-                "job_id": a.job_id,
-                "status_applied": a.status_applied,
-                "status_shortlisted": a.status_shortlisted,
-                "status_interviewed": a.status_interviewed,
-                "status_offered": a.status_offered,
-                "status_rejected": a.status_rejected,
-                "score": a.score,
-                "submitted_at": a.submitted_at,
+                "id": app.id,
+                "candidate_id": app.candidate_id,
+                "job_id": app.job_id,
+                "status_applied": app.status_applied,
+                "status_under_review": app.status_under_review,
+                "status_shortlisted": app.status_shortlisted,
+                "status_interviewed": app.status_interviewed,
+                "status_offered": app.status_offered,
+                "status_rejected": app.status_rejected,
+                "score": app.score,
+                "submitted_at": app.submitted_at
             }
-            for a in apps
+            for app in apps
         ]
     finally:
         db.close()
