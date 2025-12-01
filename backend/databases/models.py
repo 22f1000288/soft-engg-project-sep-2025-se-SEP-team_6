@@ -1,8 +1,11 @@
 import os
+import sys
+sys.path.append('..')
 from sqlalchemy import create_engine, event
-from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey, UniqueConstraint, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 from backend.roles import ROLE_ADMIN
 from backend.utils import hash_password
@@ -33,12 +36,16 @@ class User(Base):
     password = Column(String, nullable=False)
     role = Column(String, nullable=False)
     name = Column(String, nullable=False)
+    resume_json = Column(String, nullable=True)
 
 class Application(Base):
     __tablename__ = 'application'
-    id = Column(Integer, primary_key=True, index=True)
-    candidate_id = Column(Integer, primary_key=True)
-    job_id = Column(Integer, primary_key=True)
+    # Autoincrementing primary key for applications
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    # Candidate/user id
+    candidate_id = Column(Integer, nullable=False, index=True)
+    # Job id — candidate may apply to multiple jobs, but only once per job
+    job_id = Column(Integer, nullable=False, index=True)
     status_applied = Column(Boolean, nullable=True)
     status_under_review = Column(Boolean, nullable=True)
     status_shortlisted = Column(Boolean, nullable=True)
@@ -47,6 +54,8 @@ class Application(Base):
     status_rejected = Column(Boolean, nullable=True)
     score = Column(Float, nullable=True)
     submitted_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (UniqueConstraint('candidate_id', 'job_id', name='uix_candidate_job'),)
 
 class Job(Base):
     __tablename__ = 'job'
@@ -85,11 +94,22 @@ class Communication(Base):
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, nullable=False)
     receiver_id = Column(Integer, nullable=False)
-    message_id = Column(Integer, nullable=False)
-    content = Column(String, nullable=False)
-    timestamp = Column(DateTime, nullable=False)
+    content = Column(Text, nullable=False)
+    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
     type = Column(String, nullable=False)
-    application_id = Column(Integer, nullable=False)
+    application_id = Column(Integer, nullable=True)
+
+class Scores(Base):
+    __tablename__ = "scores"
+
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
+    job_id = Column(Integer, ForeignKey("job.id"), nullable=False, index=True)
+    score = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (UniqueConstraint('candidate_id', 'job_id', name='unique_candidate_job_score'),)
 
 class Recruiter(Base):
     __tablename__ = 'recruiter'
@@ -101,27 +121,15 @@ class Recruiter(Base):
     permissions_level = Column(String, nullable=False)
 
 
+class Interview(Base):
+    __tablename__ = 'interview'
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(Integer, nullable=False, index=True)
+    hr_id = Column(Integer, nullable=False, index=True)
+    scheduled_time = Column(DateTime, nullable=False)
+    calendar_event_id = Column(String, nullable=True)  # Google Calendar event ID
+    status = Column(String, default="scheduled")  # scheduled, rescheduled, cancelled
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # Create the table
 Base.metadata.create_all(bind=engine)
-
-# Insert admin user if not exists
-def init_admin():
-    db = SessionLocal()
-    admin = db.query(User).filter(User.email == "admin@company.com").first()
-    if not admin:
-        admin = User(
-            id=1,
-            email="admin@company.com",
-            password=hash_password("admin123"),
-            role=ROLE_ADMIN,
-            name="Admin User"
-        )
-        db.add(admin)
-        db.commit()
-    db.close()
-
-if __name__ == "__main__":
-    init_admin()
-
-
-    

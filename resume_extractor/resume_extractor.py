@@ -636,7 +636,7 @@ if __name__ == "__main__":
     parser = ResumeParser(api_key)
     
     # Parse resume
-    resume_data = parser.parse_resume("resume.pdf")
+    resume_data = parser.parse_resume("resume_extractor\\Resume.pdf")
     
     print("Parsed Resume Data:")
     print(json.dumps(resume_data, indent=2))

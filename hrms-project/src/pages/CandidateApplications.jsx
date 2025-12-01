@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import CandidateNavbar from "../components/CandidateNavbar";
+import useAuth from "../contexts/useAuth";
 
 const SAMPLE_APPLICATIONS = [
   {
@@ -31,7 +32,31 @@ const SAMPLE_APPLICATIONS = [
 export default function CandidateApplications() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [applications, setApplications] = useState(SAMPLE_APPLICATIONS);
+  const { authFetch } = useAuth();
+  const [applications, setApplications] = useState([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await authFetch("/candidate/applications");
+        const data = await res.json();
+        // map backend shape to frontend display shape
+        const mapped = (Array.isArray(data) ? data : []).map((a) => ({
+          id: a.application_id,
+          jobTitle: a.job_title || `Job ${a.job_id}`,
+          company: "", // backend does not expose poster name currently
+          appliedOn: a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : "",
+          status: a.status || "Unknown",
+          location: a.location || "",
+        }));
+        setApplications(mapped);
+      } catch (err) {
+        console.error("Failed to load applications", err);
+        setApplications(SAMPLE_APPLICATIONS);
+      }
+    };
+    load();
+  }, [authFetch]);
 
   const filtered = useMemo(() => {
     return applications.filter((a) => {
@@ -46,9 +71,20 @@ export default function CandidateApplications() {
     });
   }, [applications, query, statusFilter]);
 
-  const withdraw = (id) => {
+  const withdraw = async (id) => {
     if (!confirm("Withdraw application? This action cannot be undone.")) return;
-    setApplications((prev) => prev.filter((p) => p.id !== id));
+    try {
+      const res = await authFetch(`/applications/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.detail || 'Withdraw failed');
+      }
+      setApplications((prev) => prev.filter((p) => p.id !== id));
+      alert("Application withdrawn");
+    } catch (err) {
+      console.error("Withdraw failed", err);
+      alert(err.message || "Unable to withdraw application");
+    }
   };
 
   return (

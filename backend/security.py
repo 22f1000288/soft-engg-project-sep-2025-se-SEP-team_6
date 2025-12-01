@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict
 
 import jwt
-from jwt import PyJWTError
+from jwt.exceptions import PyJWTError
 from dotenv import load_dotenv
 
 load_dotenv()

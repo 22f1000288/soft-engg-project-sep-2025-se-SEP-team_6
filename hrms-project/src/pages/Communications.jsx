@@ -15,6 +15,7 @@ export default function Communications(props) {
   const [autoTranslate, setAutoTranslate] = useState(false);
   const [scheduled, setScheduled] = useState(false);
   const [candidateList, setCandidateList] = useState([]);
+  const [recent, setRecent] = useState([]);
 
   const messageTypes = [
     "Select type",
@@ -24,35 +25,24 @@ export default function Communications(props) {
     "Other",
   ];
 
-  const recent = [
-    {
-      id: 1,
-      name: "Sarah Chen",
-      snippet:
-        "Thank you for interviewing with us. We were impressed with your technical skills and problem-solving approach...",
-      time: "2 hours ago",
-      tags: ["Delivered", "Translated"],
-      color: "text-green-600",
-    },
-    {
-      id: 2,
-      name: "Michael Rodriguez",
-      snippet:
-        "We'd like to invite you for a technical interview. Please confirm your availability for the proposed time slots...",
-      time: "Tomorrow 9:00 AM",
-      tags: ["Scheduled"],
-      color: "text-yellow-600",
-    },
-    {
-      id: 3,
-      name: "Emily Johnson",
-      snippet:
-        "Thank you for your application. We're currently reviewing your profile and will update you on next steps...",
-      time: "1 day ago",
-      tags: ["Delivered", "Auto-sent"],
-      color: "text-green-600",
-    },
-  ];
+  useEffect(() => {
+    authFetch("/candidate-list")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch candidates");
+        return res.json();
+      })
+      .then((data) => setCandidateList(data.candidates ?? []))
+      .catch((err) => console.error("Error fetching candidate list:", err));
+
+    // Fetch recent communications
+    authFetch("/recent-communications")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch recent communications");
+        return res.json();
+      })
+      .then((data) => setRecent(data.recent ?? []))
+      .catch((err) => console.error("Error fetching recent communications:", err));
+  }, [authFetch]);
 
   const handleSend = async () => {
     if (!selectedCandidate || !messageType || message.trim().length === 0) {
@@ -60,11 +50,15 @@ export default function Communications(props) {
       return;
     }
 
-    // Find the selected candidate's email
     const selectedCandidateData = candidateList.find(
       (c) => c.name === selectedCandidate
     );
     const candidateEmail = selectedCandidateData ? selectedCandidateData.email : "";
+
+    if (!candidateEmail) {
+      alert("Selected candidate has no email");
+      return;
+    }
 
     const emailData = {
       candidate_email: candidateEmail,
@@ -76,16 +70,34 @@ export default function Communications(props) {
     };
 
     try {
-      const res = await authFetch("/notify-candidate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(emailData),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to send email");
+      // Prefer authFetch (adds Authorization header). If not available, attach token from tf_tokens.
+      let res;
+      if (typeof authFetch === "function") {
+        res = await authFetch("/notify-candidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(emailData),
+        });
+      } else {
+        const tokenData = localStorage.getItem("tf_tokens");
+        if (!tokenData) throw new Error("Not authenticated");
+        const token = JSON.parse(tokenData).accessToken;
+        res = await fetch("http://localhost:8000/notify-candidate", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify(emailData),
+        });
       }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || `Status ${res.status}`);
+      }
+
       await res.json();
       alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
       setSelectedCandidate("");
@@ -103,22 +115,6 @@ export default function Communications(props) {
   const handlePreview = () => {
     alert("Preview\n\n" + message);
   };
-
-  useEffect(() => {
-    authFetch("/candidate-list")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch candidates");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setCandidateList(data.candidates ?? []);
-      })
-      .catch((err) => {
-        console.error("Error fetching candidate list:", err);
-      });
-  }, [authFetch]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -183,32 +179,7 @@ export default function Communications(props) {
                         ))}
                       </select>
                     </div>
-
-                    <div>
-                      <label className="text-sm text-gray-700">
-                        Message Options
-                      </label>
-                      <div className="mt-1 flex gap-4">
-                        <label className="inline-flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={autoTranslate}
-                            onChange={() => setAutoTranslate((s) => !s)}
-                            className="rounded"
-                          />
-                          Auto-translate
-                        </label>
-                        <label className="inline-flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={scheduled}
-                            onChange={() => setScheduled((s) => !s)}
-                            className="rounded"
-                          />
-                          Schedule
-                        </label>
-                      </div>
-                    </div>
+                
                   </div>
 
                   <div>

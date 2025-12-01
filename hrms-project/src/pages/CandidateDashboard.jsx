@@ -18,17 +18,18 @@ export default function CandidateDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [applicationsRes, interviewsRes, offersRes] = await Promise.all([
-          authFetch("/application-count"),
-          authFetch("/interview-count"),
-          authFetch("/job-offered-count"),
-        ]);
-        const applicationsData = await applicationsRes.json();
-        const interviewsData = await interviewsRes.json();
-        const offersData = await offersRes.json();
-        setApplicationCount(applicationsData.application_count ?? 0);
-        setInterviewCount(interviewsData.interview_count ?? 0);
-        setjobOfferedCount(offersData.offer_count ?? 0);
+        const res = await authFetch("/candidate/applications");
+        const apps = await res.json();
+        const applicationCount = Array.isArray(apps) ? apps.length : 0;
+        const interviewCount = Array.isArray(apps)
+          ? apps.filter((a) => a.status === "Interview" || a.status_interviewed).length
+          : 0;
+        const jobOfferedCount = Array.isArray(apps)
+          ? apps.filter((a) => a.status === "Offered" || a.status_offered).length
+          : 0;
+        setApplicationCount(applicationCount);
+        setInterviewCount(interviewCount);
+        setjobOfferedCount(jobOfferedCount);
       } catch (err) {
         console.error("Error loading candidate dashboard stats:", err);
       }
@@ -61,22 +62,47 @@ export default function CandidateDashboard() {
     },
   ];
 
-  const applications = [
-    {
-      title: "Frontend Developer",
-      company: "TechCorp Inc.",
-      appliedDate: "Applied 2 days ago",
-      status: "Under Review",
-      statusColor: "bg-yellow-100 text-yellow-700",
-    },
-    {
-      title: "React Developer",
-      company: "StartupXYZ",
-      appliedDate: "Applied 5 days ago",
-      status: "Interview Scheduled",
-      statusColor: "bg-green-100 text-green-700",
-    },
-  ];
+  const [recentApplications, setRecentApplications] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadRecent = async () => {
+      try {
+        const res = await authFetch("/candidate/applications");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        const mapped = data.slice(0, 5).map((a) => {
+          // map backend shape to the UI shape used below
+          const status = a.status || (a.status_applied ? "Applied" : "Unknown");
+          const statusColor =
+            status === "Rejected"
+              ? "bg-red-100 text-red-700"
+              : status === "Offered"
+              ? "bg-green-100 text-green-700"
+              : status === "Interview"
+              ? "bg-green-50 text-green-700"
+              : "bg-yellow-100 text-yellow-700";
+
+          return {
+            id: a.application_id,
+            title: a.job_title || `Job ${a.job_id}`,
+            company: "", // not provided by backend currently
+            appliedDate: a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : "",
+            status,
+            statusColor,
+          };
+        });
+        if (mounted) setRecentApplications(mapped);
+      } catch (err) {
+        console.error("Failed to load recent applications", err);
+      }
+    };
+    loadRecent();
+    return () => {
+      mounted = false;
+    };
+  }, [authFetch]);
 
   
 
@@ -127,7 +153,7 @@ export default function CandidateDashboard() {
             </h2>
 
             <div className="space-y-4">
-              {applications.map((app, index) => (
+              {recentApplications.map((app, index) => (
                 <div
                   key={index}
                   className="border border-gray-200 rounded-xl p-5 hover:border-indigo-300 transition cursor-pointer"

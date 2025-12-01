@@ -6,21 +6,21 @@ SEED_USERS = [
     {
         "id": 1,
         "name": "Admin User",
-        "email": "admin@example.com",
+        "email": "admin@company.com",
         "role": ROLE_ADMIN,
         "password": "admin123",
     },
     {
         "id": 2,
         "name": "MSR",
-        "email": "msr@iitm.com",
+        "email": "msr@company.com",
         "role": ROLE_HR,
         "password": "test123",
     },
     {
         "id": 3,
-        "name": "Shamanthak",
-        "email": "shamanthakreddy@gmail.com",
+        "name": "John",
+        "email": "john@gmail.com",
         "role": ROLE_CANDIDATE,
         "password": "test123",
     },
@@ -29,7 +29,7 @@ SEED_USERS = [
 SEED_CANDIDATES = [
     {
         "id": 1,
-        "resume_url": "https://shamanthak-portfolio.vercel.app/",
+        "resume_url": "https://john-resume.vercel.app/",
         "skills": "Python, FastAPI, PostgreSQL",
         "experience": "5 years",
         "education": "B.Tech - Computer Science",
@@ -43,7 +43,7 @@ SEED_RECRUITERS = [
     {
         "id": 1,
         "user_id": 2,
-        "organization": "IITM",
+        "organization": "Company",
         "designation": "Senior HR Manager",
         "department": "HR",
         "permissions_level": "level_2",

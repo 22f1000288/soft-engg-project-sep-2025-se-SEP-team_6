@@ -133,6 +133,7 @@ export function AuthProvider({ children }) {
       setSession(data);
       return data.access_token;
     } catch (err) {
+      setError(err.message || 'Refresh failed');
       logout();
       return null;
     }
