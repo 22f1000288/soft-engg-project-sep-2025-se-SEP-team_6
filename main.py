@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 import traceback
 from sqlalchemy import text
 from resume_extractor.job_descriptor import create_job_summary
-from backend.databases.models import SessionLocal, User, Application, Job, Scores, Candidate, Communication
+from backend.databases.models import SessionLocal, User, Application, Job, Scores, Candidate, Communication, Interview
 from backend.databases.controller import (
     create_job,
     create_application,
@@ -531,8 +531,7 @@ async def get_job_offered_count(
 
 @app.get('/candidate-list', tags=["Candidates"])
 async def get_candidate_list(
-    db: Session = Depends(get_db),
-    user: User = Depends(require_roles(ROLE_HR))
+    db: Session = Depends(get_db)
 ):
     # Join candidate and user tables
     result = db.execute(
@@ -903,7 +902,7 @@ async def process_resume_and_score(
         if not jobs:
             return {"message": "No active jobs found", "scores_created": 0}
         
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = os.getenv("GROQ_API")
         if not api_key:
             raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
         
@@ -1120,26 +1119,20 @@ async def update_my_candidate_profile(
 @app.post("/schedule-interview", tags=["Interviews"])
 async def schedule_interview(
     payload: InterviewRequest,
-    hr_user: User = Depends(require_roles(ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     candidate = db.query(User).filter(User.id == payload.candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
-    # Default scheduled_time to 5 days from now
     scheduled_time = payload.scheduled_time or (datetime.utcnow() + timedelta(days=5))
 
-    # Call your Google Calendar API logic here (implement event creation)
-    event_id = create_google_calendar_event(
-        candidate_email=candidate.email,
-        hr_email=hr_user.email,
-        scheduled_time=scheduled_time,
-    )
+    # Call with correct arguments
+    event_id = create_calendar_event(candidate.email, scheduled_time)
 
     interview = Interview(
         candidate_id=candidate.id,
-        hr_id=hr_user.id,
+        hr_id=None,
         scheduled_time=scheduled_time,
         calendar_event_id=event_id,
         status="scheduled"
@@ -1164,7 +1157,7 @@ async def reschedule_interview(
         raise HTTPException(status_code=404, detail="Interview not found")
 
     # Update Google Calendar event here
-    update_google_calendar_event(
+    create_calendar_event(
         event_id=interview.calendar_event_id,
         new_time=payload.new_time
     )
