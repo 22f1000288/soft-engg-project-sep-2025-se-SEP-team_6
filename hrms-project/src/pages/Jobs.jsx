@@ -41,31 +41,39 @@ export default function Jobs(props) {
   }, [jobs, query, departmentFilter, statusFilter, sortBy]);
 
   const fetchJobs = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/jobs`);
-      if (!res.ok) throw new Error(`Failed to load jobs (${res.status})`);
-      const data = await res.json();
-      // normalize jobs to local shape
-      const normalized = data.map((j) => ({
-        id: j.id,
-        title: j.title,
-        department: j.employment_type || j.department || j.qualification || "",
-        location: j.location,
-        type: j.employment_type || "",
-        posted_at: j.created_at,
-        applicants: j.applicants ?? 0,
-        status: j.status ? (String(j.status).toLowerCase() === 'open' ? 'Active' : (String(j.status).charAt(0).toUpperCase() + String(j.status).slice(1))) : 'Unknown',
-        raw: j,
-      }));
-      setJobs(normalized);
-    } catch (err) {
-      setError(err.message || String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  setLoading(true);
+  setError("");
+  try {
+    const res = await authFetch(`/jobs`, {
+      method: "GET",
+    });
+    if (!res.ok) throw new Error(`Failed to load jobs (${res.status})`);
+    const data = await res.json();
+
+    const normalized = data.map((j) => ({
+      id: j.id,
+      title: j.title,
+      department: j.employment_type || j.department || j.qualification || "",
+      location: j.location,
+      type: j.employment_type || "",
+      posted_at: j.created_at,
+      applicants: j.applicants ?? 0,
+      status: j.status
+        ? String(j.status).toLowerCase() === "open"
+          ? "Active"
+          : String(j.status).charAt(0).toUpperCase() + String(j.status).slice(1)
+        : "Unknown",
+      raw: j,
+    }));
+
+    setJobs(normalized);
+  } catch (err) {
+    setError(err.message || String(err));
+  } finally {
+    setLoading(false);
+  }
+}, [authFetch]);
+
 
   useEffect(() => {
     fetchJobs();

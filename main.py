@@ -525,27 +525,27 @@ async def update_application_status(
         print(f"Update application status error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update application status: {str(e)}")
 
-@app.get("/jobs", tags=["Jobs"])
-async def get_jobs(
-    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
-    db: Session = Depends(get_db),
-):
-    """Get all available jobs for application creation."""
-    try:
-        jobs = db.query(Job).filter(Job.status == "active").all()
-        return [
-            {
-                "id": job.id,
-                "title": job.title,
-                "location": job.location,
-                "employment_type": job.employment_type,
-                "description": job.description
-            }
-            for job in jobs
-        ]
-    except Exception as e:
-        print(f"Get jobs error: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get jobs: {str(e)}")
+# @app.get("/jobs", tags=["Jobs"])
+# async def get_jobs(
+#     User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+#     db: Session = Depends(get_db),
+# ):
+#     """Get all available jobs for application creation."""
+#     try:
+#         jobs = db.query(Job).filter(Job.status == "active").all()
+#         return [
+#             {
+#                 "id": job.id,
+#                 "title": job.title,
+#                 "location": job.location,
+#                 "employment_type": job.employment_type,
+#                 "description": job.description
+#             }
+#             for job in jobs
+#         ]
+#     except Exception as e:
+#         print(f"Get jobs error: {e}")
+#         raise HTTPException(status_code=500, detail=f"Failed to get jobs: {str(e)}")
 
 @app.post("/login", tags=["Authentication"])
 async def login(request: Login, db: Session = Depends(get_db)) -> AuthResponse:
