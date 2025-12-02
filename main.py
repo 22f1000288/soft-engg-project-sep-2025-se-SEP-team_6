@@ -59,6 +59,13 @@ import json
 from resume_extractor.resume_job_json_comparator import compare_resume_job
 from groq import Groq
 from sqlalchemy import and_
+from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from fastapi.responses import RedirectResponse
+from fastapi import Request
+import json
+
 
 
 
@@ -235,9 +242,9 @@ async def read_users(
 ):
     return await list_users()
 
-@app.get("/applications/all/", tags=["Applications"])
+@app.get("/applications/all", tags=["Applications"])
 async def get_all_applications(
-    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    User = Depends(require_roles(ROLE_CANDIDATE, ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     """
@@ -245,6 +252,7 @@ async def get_all_applications(
     """
 
     try:
+        print('checking the endpoint')
         query = text("""
             SELECT 
                 a.id AS app_id,
@@ -275,7 +283,7 @@ async def get_all_applications(
                 j.qualification AS job_requirements
 
             FROM application a
-            JOIN candidate c ON a.candidate_id = c.id
+            JOIN candidate c ON a.candidate_id = c.user_id
             JOIN user u ON c.user_id = u.id
             JOIN job j ON a.job_id = j.id
 
@@ -283,7 +291,7 @@ async def get_all_applications(
         """)
 
         result = db.execute(query).fetchall()
-
+        print(result)
         applications = []
         for row in result:
 
@@ -337,6 +345,7 @@ async def get_all_applications(
                 }
             })
 
+        print(applications)
         return {
             "total_applications": len(applications),
             "applications": applications
@@ -348,19 +357,19 @@ async def get_all_applications(
 
 
 
-@app.get("/applications/", tags=["Applications"])
-async def read_apps(
-    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
-    db: Session = Depends(get_db),
-):
-    return await list_applications_for_admin()
+# @app.get("/applications/", tags=["Applications"])
+# async def read_apps(
+#     User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+#     db: Session = Depends(get_db),
+# ):
+#     return await list_applications_for_admin()
 
-@app.get("/applications/all", tags=["Applications"])
-async def get_all_applications_redirect(
-    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
-    db: Session = Depends(get_db),
-):
-    return await get_all_applications(User, db)
+# @app.get("/applications/all", tags=["Applications"])
+# async def get_all_applications_redirect(
+#     User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+#     db: Session = Depends(get_db),
+# ):
+#     return await get_all_applications(User, db)
 
 @app.post("/applications", tags=["Applications"])
 # async def create_application(
@@ -914,7 +923,7 @@ async def get_hired_candidates(
 
 @app.get('/application-count', tags=["Applications"])
 async def get_application_count(
-    User = Depends(require_roles(ROLE_CANDIDATE)),
+    User = Depends(require_roles(ROLE_CANDIDATE,ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     result = db.execute(text('SELECT COUNT(*) FROM application'))
@@ -925,7 +934,7 @@ async def get_application_count(
 
 @app.get('/interview-count', tags=["Interviews"])
 async def get_interview_count(
-    User = Depends(require_roles(ROLE_CANDIDATE)),
+    User = Depends(require_roles(ROLE_CANDIDATE,ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     try:
@@ -940,7 +949,7 @@ async def get_interview_count(
 
 @app.get('/job-offered-count', tags=["Jobs"])
 async def get_job_offered_count(
-    User = Depends(require_roles(ROLE_CANDIDATE)),
+    User = Depends(require_roles(ROLE_CANDIDATE, ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     result = db.execute(text("SELECT COUNT(*) FROM application WHERE status_offered = :status"), {"status": 1})
