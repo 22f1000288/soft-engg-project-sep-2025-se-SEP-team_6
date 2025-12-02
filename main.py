@@ -1295,6 +1295,43 @@ async def get_candidate_scores(
     scores = get_scores_for_candidate(db, candidate_id)
     return {"candidate_id": candidate_id, "scores": scores}
 
+
+def compare_resume_and_job_json(resume_json: dict, job_json: dict):
+    """
+    Wrapper so compare_resume_job() can accept dicts by writing them to temp files.
+    """
+    import tempfile
+    import json
+    import os
+
+    try:
+        # Write resume JSON to temp file
+        with tempfile.NamedTemporaryFile("w", delete=False, suffix=".json") as r:
+            json.dump(resume_json, r)
+            resume_path = r.name
+
+        # Write job JSON to temp file
+        with tempfile.NamedTemporaryFile("w", delete=False, suffix=".json") as j:
+            json.dump(job_json, j)
+            job_path = j.name
+
+        # Call existing comparator
+        result = compare_resume_job(resume_path, job_path)
+
+        # Cleanup
+        os.remove(resume_path)
+        os.remove(job_path)
+
+        return result
+
+    except Exception as e:
+        print("compare_resume_and_job_json ERROR:", e)
+        return {"similarity_score": 0}
+
+
+
+
+
 @app.post("/resumes/process-and-score", tags=["Resumes"])
 async def process_resume_and_score(
     user: User = Depends(get_current_user),
@@ -1609,6 +1646,63 @@ async def get_recent_communications(db: Session = Depends(get_db)):
             "color": "text-blue-600",
         })
     return {"recent": out}
+
+@app.post("/jobs/{job_id}/score", tags=["Scores"])
+async def score_all_candidates_for_job(
+    job_id: int,
+    user: User = Depends(require_roles(ROLE_HR)),
+    db: Session = Depends(get_db),
+):
+    """HR triggers scoring for ALL candidates who applied to a job."""
+    try:
+        # Get all candidates who applied to this job
+        applications = db.query(Application).filter(Application.job_id == job_id).all()
+        if not applications:
+            return {"message": "No applications found for this job"}
+
+        # Get job details
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        # Score each candidate
+        scores_created = 0
+        for app in applications:
+            candidate_user = db.query(User).filter(User.id == app.candidate_id).first()
+
+            # Skip users without resumes
+            if not candidate_user or not candidate_user.resume_json:
+                continue  
+
+            resume_data = json.loads(candidate_user.resume_json)
+
+            job_data = {
+                "title": job.title,
+                "description": job.description,
+                "skills_required": job.skills_required,
+                "qualification": job.qualification,
+            }
+
+            similarity = compare_resume_and_job_json(resume_data, job_data)
+            score_value = similarity.get("similarity_score", 0)
+
+            # Store/update score
+            create_or_update_score(db, candidate_user.id, job.id, score_value)
+            scores_created += 1
+
+        return {
+            "message": "Scoring complete",
+            "scores_created": scores_created,
+            "job_id": job_id
+        }
+
+    except Exception as e:
+        print("Score error:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

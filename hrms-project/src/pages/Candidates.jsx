@@ -82,6 +82,39 @@ export default function Candidates(props) {
     }
   };
 
+
+  const handleScoreResumes = async () => {
+    if (!selectedJob) {
+      alert("Please select a job first.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await authFetch(`/jobs/${selectedJob}/score`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || "Scoring failed");
+      }
+
+      alert("Scoring complete!");
+
+      // Refresh UI
+      await fetchTopCandidatesForJob(selectedJob);
+
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const handleJobChange = (e) => {
     const jobId = e.target.value;
     setSelectedJob(jobId);
@@ -144,8 +177,9 @@ export default function Candidates(props) {
         )}
 
         {/* Top control card */}
-        <section className="bg-white rounded-2xl p-6 shadow-lg mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+          <section className="bg-white rounded-2xl p-6 shadow-lg mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+            
             {/* Job select */}
             <div className="lg:col-span-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -164,8 +198,21 @@ export default function Candidates(props) {
                 ))}
               </select>
             </div>
+
+            {/* SCORE BUTTON */}
+            <div className="lg:col-span-2 flex items-end">
+              <button
+                onClick={handleScoreResumes}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition w-full"
+              >
+                Score
+              </button>
+            </div>
+
           </div>
         </section>
+
+
 
         {/* Content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
