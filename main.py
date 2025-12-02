@@ -33,6 +33,7 @@ from backend.databases.controller import (
     get_scores_for_candidate,
     get_candidate_score_for_job,
 )
+from backend.databases.controller import create_application as create_application_db
 from typing import Optional, List
 from pydantic import Field
 from datetime import datetime
@@ -57,6 +58,8 @@ from resume_extractor.resume_extractor import ResumeParser
 import json
 from resume_extractor.resume_job_json_comparator import compare_resume_job
 from groq import Groq
+from sqlalchemy import and_
+
 
 
 load_dotenv()
@@ -356,9 +359,106 @@ async def get_all_applications(
 
 
 @app.post("/applications", tags=["Applications"])
-async def create_application(
+# async def create_application(
+#     request: CreateApplicationRequest,
+#     current_user: User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+#     db: Session = Depends(get_db),
+# ):
+#     """
+#     Create a new application with candidate information.
+#     Creates both User, Candidate, and Application records.
+#     """
+#     try:
+#         # Check if user with this email already exists
+#         existing_user = db.query(User).filter(User.email == request.candidate_email).first()
+        
+#         if existing_user:
+#             # Check if this user is already a candidate
+#             existing_candidate = db.query(Candidate).filter(Candidate.user_id == existing_user.id).first()
+#             if not existing_candidate:
+#                 raise HTTPException(status_code=400, detail="User exists but is not a candidate")
+#             candidate_id = existing_candidate.id
+#             user_id = existing_user.id
+#         else:
+#             # Create new user with candidate role
+#             new_user = User(
+#                 name=request.candidate_name,
+#                 email=request.candidate_email,
+#                 password=hash_password("defaultpass123"),  # Default password, should be changed
+#                 role=ROLE_CANDIDATE
+#             )
+#             db.add(new_user)
+#             db.flush()  # Get the ID without committing
+#             user_id = new_user.id
+            
+#             # Create candidate record
+#             new_candidate = Candidate(
+#                 user_id=user_id,
+#                 candidate_id=user_id,  # Using user_id as candidate_id
+#                 resume_url=request.resume_url or "",
+#                 skills=request.skills or "",
+#                 experience=request.experience or "",
+#                 education=request.education or "",
+#                 profile_summary=request.profile_summary or ""
+#             )
+#             db.add(new_candidate)
+#             db.flush()
+#             candidate_id = new_candidate.id
+        
+#         # Check if job exists
+#         job = db.query(Job).filter(Job.id == request.job_id).first()
+#         if not job:
+#             raise HTTPException(status_code=404, detail="Job not found")
+        
+#         # Check if application already exists for this candidate and job
+#         existing_application = db.query(Application).filter(
+#             and_(Application.candidate_id == candidate_id, Application.job_id == request.job_id)
+#         ).first()
+        
+#         if existing_application:
+#             raise HTTPException(status_code=400, detail="Application already exists for this candidate and job")
+        
+#         # Create application
+#         new_application = Application(
+#             candidate_id=candidate_id,
+#             job_id=request.job_id,
+#             status_applied=True,
+#             status_under_review=False,
+#             status_shortlisted=False,
+#             status_interviewed=False,
+#             status_offered=False,
+#             status_rejected=False,
+#             score=None,
+#             submitted_at=datetime.now()
+#         )
+#         db.add(new_application)
+#         db.commit()
+        
+#         # Return the created application with full details
+#         return {
+#             "message": "Application created successfully",
+#             "application": {
+#                 "id": new_application.id,
+#                 "candidate_id": candidate_id,
+#                 "job_id": request.job_id,
+#                 "candidate_name": request.candidate_name,
+#                 "candidate_email": request.candidate_email,
+#                 "job_title": job.title,
+#                 "status": "new-applications",
+#                 "submitted_at": new_application.submitted_at.isoformat()
+#             }
+#         }
+        
+#     except HTTPException:
+#         db.rollback()
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         print(f"Create application error: {e}")
+#         raise HTTPException(status_code=500, detail=f"Failed to create application: {str(e)}")
+async def api_create_application(
     request: CreateApplicationRequest,
-    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    current_user: User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     """
@@ -368,70 +468,69 @@ async def create_application(
     try:
         # Check if user with this email already exists
         existing_user = db.query(User).filter(User.email == request.candidate_email).first()
-        
+
         if existing_user:
             # Check if this user is already a candidate
-            existing_candidate = db.query(Candidate).filter(Candidate.user_id == existing_user.id).first()
+            existing_candidate = (
+                db.query(Candidate).filter(Candidate.user_id == existing_user.id).first()
+            )
             if not existing_candidate:
                 raise HTTPException(status_code=400, detail="User exists but is not a candidate")
+
             candidate_id = existing_candidate.id
             user_id = existing_user.id
+
         else:
             # Create new user with candidate role
             new_user = User(
                 name=request.candidate_name,
                 email=request.candidate_email,
-                password=hash_password("defaultpass123"),  # Default password, should be changed
-                role=ROLE_CANDIDATE
+                password=hash_password("defaultpass123"),
+                role=ROLE_CANDIDATE,
             )
             db.add(new_user)
-            db.flush()  # Get the ID without committing
+            db.flush()
             user_id = new_user.id
-            
+
             # Create candidate record
             new_candidate = Candidate(
                 user_id=user_id,
-                candidate_id=user_id,  # Using user_id as candidate_id
+                candidate_id=user_id,
                 resume_url=request.resume_url or "",
                 skills=request.skills or "",
                 experience=request.experience or "",
                 education=request.education or "",
-                profile_summary=request.profile_summary or ""
+                profile_summary=request.profile_summary or "",
             )
             db.add(new_candidate)
             db.flush()
             candidate_id = new_candidate.id
-        
+
         # Check if job exists
         job = db.query(Job).filter(Job.id == request.job_id).first()
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
-        
-        # Check if application already exists for this candidate and job
-        existing_application = db.query(Application).filter(
-            and_(Application.candidate_id == candidate_id, Application.job_id == request.job_id)
-        ).first()
-        
+
+        # Check if application already exists
+        existing_application = (
+            db.query(Application)
+            .filter(and_(Application.candidate_id == candidate_id, Application.job_id == request.job_id))
+            .first()
+        )
+
         if existing_application:
-            raise HTTPException(status_code=400, detail="Application already exists for this candidate and job")
-        
-        # Create application
+            raise HTTPException(status_code=400, detail="Application already exists for this job")
+
+        # Create new application
         new_application = Application(
             candidate_id=candidate_id,
             job_id=request.job_id,
             status_applied=True,
-            status_under_review=False,
-            status_shortlisted=False,
-            status_interviewed=False,
-            status_offered=False,
-            status_rejected=False,
-            score=None,
-            submitted_at=datetime.now()
+            submitted_at=datetime.now(),
         )
         db.add(new_application)
         db.commit()
-        
-        # Return the created application with full details
+
         return {
             "message": "Application created successfully",
             "application": {
@@ -442,16 +541,16 @@ async def create_application(
                 "candidate_email": request.candidate_email,
                 "job_title": job.title,
                 "status": "new-applications",
-                "submitted_at": new_application.submitted_at.isoformat()
-            }
+                "submitted_at": new_application.submitted_at.isoformat(),
+            },
         }
-        
+
     except HTTPException:
         db.rollback()
         raise
     except Exception as e:
         db.rollback()
-        print(f"Create application error: {e}")
+        print("Create application error:", e)
         raise HTTPException(status_code=500, detail=f"Failed to create application: {str(e)}")
 
 @app.put("/applications/{application_id}/status", tags=["Applications"])
@@ -691,34 +790,24 @@ async def api_apply_job(
     job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+
     try:
-        result = await create_application(user.id, job_id)
+        # Call the database-layer function
+        result = await create_application_db(user.id, job_id)
+
         if result.get("status") == "exists":
-            existing_job_id = result.get("existing_job_id")
-            if existing_job_id == job_id:
-                raise HTTPException(status_code=409, detail="Already applied to this job")
-            else:
-                raise HTTPException(
-                    status_code=409,
-                    detail=(
-                        "Candidate already has an application (schema prevents multiple applications)."
-                        f" existing_job_id={existing_job_id}"
-                    ),
-                )
+            raise HTTPException(status_code=409, detail="Already applied to this job")
 
         app = result.get("application")
         return {"detail": "Application submitted", "id": getattr(app, "id", None)}
+
     except HTTPException:
-        # pass through HTTP errors raised above
         raise
     except IntegrityError as ie:
-        # Print full traceback and the DB integrity error to the server console
-        print("IntegrityError while applying to job:")
-        traceback.print_exc()
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(ie))
     except Exception as e:
-        print("Unexpected error while applying to job:")
-        traceback.print_exc()
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 # Get applications for a job
