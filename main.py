@@ -235,35 +235,19 @@ async def read_users(
 ):
     return await list_users()
 
-@app.get("/applications", tags=["Applications"])
-async def read_apps(
-    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
-    db: Session = Depends(get_db),
-):
-    return await list_applications_for_admin()
-
-@app.get("/applications/all", tags=["Applications"])
+@app.get("/applications/all/", tags=["Applications"])
 async def get_all_applications(
     User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
     db: Session = Depends(get_db),
 ):
     """
-    Fetch all applications with complete candidate, user, and job information using SQL queries.
-    Returns comprehensive application data for HR management.
+    Fetch all applications with complete candidate, user, and job information.
     """
+
     try:
-        # First, let's check if there are any records in each table
-        app_count = db.execute(text("SELECT COUNT(*) FROM application")).scalar()
-        candidate_count = db.execute(text("SELECT COUNT(*) FROM candidate")).scalar()
-        user_count = db.execute(text("SELECT COUNT(*) FROM user")).scalar()
-        job_count = db.execute(text("SELECT COUNT(*) FROM job")).scalar()
-        
-        print(f"Database counts - Applications: {app_count}, Candidates: {candidate_count}, Users: {user_count}, Jobs: {job_count}")
-        
-        # SQL query to join all related tables and get comprehensive application data
         query = text("""
             SELECT 
-                a.id as app_id,
+                a.id AS app_id,
                 a.candidate_id,
                 a.job_id,
                 a.status_applied,
@@ -274,35 +258,36 @@ async def get_all_applications(
                 a.status_rejected,
                 a.score,
                 a.submitted_at,
-                u.name as candidate_name,
-                u.email as candidate_email,
+
+                u.name AS candidate_name,
+                u.email AS candidate_email,
+
                 c.resume_url,
                 c.skills,
                 c.experience,
                 c.education,
                 c.profile_summary,
-                j.title as job_title,
-                j.location as job_location,
+
+                j.title AS job_title,
+                j.location AS job_location,
                 j.employment_type,
-                j.description as job_description,
-                j.qualification as job_requirements
+                j.description AS job_description,
+                j.qualification AS job_requirements
+
             FROM application a
-            JOIN candidate c ON a.candidate_id = c.candidate_id
+            JOIN candidate c ON a.candidate_id = c.id
             JOIN user u ON c.user_id = u.id
             JOIN job j ON a.job_id = j.id
-            ORDER BY a.submitted_at DESC
-        """)
-        
-        result = db.execute(query)
-        applications = result.fetchall()
 
-        print("result applications", applications)
-        print(f"Number of applications found: {len(applications)}")
-        
-        # Format the response
-        formatted_applications = []
-        for row in applications:
-            # Determine application status based on boolean flags
+            ORDER BY a.submitted_at DESC;
+        """)
+
+        result = db.execute(query).fetchall()
+
+        applications = []
+        for row in result:
+
+            # determine kanban status
             status = "new-applications"
             if row.status_rejected:
                 status = "rejected"
@@ -316,47 +301,66 @@ async def get_all_applications(
                 status = "under-review"
             elif row.status_applied:
                 status = "new-applications"
-            
-            application_data = {
+
+            applications.append({
                 "id": row.app_id,
                 "candidate_id": row.candidate_id,
                 "job_id": row.job_id,
-                "candidate_name": row.candidate_name or "",
-                "candidate_email": row.candidate_email or "",
-                "job_title": row.job_title or "",
-                "job_location": row.job_location or "",
-                "employment_type": row.employment_type or "",
-                "job_description": row.job_description or "",
-                "job_requirements": row.job_requirements or "",
-                "resume_url": row.resume_url or "",
-                "skills": row.skills or "",
-                "experience": row.experience or "",
-                "education": row.education or "",
-                "profile_summary": row.profile_summary or "",
+
+                "candidate_name": row.candidate_name,
+                "candidate_email": row.candidate_email,
+
+                "resume_url": row.resume_url,
+                "skills": row.skills,
+                "experience": row.experience,
+                "education": row.education,
+                "profile_summary": row.profile_summary,
+
+                "job_title": row.job_title,
+                "job_location": row.job_location,
+                "job_description": row.job_description,
+                "job_requirements": row.job_requirements,
+                "employment_type": row.employment_type,
+
                 "status": status,
                 "score": row.score,
+
                 "submitted_at": str(row.submitted_at) if row.submitted_at else None,
+
                 "status_flags": {
                     "applied": bool(row.status_applied),
                     "under_review": bool(row.status_under_review),
                     "shortlisted": bool(row.status_shortlisted),
                     "interviewed": bool(row.status_interviewed),
                     "offered": bool(row.status_offered),
-                    "rejected": bool(row.status_rejected)
+                    "rejected": bool(row.status_rejected),
                 }
-            }
-            formatted_applications.append(application_data)
-        
+            })
+
         return {
-            "total_applications": len(formatted_applications),
-            "applications": formatted_applications
+            "total_applications": len(applications),
+            "applications": applications
         }
-        
+
     except Exception as e:
-        print(f"Get all applications error: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch applications: {str(e)}")
+        print("Error in /applications/all:", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
+
+@app.get("/applications/", tags=["Applications"])
+async def read_apps(
+    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    db: Session = Depends(get_db),
+):
+    return await list_applications_for_admin()
+
+@app.get("/applications/all", tags=["Applications"])
+async def get_all_applications_redirect(
+    User = Depends(require_roles(ROLE_ADMIN, ROLE_HR)),
+    db: Session = Depends(get_db),
+):
+    return await get_all_applications(User, db)
 
 @app.post("/applications", tags=["Applications"])
 # async def create_application(
