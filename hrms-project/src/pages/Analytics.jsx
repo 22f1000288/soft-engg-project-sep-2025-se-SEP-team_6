@@ -49,11 +49,38 @@ export default function Analytics(props) {
   
         // Top roles: pick top 3 jobs by applicants if available
         if (Array.isArray(jobsData)) {
-          const mapped = jobsData
-            .map((j) => ({ id: j.id || j.title, title: j.title, open: j.applicants || 0 }))
-            .sort((a, b) => b.open - a.open)
-            .slice(0, 3);
-          setTopRoles(mapped);
+          // fetch scores for each job to compute screened count and top scores
+          try {
+            const scoreResPromises = jobsData.map((j) => authFetch(`/scores/job/${j.id}`));
+            const scoreRes = await Promise.all(scoreResPromises);
+            const scoreJsonPromises = scoreRes.map((r) => r.json().catch(() => ({ scores: [] })));
+            const scoresPerJob = await Promise.all(scoreJsonPromises);
+
+            const mapped = jobsData
+              .map((j, idx) => {
+                const scores = (scoresPerJob[idx] && scoresPerJob[idx].scores) || [];
+                const open = scores.length || j.applicants || 0;
+                const topScore = scores.length ? Math.max(...scores.map((s) => s.score || 0)) : 0;
+                return { id: j.id || j.title, title: j.title, open, topScore, scores };
+              })
+              .sort((a, b) => b.open - a.open)
+              .slice(0, 3);
+            setTopRoles(mapped);
+
+            // compute screened count from scores table (unique candidate-score entries)
+            const totalScreened = scoresPerJob.reduce((acc, item) => {
+              const list = (item && item.scores) || [];
+              return acc + list.length;
+            }, 0);
+            setScreenedCount(totalScreened);
+          } catch (err) {
+            console.warn('Failed to load scores per job', err);
+            const mapped = jobsData
+              .map((j) => ({ id: j.id || j.title, title: j.title, open: j.applicants || 0 }))
+              .sort((a, b) => b.open - a.open)
+              .slice(0, 3);
+            setTopRoles(mapped);
+          }
         }
   
         // Pipeline counts from /applications/all
@@ -275,7 +302,9 @@ export default function Analytics(props) {
                   <li key={r.id} className="flex items-center justify-between">
                     <div>
                       <div className="font-medium text-gray-800">{r.title}</div>
-                      <div className="text-xs text-gray-500">{r.open} open</div>
+                          <div className="text-xs text-gray-500">
+                            {r.open} open{r.topScore ? ` • top ${Number(r.topScore).toFixed(2)}` : ""}
+                          </div>
                     </div>
                     <button className="text-sm text-blue-600">View</button>
                   </li>
