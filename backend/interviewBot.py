@@ -1,190 +1,182 @@
-from groq import Groq
-from dotenv import load_dotenv
+# backend/main.py
 import os
-import tempfile
+import io
 import uuid
 import json
-import asyncio
-import io
 import wave
 import struct
-import base64
+import asyncio
+import tempfile
+from typing import Optional
 
+from dotenv import load_dotenv
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+
+# Try to import Groq client (optional)
+try:
+    from groq import Groq
+except Exception:
+    Groq = None
 
 load_dotenv()
 
-# Directory where generated audio files will be stored.
-# Make this absolute so other modules (main.py) can serve files reliably.
-AUDIO_FOLDER = os.path.abspath(os.path.join(os.getcwd(), "temp_audio"))
+# --- Configuration ---
+BASE_DIR = os.getcwd()
+CONVERSATIONS_DIR = os.path.join(BASE_DIR, "conversations")
+DATABASE_DIR = os.path.join(BASE_DIR, "database")
+GLOBAL_DB = os.path.join(DATABASE_DIR, "database.json")
+AUDIO_FOLDER = CONVERSATIONS_DIR  # we'll store under conversations/<conv_id>/
 
-# Initialize Groq client lazily and defensively. If the GROQ_API_KEY is not set
-# we keep `client` as None so the module import does not raise and the server
-# can run without Groq features in development environments.
+os.makedirs(CONVERSATIONS_DIR, exist_ok=True)
+os.makedirs(DATABASE_DIR, exist_ok=True)
+
+# Initialize Groq client defensively
 _groq_api_key = os.environ.get("GROQ_API_KEY")
 client = None
-if _groq_api_key:
+if _groq_api_key and Groq is not None:
     try:
         client = Groq(api_key=_groq_api_key)
+        print("Groq client initialized.")
     except Exception as e:
-        # Non-fatal in dev: log and continue without Groq client
-        print(f"Warning: failed to initialize Groq client: {e}")
+        print("Warning: failed to init Groq client:", e)
         client = None
+else:
+    if _groq_api_key:
+        print("Groq SDK missing; GROQ_API_KEY set but groq module not available.")
+    else:
+        print("GROQ_API_KEY not set; running in fallback mode.")
 
 
-class GroqInterview:
-    """A thin wrapper around a chat + (optional) audio pipeline.
+app = FastAPI(title="InterviewBot Backend")
 
-    Notes:
-    - All public methods are async so callers (FastAPI) can `await` them.
-    - Blocking work (file I/O, SDK calls) is run with `asyncio.to_thread`.
-    - The class implements graceful fallbacks when the Groq client
-      does not expose audio transcription / TTS APIs in the runtime.
-    """
+# Allow CORS for local dev (adjust origins in production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    async def transcribe_audio(self, file_like) -> dict:
-        """Accept a file-like object (BytesIO or an object with .read()) and return
-        a message dict: {"role": "user", "content": "...transcript..."}
+# Serve conversation files (audio + messages) at /conversations/<conv_id>/...
+app.mount("/conversations", StaticFiles(directory=CONVERSATIONS_DIR), name="conversations")
 
-        This function writes the content to a temporary file and calls the
-        Groq client's transcription endpoint if available. Otherwise it raises
-        a clear RuntimeError so caller can decide how to proceed.
-        """
-        # Read bytes from file-like in a non-blocking way
-        if hasattr(file_like, "read"):
-            file_bytes = await asyncio.to_thread(file_like.read)
-        else:
-            # If raw bytes were passed
-            file_bytes = file_like
 
-        if not file_bytes:
-            raise ValueError("Audio file is empty")
+# --- Helper utilities ---
+def _ensure_conv_folder(conv_id: str) -> str:
+    folder = os.path.join(CONVERSATIONS_DIR, conv_id)
+    os.makedirs(folder, exist_ok=True)
+    return folder
 
-        # Create a temporary WAV file synchronously inside a thread
-        def _write_temp_file(bytes_data):
-            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-            tmp.write(bytes_data)
-            tmp.flush()
-            tmp.close()
-            return tmp.name
 
-        tmp_path = await asyncio.to_thread(_write_temp_file, file_bytes)
+async def _write_file_threaded(path: str, data: bytes):
+    def _write():
+        with open(path, "wb") as f:
+            f.write(data)
 
+    await asyncio.to_thread(_write)
+
+
+async def _safe_json_read(path: str):
+    def _read():
+        if not os.path.exists(path):
+            return []
         try:
-            # Try to call Groq transcription if available. If not, raise informative error.
-            if hasattr(client, "audio") and hasattr(client.audio, "transcriptions"):
-                def _call_transcription():
-                    with open(tmp_path, "rb") as audio_f:
-                        return client.audio.transcriptions.create(
-                            file=audio_f,
-                            model="whisper-large-v3-turbo",
-                            response_format="text",
-                            language="en",
-                        )
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
 
-                transcription = await asyncio.to_thread(_call_transcription)
+    return await asyncio.to_thread(_read)
 
-                # transcription might be a string or an object depending on SDK
+
+async def _safe_json_write(path: str, obj):
+    def _write():
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(obj, f, indent=4)
+
+    await asyncio.to_thread(_write)
+
+
+def _silent_wav_bytes(duration_s: int = 1, framerate: int = 16000):
+    """Return bytes for a short silent WAV (16-bit mono)."""
+    nframes = int(duration_s * framerate)
+    silence = struct.pack("<h", 0) * nframes
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(framerate)
+        wf.writeframes(silence)
+    return buf.getvalue()
+
+
+# --- Core interview class ---
+class GroqInterview:
+    def __init__(self, groq_client):
+        self.client = groq_client
+
+    async def transcribe_audio_and_save(self, file_bytes: bytes, conv_id: str) -> dict:
+        """
+        Save user audio into conversations/<conv_id>/user_<uuid>.<ext> and transcribe it.
+        Returns: {"role": "user", "content": "<transcript>", "user_audio_filename": "<filename>"}
+        NOTE: user_audio_filename is returned for internal use but MUST NOT be sent as part of a chat message to the LLM.
+        """
+        if not file_bytes:
+            raise ValueError("Empty audio file")
+
+        # detect extension by simple heuristics: if startswith RIFF -> wav, else use webm
+        ext = ".webm"
+        if file_bytes[:4] == b"RIFF":
+            ext = ".wav"
+        elif file_bytes[:3] == b"Ogg":
+            ext = ".ogg"
+        elif file_bytes[:4] == b"fLaC":
+            ext = ".flac"
+        # otherwise default to webm (common from browser)
+
+        conv_folder = _ensure_conv_folder(conv_id)
+        user_filename = f"user_{uuid.uuid4()}{ext}"
+        user_path = os.path.join(conv_folder, user_filename)
+
+        # Save file
+        await _write_file_threaded(user_path, file_bytes)
+
+        # Transcribe using Groq if available
+        if self.client and hasattr(self.client, "audio") and hasattr(self.client.audio, "transcriptions"):
+            def _call_transcription(path):
+                with open(path, "rb") as audio_f:
+                    return self.client.audio.transcriptions.create(
+                        file=audio_f,
+                        model="whisper-large-v3-turbo",
+                        response_format="text",
+                        language="en",
+                    )
+
+            try:
+                transcription = await asyncio.to_thread(_call_transcription, user_path)
                 if isinstance(transcription, str):
                     transcript_text = transcription
                 else:
-                    # try common attributes
                     transcript_text = getattr(transcription, "text", None) or str(transcription)
-
-                return {"role": "user", "content": transcript_text}
-            else:
-                # Clear error so caller knows what's missing
-                raise RuntimeError(
-                    "Groq client does not expose audio transcription in this environment."
-                )
-        finally:
-            # best-effort cleanup of the temporary file
-            try:
-                os.remove(tmp_path)
-            except Exception:
-                pass
-
-    async def get_chat_response(self, user_message: dict) -> dict:
-        """Send messages (including user_message) to the chat model and return assistant response.
-
-        The function persists conversation history (database.json) after receiving the assistant reply.
-        """
-        messages = await self.load_messages()
-        messages.append(user_message)
-
-        if hasattr(client, "chat") and hasattr(client.chat, "completions"):
-            def _call_chat():
-                return client.chat.completions.create(messages=messages, model="llama-3.3-70b-versatile")
-
-            chat_completion = await asyncio.to_thread(_call_chat)
-
-            # SDKs differ in shape; attempt to extract content safely
-            content = None
-            try:
-                # typical structure: chat_completion.choices[0].message.content
-                content = chat_completion.choices[0].message.content
-            except Exception:
-                # fallback to string representation
-                content = getattr(chat_completion, "text", None) or str(chat_completion)
-
-            response = {"role": "assistant", "content": content}
-
-            # save messages (user + assistant) to persistent history
-            await self.save_messages(user_message, response)
-            return response
+            except Exception as ex:
+                # transcription failed; raise so caller can handle
+                raise RuntimeError(f"Transcription failed: {ex}") from ex
         else:
-            raise RuntimeError("Groq client chat completions not available in this environment.")
+            # Fallback: no Groq -> return placeholder
+            transcript_text = "(transcription unavailable - server running in fallback mode)"
 
-    async def save_messages(self, user_message: dict, response: dict):
-        """Append user_message and response to database.json in a thread to avoid blocking."""
-        file_path = "database.json"
+        return {"role": "user", "content": transcript_text, "user_audio_filename": user_filename}
 
-        def _sync_write():
-            # Ensure file exists and contains a JSON array
-            if not os.path.exists(file_path):
-                with open(file_path, "w", encoding="utf-8") as f:
-                    json.dump([], f)
-
-            # Read, append, write
-            with open(file_path, "r", encoding="utf-8") as f:
-                try:
-                    data = json.load(f)
-                    if not isinstance(data, list):
-                        data = []
-                except json.JSONDecodeError:
-                    data = []
-
-            data.append(user_message)
-            data.append(response)
-
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=4)
-
-        await asyncio.to_thread(_sync_write)
-
-    async def load_messages(self) -> list:
-        """Load conversation messages from database.json. If empty, return a default system prompt."""
-        file_path = "database.json"
-
-        def _sync_read():
-            if not os.path.exists(file_path):
-                # create an empty JSON array file
-                with open(file_path, "w", encoding="utf-8") as f:
-                    json.dump([], f)
-                return []
-
-            with open(file_path, "r", encoding="utf-8") as f:
-                try:
-                    data = json.load(f)
-                    if not isinstance(data, list):
-                        return []
-                    return data
-                except json.JSONDecodeError:
-                    return []
-
-        data = await asyncio.to_thread(_sync_read)
-
+    async def load_messages(self, conv_id: str) -> list:
+        """Load messages for this conversation from conversations/<conv_id>/messages.json"""
+        conv_folder = _ensure_conv_folder(conv_id)
+        messages_path = os.path.join(conv_folder, "messages.json")
+        data = await _safe_json_read(messages_path)
         if not data:
-            # return a sensible system prompt as the initial context
+            # default system prompt
             return [
                 {
                     "role": "system",
@@ -195,49 +187,183 @@ class GroqInterview:
                     ),
                 }
             ]
-
         return data
 
-    async def text_to_speech(self, text: str) -> str:
-        """Generate speech audio from `text` and save to the AUDIO_FOLDER. Return the filename.
-
-        If Groq's TTS is not available, this function will synthesize a short silent WAV file
-        as a harmless fallback so the rest of the pipeline can continue to work.
+    async def save_messages(self, conv_id: str, user_message: dict, assistant_message: dict):
         """
-        os.makedirs(AUDIO_FOLDER, exist_ok=True)
-        filename = f"{uuid.uuid4()}.wav"
-        speech_file_path = os.path.join(AUDIO_FOLDER, filename)
+        Save to conversations/<conv_id>/messages.json AND append to global database/database.json.
+        NOTE: user_message and assistant_message are plain dicts with role & content; they may include
+        local metadata (like 'audio_filename') but we keep that in the saved messages file only.
+        """
+        conv_folder = _ensure_conv_folder(conv_id)
+        messages_path = os.path.join(conv_folder, "messages.json")
 
-        # If Groq provides TTS, call it (in a thread). Otherwise create a short silent WAV.
-        if hasattr(client, "audio") and hasattr(client.audio, "speech"):
-            def _call_tts():
-                resp = client.audio.speech.create(model="playai-tts", voice="Fritz-PlayAI", input=text, response_format="wav")
-                # SDKs often provide a method to write the response to file. Attempt it, otherwise write raw bytes.
+        # read, append, write in thread
+        def _sync():
+            if not os.path.exists(messages_path):
+                with open(messages_path, "w", encoding="utf-8") as f:
+                    json.dump([], f)
+            with open(messages_path, "r", encoding="utf-8") as f:
                 try:
-                    resp.write_to_file(speech_file_path)
+                    existing = json.load(f)
+                    if not isinstance(existing, list):
+                        existing = []
                 except Exception:
-                    # try to treat resp as bytes
-                    with open(speech_file_path, "wb") as f:
+                    existing = []
+            existing.append(user_message)
+            existing.append(assistant_message)
+            with open(messages_path, "w", encoding="utf-8") as f:
+                json.dump(existing, f, indent=4)
+
+            # also append to global DB
+            if not os.path.exists(GLOBAL_DB):
+                with open(GLOBAL_DB, "w", encoding="utf-8") as gf:
+                    json.dump([], gf)
+            with open(GLOBAL_DB, "r", encoding="utf-8") as gf:
+                try:
+                    gdata = json.load(gf)
+                    if not isinstance(gdata, list):
+                        gdata = []
+                except Exception:
+                    gdata = []
+            gdata.append(user_message)
+            gdata.append(assistant_message)
+            with open(GLOBAL_DB, "w", encoding="utf-8") as gf:
+                json.dump(gdata, gf, indent=4)
+
+        await asyncio.to_thread(_sync)
+
+    async def get_chat_response(self, conv_id: str, user_message: dict) -> dict:
+        """
+        Build messages (load history + append user_message), send to chat model,
+        save assistant message into conversation messages, and return assistant message dict.
+        IMPORTANT: We MUST NOT include non-standard fields (like audio file names) in messages we pass to the LLM.
+        """
+        messages = await self.load_messages(conv_id)
+
+        # Append user message for the API - only keep role & content
+        api_user_msg = {"role": "user", "content": user_message.get("content", "")}
+        messages_for_api = messages + [api_user_msg]
+
+        if self.client and hasattr(self.client, "chat") and hasattr(self.client.chat, "completions"):
+            def _call_chat(msgs):
+                return self.client.chat.completions.create(messages=msgs, model="llama-3.3-70b-versatile")
+
+            try:
+                completion = await asyncio.to_thread(_call_chat, messages_for_api)
+                # attempt to extract content safely
+                content = None
+                try:
+                    content = completion.choices[0].message.content
+                except Exception:
+                    content = getattr(completion, "text", None) or str(completion)
+            except Exception as ex:
+                raise RuntimeError(f"Chat completion failed: {ex}") from ex
+        else:
+            # fallback assistant message
+            content = "(assistant unavailable - running in fallback mode)"
+
+        assistant_message = {"role": "assistant", "content": content}
+
+        # Save both user_message and assistant_message to conversation storage
+        # We may add metadata keys (like 'user_audio_filename' or 'assistant_audio_filename') to the saved record,
+        # but we WILL NOT pass those keys to the chat API itself.
+        saved_user = {"role": user_message.get("role", "user"), "content": user_message.get("content", "")}
+        if "user_audio_filename" in user_message:
+            saved_user["user_audio_filename"] = user_message["user_audio_filename"]
+
+        saved_assistant = {"role": "assistant", "content": content}
+
+        await self.save_messages(conv_id, saved_user, saved_assistant)
+
+        return assistant_message
+
+    async def text_to_speech_and_save(self, text: str, conv_id: str) -> str:
+        """
+        Generate TTS audio for assistant text, save to conversations/<conv_id>/assistant_<uuid>.wav,
+        and return the filename (not URL).
+        Uses Groq TTS if available, otherwise generates a 1s silent wav as fallback.
+        """
+        conv_folder = _ensure_conv_folder(conv_id)
+        filename = f"assistant_{uuid.uuid4()}.wav"
+        path = os.path.join(conv_folder, filename)
+
+        if self.client and hasattr(self.client, "audio") and hasattr(self.client.audio, "speech"):
+            def _call_tts(p, txt):
+                resp = self.client.audio.speech.create(
+                    model="playai-tts",
+                    voice="Fritz-PlayAI",
+                    input=txt,
+                    response_format="wav",
+                )
+                # try to write using SDK helper, otherwise write raw bytes
+                try:
+                    resp.write_to_file(p)
+                except Exception:
+                    with open(p, "wb") as f:
                         f.write(resp)
 
-            await asyncio.to_thread(_call_tts)
+            try:
+                await asyncio.to_thread(_call_tts, path, text)
+            except Exception as ex:
+                # On failure, fall back to silence
+                await _write_file_threaded(path, _silent_wav_bytes(1))
         else:
-            # Fallback: create 1 second of silence WAV (16kHz, 16-bit)
-            def _make_silence(path):
-                framerate = 16000
-                duration = 1  # seconds
-                nframes = framerate * duration
-                with wave.open(path, "w") as wf:
-                    wf.setnchannels(1)
-                    wf.setsampwidth(2)  # 16-bit
-                    wf.setframerate(framerate)
-                    silence = struct.pack('<h', 0) * nframes
-                    wf.writeframes(silence)
-
-            await asyncio.to_thread(_make_silence, speech_file_path)
+            # fallback: silent wav so UI will have an audio file to play
+            await _write_file_threaded(path, _silent_wav_bytes(1))
 
         return filename
 
 
-# Provide a module-level instance so main.py can import AUDIO_FOLDER and instantiate quickly.
-# groq_instance = GroqInterview()
+# instantiate module-level object
+groq_instance = GroqInterview(client)
+
+
+# --- API endpoints ---
+@app.post("/talk")
+async def talk(file: UploadFile = File(...), conversation_id: Optional[str] = Form(None)):
+    """
+    Accepts a file upload (from browser). Saves the uploaded user audio in
+    conversations/<conv_id>/user_<uuid>.<ext>, transcribes, queries the chat model,
+    generates assistant TTS saved as assistant_<uuid>.wav in same folder, and
+    returns JSON with transcript, assistant text, assistant audio path, and conversation_id.
+    """
+    # generate or use provided conversation id
+    conv_id = conversation_id or str(uuid.uuid4())
+
+    try:
+        file_bytes = await file.read()
+        # transcribe + save user audio
+        user_msg = await groq_instance.transcribe_audio_and_save(file_bytes, conv_id)
+        # user_msg contains role & content and user_audio_filename (for storage only)
+        # get assistant response (this will append to conv messages.json)
+        assistant_msg = await groq_instance.get_chat_response(conv_id, user_msg)
+        assistant_text = assistant_msg.get("content", "")
+
+        # create assistant TTS and save to conversation folder
+        assistant_audio_filename = await groq_instance.text_to_speech_and_save(assistant_text, conv_id)
+
+        # Prepare response to frontend. Provide paths under /conversations/<conv_id>/<filename>
+        user_audio_url = f"/conversations/{conv_id}/{user_msg['user_audio_filename']}"
+        assistant_audio_url = f"/conversations/{conv_id}/{assistant_audio_filename}"
+
+        return JSONResponse(
+            {
+                "conversation_id": conv_id,
+                "transcript": user_msg.get("content"),
+                "response": assistant_text,
+                "user_audio_file": user_audio_url,
+                "audio_file": assistant_audio_url,
+            }
+        )
+    except RuntimeError as re:
+        # expected runtime errors from transcription/chat
+        raise HTTPException(status_code=500, detail=str(re))
+    except Exception as e:
+        # catch-all
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "groq_available": client is not None}

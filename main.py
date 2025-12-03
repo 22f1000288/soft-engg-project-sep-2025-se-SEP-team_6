@@ -2,10 +2,11 @@ import os
 import uvicorn
 from datetime import datetime
 import webbrowser
-from fastapi import FastAPI, HTTPException, Depends, Request, status, UploadFile, File
+from fastapi import FastAPI, HTTPException, Depends, Request, status, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import FileResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
@@ -48,7 +49,6 @@ from backend.security import (
 )
 from backend.utils import verify_password, hash_password
 from backend.mailUtils.sendMail import send_email
-from backend.interviewBot import GroqInterview, AUDIO_FOLDER
 from backend.eventCreator import main as create_calendar_event
 from backend.databases.seed_users import seed_all
 import tempfile
@@ -65,8 +65,11 @@ from googleapiclient.discovery import build
 from fastapi.responses import RedirectResponse
 from fastapi import Request
 import json
+from backend.interviewBot import GroqInterview, AUDIO_FOLDER, client as groq_client
+import uuid
 
-
+import os
+from fastapi.staticfiles import StaticFiles
 
 
 load_dotenv()
@@ -81,7 +84,7 @@ app = FastAPI(
 def on_startup():
     seed_all()
 
-groq_instance = GroqInterview()
+groq_instance = GroqInterview(groq_client)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -1043,42 +1046,49 @@ async def root():
 
 
 
-@app.post("/talk", tags=["Interviews"])
-async def post_audio(file: UploadFile = File(...)):
-    """Accept audio file and return transcription + response."""
-    if not file or file.filename == "":
-        raise HTTPException(status_code=400, detail="No file provided")
-    
-    global groq_instance
-    try:
-        # Read file into memory
-        file_content = await file.read()
-        
-        # Create a BytesIO wrapper for groq transcription
-        import io
-        audio_file = io.BytesIO(file_content)
-        audio_file.seek(0)  # Ensure pointer is at start
-        audio_file.name = file.filename
-        
-        # Transcribe
-        user_message = await groq_instance.transcribe_audio(audio_file)
-        
-        # Get chat response
-        chat_response = await groq_instance.get_chat_response(user_message)
-        print(chat_response['content'])
+@app.post("/talk")
+async def talk(file: UploadFile = File(...), conversation_id: Optional[str] = Form(None)):
+    """
+    Accepts a file upload (from browser). Saves the uploaded user audio in
+    conversations/<conv_id>/user_<uuid>.<ext>, transcribes, queries the chat model,
+    generates assistant TTS saved as assistant_<uuid>.wav in same folder, and
+    returns JSON with transcript, assistant text, assistant audio path, and conversation_id.
+    """
+    # generate or use provided conversation id
+    conv_id = conversation_id or str(uuid.uuid4())
 
-        # Text to speech
-        audio_response = await groq_instance.text_to_speech(chat_response['content'])
-        print(audio_response)
-        # Return response
-        return {
-            "audio_file": f"/temp_audio/{audio_response}",
-            "transcript": user_message['content'],
-            "response": chat_response['content']
-        }
+    try:
+        file_bytes = await file.read()
+        # transcribe + save user audio
+        user_msg = await groq_instance.transcribe_audio_and_save(file_bytes, conv_id)
+        # user_msg contains role & content and user_audio_filename (for storage only)
+        # get assistant response (this will append to conv messages.json)
+        assistant_msg = await groq_instance.get_chat_response(conv_id, user_msg)
+        assistant_text = assistant_msg.get("content", "")
+
+        # create assistant TTS and save to conversation folder
+        assistant_audio_filename = await groq_instance.text_to_speech_and_save(assistant_text, conv_id)
+
+        # Prepare response to frontend. Provide paths under /conversations/<conv_id>/<filename>
+        user_audio_url = f"/conversations/{conv_id}/{user_msg['user_audio_filename']}"
+        assistant_audio_url = f"/conversations/{conv_id}/{assistant_audio_filename}"
+
+        return JSONResponse(
+            {
+                "conversation_id": conv_id,
+                "transcript": user_msg.get("content"),
+                "response": assistant_text,
+                "user_audio_file": user_audio_url,
+                "audio_file": assistant_audio_url,
+            }
+        )
+    except RuntimeError as re:
+        # expected runtime errors from transcription/chat
+        raise HTTPException(status_code=500, detail=str(re))
     except Exception as e:
-        print(f"Error in /talk: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # catch-all
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
+
 
 TEMP_AUDIO_DIR = os.path.abspath(os.path.join(os.getcwd(), "temp_audio"))
 
@@ -1721,6 +1731,10 @@ async def score_all_candidates_for_job(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+CONVERSATIONS_DIR = os.path.join(os.getcwd(), "conversations")
+os.makedirs(CONVERSATIONS_DIR, exist_ok=True)
+
+app.mount("/conversations", StaticFiles(directory=CONVERSATIONS_DIR), name="conversations")
 
 
 
