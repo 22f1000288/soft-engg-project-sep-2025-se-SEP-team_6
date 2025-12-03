@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import CandidateNavbar from "../components/CandidateNavbar";
 import { useAuth } from "../contexts/useAuth";
+import { MapPin, Users, Send, Check, Briefcase } from "lucide-react";
 
 export default function CandidateJobs() {
   const [query, setQuery] = useState("");
@@ -11,6 +12,8 @@ export default function CandidateJobs() {
   const [error, setError] = useState(null);
 
   const { authFetch } = useAuth();
+
+  const [appliedJobIds, setAppliedJobIds] = useState(() => new Set());
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -28,6 +31,24 @@ export default function CandidateJobs() {
       .finally(() => mounted && setLoading(false));
     return () => (mounted = false);
   }, [API_BASE]);
+
+  // load which jobs the candidate already applied to
+  useEffect(() => {
+    let mounted = true;
+    const loadApplied = async () => {
+      try {
+        const res = await authFetch('/candidate/applications');
+        if (!res.ok) return;
+        const data = await res.json();
+        const ids = (Array.isArray(data) ? data : []).map((a) => String(a.job_id)).filter(Boolean);
+        if (mounted) setAppliedJobIds(new Set(ids));
+      } catch {
+        // ignore
+      }
+    };
+    loadApplied();
+    return () => (mounted = false);
+  }, [authFetch]);
 
   const allSkills = useMemo(() => {
     const s = new Set();
@@ -56,6 +77,16 @@ export default function CandidateJobs() {
     });
   }, [jobs, query, typeFilter, selectedSkill]);
 
+  // color styles for skill chips (cycled)
+  const skillColors = [
+    "bg-indigo-50 text-indigo-700",
+    "bg-pink-50 text-pink-700",
+    "bg-green-50 text-green-700",
+    "bg-yellow-50 text-yellow-700",
+    "bg-sky-50 text-sky-700",
+    "bg-rose-50 text-rose-700",
+  ];
+
   const handleApply = async (job) => {
     try {
       const resp = await authFetch(`/jobs/${job.id}/apply`, { method: "POST" });
@@ -67,6 +98,8 @@ export default function CandidateJobs() {
       alert("Application submitted");
       // Optionally update local applicants count
       setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, applicants: (j.applicants || 0) + 1 } : j)));
+      // mark as applied locally
+      setAppliedJobIds((prev) => new Set([...Array.from(prev), String(job.id)]));
     } catch (err) {
       alert(err.message || "Unable to apply. Please login as candidate.");
     }
@@ -166,41 +199,60 @@ export default function CandidateJobs() {
                 className="bg-white p-5 rounded-lg shadow-lg flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-lg font-semibold text-gray-900 truncate">{job.title}</h2>
-                      <div className="mt-1 text-sm text-gray-600">
-                        <span>{job.location}</span>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-700">
+                            <Briefcase className="w-5 h-5" />
+                          </div>
+                          <div className="ml-2">
+                            <h2 className="text-lg font-semibold text-gray-900 truncate">{job.title}</h2>
+                            <div className="mt-1 text-sm text-gray-600 flex items-center gap-3">
+                              <span className="inline-flex items-center gap-1"><MapPin className="w-4 h-4 text-gray-400" />{job.location || 'Remote'}</span>
+                              <span className="inline-flex items-center gap-1"><Users className="w-4 h-4 text-gray-400" />{job.applicants ?? 0} applicants</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right flex flex-col items-end gap-1">
+                          <div className="text-sm">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">{job.employment_type || 'N/A'}</span>
+                          </div>
+                          <div className="text-sm text-gray-500">{job.applicants ?? 0} applicants</div>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="text-right">
-                      <div className="text-sm text-gray-700">{job.employment_type}</div>
-                      <div className="text-sm text-gray-500">{job.applicants ?? 0} applicants</div>
-                    </div>
-                  </div>
+                      <p className="mt-4 text-sm text-gray-700 line-clamp-3">{job.description}</p>
 
-                  <p className="mt-4 text-sm text-gray-700 line-clamp-3">{job.description}</p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {(job.skills_required || "").split(",").map((s) => s.trim()).filter(Boolean).map((t, i) => (
+                          <span key={`${job.id}-${t}-${i}`} className={`text-xs px-2 py-1 rounded-full font-medium ${skillColors[i % skillColors.length]}`}>
+                            {t}
+                          </span>
+                        ))}
+                      </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {(job.skills_required || "").split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
-                      <span key={t} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">{t}</span>
-                    ))}
-                  </div>
-
-                  {job.qualification ? (
-                    <div className="mt-3 text-sm text-gray-600">Qualification: {job.qualification}</div>
-                  ) : null}
+                      {job.qualification ? (
+                        <div className="mt-3 text-sm text-gray-600">Qualification: {job.qualification}</div>
+                      ) : null}
                 </div>
 
                 <div className="mt-5 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <button
-                      className="text-sm px-3 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                      onClick={() => handleApply(job)}
-                    >
-                      Apply
-                    </button>
+                    {appliedJobIds.has(String(job.id)) ? (
+                      <button
+                        disabled
+                        className="flex items-center gap-2 text-sm px-3 py-1 rounded-md bg-green-100 text-green-800 cursor-default"
+                      >
+                        <Check className="w-4 h-4" /> Applied
+                      </button>
+                    ) : (
+                      <button
+                        className="flex items-center gap-2 text-sm px-3 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                        onClick={() => handleApply(job)}
+                      >
+                        <Send className="w-4 h-4" /> Apply
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>

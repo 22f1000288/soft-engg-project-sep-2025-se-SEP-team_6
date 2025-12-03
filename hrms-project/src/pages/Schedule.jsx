@@ -20,6 +20,7 @@ export default function Schedule(props) {
     }
   } catch (e) {
     token = "";
+    console.error("Error parsing token from localStorage", e);
   }
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function Schedule(props) {
         setLoading(false);
       })
       .catch((error) => {
-        setError("Error fetching candidate list.");
+        setError("Error fetching candidate list. " + error.message);
         setLoading(false);
       });
   }, []);

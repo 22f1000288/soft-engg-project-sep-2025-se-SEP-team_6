@@ -267,7 +267,7 @@ export default function Analytics(props) {
                 </div>
               </div>
 
-              <div className="w-full md:w-80">
+              {/* <div className="w-full md:w-80">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Diversity Snapshot
                 </h3>
@@ -287,7 +287,7 @@ export default function Analytics(props) {
                     <div className="text-sm text-gray-700">62% Male</div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 

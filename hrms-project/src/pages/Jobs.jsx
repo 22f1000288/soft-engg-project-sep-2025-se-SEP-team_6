@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Navbar from "../components/HRNavbar";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, MapPin, Users, Calendar, Briefcase, Edit3, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../contexts/useAuth";
 
@@ -20,6 +20,15 @@ export default function Jobs(props) {
 
   const departments = Array.from(new Set(jobs.map((j) => j.department || "")));
   const statuses = Array.from(new Set(jobs.map((j) => j.status || "")));
+
+  // Colors for skill chips (cycled)
+  const skillColors = [
+    "bg-indigo-50 text-indigo-700",
+    "bg-pink-50 text-pink-700",
+    "bg-green-50 text-green-700",
+    "bg-yellow-50 text-yellow-700",
+    "bg-sky-50 text-sky-700",
+  ];
 
   const filtered = useMemo(() => {
     let out = jobs;
@@ -220,49 +229,75 @@ export default function Jobs(props) {
               className="bg-white rounded-lg p-5 shadow-lg border border-gray-100"
             >
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {job.title}
-                    </h3>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        job.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : job.status === "Review"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {job.status}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    {job.department}, {job.location}, {job.type}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-2">
-                    Posted {job.posted_at ? new Date(job.posted_at).toLocaleString() : 'Unknown'}, {job.applicants} applicants
+                <div className="flex-1">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-700">
+                      <Briefcase className="w-6 h-6" />
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">
+                          {job.title}
+                        </h3>
+                        <span
+                          className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                            job.status === "Active"
+                              ? "bg-green-100 text-green-700"
+                              : job.status === "Review"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {job.status}
+                        </span>
+                      </div>
+
+                      <div className="text-sm text-gray-600 mt-1 flex items-center gap-4">
+                        <span className="inline-flex items-center gap-1"><MapPin className="w-4 h-4 text-gray-400" />{job.location || 'Remote'}</span>
+                        <span className="inline-flex items-center gap-1"><Users className="w-4 h-4 text-gray-400" />{job.applicants ?? 0} applicants</span>
+                        <span className="inline-flex items-center gap-1 text-sm text-gray-500"><Calendar className="w-4 h-4 text-gray-400" /> {job.posted_at ? new Date(job.posted_at).toLocaleDateString() : 'Unknown'}</span>
+                      </div>
+
+                      {/* skills from raw payload if present */}
+                      {job.raw?.skills_required ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {(job.raw.skills_required || "").split(",").map((s, i) => {
+                            const t = s.trim();
+                            if (!t) return null;
+                            const cls = skillColors[i % skillColors.length];
+                            return (
+                              <span key={i} className={`text-xs px-2 py-1 rounded-full ${cls}`}>
+                                {t}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-end gap-3">
                   <button
                     onClick={() => navigate(`/job-applicants/${job.id}`)}
-                    className="text-sm text-indigo-600"
+                    className="text-sm text-indigo-600 flex items-center gap-2"
                   >
                     View applicants
                   </button>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(job)}
-                      className="px-3 py-1 border rounded-md text-sm hover:bg-green-500 hover:text-white transition hover:cursor-pointer"
+                      className="px-3 py-1 rounded-md text-sm bg-blue-400 text-black hover:bg-blue-700 transition flex items-center gap-2"
                     >
+                      <Edit3 className="w-4 h-4" />
                       Edit
                     </button>
                     <button
                       onClick={() => handleClose(job)}
-                      className="px-3 py-1 border rounded-md text-sm hover:bg-red-600 hover:text-white transition hover:cursor-pointer"
+                      className="px-3 py-1 rounded-md text-sm bg-red-300 text-black hover:bg-red-700 transition flex items-center gap-2"
                     >
+                      <Trash2 className="w-4 h-4" />
                       Close
                     </button>
                   </div>

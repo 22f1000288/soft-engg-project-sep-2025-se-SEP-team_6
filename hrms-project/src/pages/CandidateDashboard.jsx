@@ -164,7 +164,11 @@ export default function CandidateDashboard() {
                         {app.title}
                       </h3>
                       <p className="text-gray-600 text-sm">
-                        {app.company} • {app.appliedDate}
+                        {app.company && <>{app.company} • </>}
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          {app.appliedDate}
+                        </span>
                       </p>
                     </div>
                     <span

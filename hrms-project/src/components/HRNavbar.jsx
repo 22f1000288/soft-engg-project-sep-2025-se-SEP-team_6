@@ -78,9 +78,9 @@ export default function Navbar({
               onClick={() => {
                 handleLogout();
               }}
-              className="text-sm text-gray-700 hover:text-gray-900 cursor-pointer"
+              className="text-sm bg-indigo-50 text-indigo-700 hover:text-gray-900 cursor-pointer"
             >
-              Logout
+              <LogOut className="w-8 h-8 mr-2" />
             </button>
           </div>
 

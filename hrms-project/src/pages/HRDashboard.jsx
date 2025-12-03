@@ -3,6 +3,9 @@ import {
   Users,
   CheckCircle,
   Plus,
+  MapPin,
+  Calendar,
+  BarChart2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/HRNavbar";
@@ -113,21 +116,12 @@ export default function RecruitmentDashboard(props) {
           })}
         </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1">
-          {/* Hiring Pipeline */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
+        {/* Main Grid with sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Hiring Pipeline (main) */}
+          <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-blue-700">
-                Hiring Pipeline
-              </h2>
-              <button
-                onClick={createJobHandler}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                Create Job
-              </button>
+              <h2 className="text-2xl font-bold text-blue-700">Hiring Pipeline</h2>
             </div>
 
             <div className="space-y-6">
@@ -138,9 +132,15 @@ export default function RecruitmentDashboard(props) {
                   className="border border-gray-200 rounded-xl p-5 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 hover:text-blue-700 transition-colors">
-                      {job.title}
-                    </h3>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-md bg-indigo-50 flex items-center justify-center text-indigo-700">
+                        <Briefcase className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 hover:text-blue-700 transition-colors">
+                        {job.title}
+                      </h3>
+                    </div>
+
                     <span
                       className={`${
                         job.status === "active"
@@ -152,19 +152,10 @@ export default function RecruitmentDashboard(props) {
                     </span>
                   </div>
 
-                  <div className="flex gap-6 text-sm text-gray-600 mb-4">
-                    <span>
-                      Location:{" "}
-                      <span className="font-semibold text-gray-900">
-                        {job.location}
-                      </span>
-                    </span>
-                    <span>
-                      Type:{" "}
-                      <span className="font-semibold text-gray-900">
-                        {job.employment_type}
-                      </span>
-                    </span>
+                  <div className="flex gap-6 text-sm text-gray-600 mb-4 items-center">
+                    <span className="inline-flex items-center gap-1"><MapPin className="w-4 h-4 text-gray-400" /> <span className="font-semibold text-gray-900">{job.location || 'Remote'}</span></span>
+                    <span className="inline-flex items-center gap-1">Type: <span className="font-semibold text-gray-900">{job.employment_type}</span></span>
+                    <span className="inline-flex items-center gap-1"><Users className="w-4 h-4 text-gray-400" /> <span className="font-semibold text-gray-900">{job.applicants ?? 0}</span></span>
                   </div>
 
                   <div className="text-sm text-gray-600 mb-4">
@@ -172,18 +163,12 @@ export default function RecruitmentDashboard(props) {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-blue-600 font-medium">
-                      Click to view applications →
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      Posted:{" "}
-                      {job.created_at
-                        ? new Date(job.created_at).toLocaleDateString()
-                        : "Recently"}
-                    </span>
+                    <span className="text-sm text-blue-600 font-medium">Click to view applications →</span>
+                    <span className="text-xs text-gray-500 inline-flex items-center gap-1"><Calendar className="w-4 h-4 text-gray-400" /> {job.created_at ? new Date(job.created_at).toLocaleDateString() : 'Recently'}</span>
                   </div>
                 </div>
               ))}
+
               {jobs.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <p>No jobs found. Create your first job to get started!</p>
@@ -191,6 +176,24 @@ export default function RecruitmentDashboard(props) {
               )}
             </div>
           </div>
+
+          {/* Right: Sidebar - Quick actions & Hires Summary */}
+          <aside className="space-y-6">
+            <div className="bg-white rounded-2xl p-4 shadow-lg">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Actions</h3>
+              <div className="flex flex-col gap-2">
+                <button onClick={createJobHandler} className="w-full inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-md">
+                  <Plus className="w-4 h-4" /> New Job
+                </button>
+                <button onClick={() => navigate('/candidates')} className="w-full inline-flex items-center gap-2 px-3 py-2 bg-white border rounded-md">
+                  <Users className="w-4 h-4 text-gray-600" /> Candidates
+                </button>
+                <button onClick={() => navigate('/hr-jobs')} className="w-full inline-flex items-center gap-2 px-3 py-2 bg-white border rounded-md">
+                  <Briefcase className="w-4 h-4 text-gray-600" /> Jobs
+                </button>
+              </div>
+            </div>
+          </aside>
         </div>
       </main>
     </div>
