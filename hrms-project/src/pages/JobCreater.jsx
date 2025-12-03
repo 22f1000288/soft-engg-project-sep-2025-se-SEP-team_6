@@ -76,7 +76,7 @@ export default function JobCreater() {
         // create mode
         res = await authFetch('/generate-job-summary', {
           method: 'POST',
-          // credentials : 'include',
+          credentials : 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });

@@ -17,8 +17,18 @@ load_dotenv()
 # Make this absolute so other modules (main.py) can serve files reliably.
 AUDIO_FOLDER = os.path.abspath(os.path.join(os.getcwd(), "temp_audio"))
 
-# Initialize Groq client (may or may not provide audio features in your environment)
-client = Groq(api_key=(os.environ.get("GROQ_API_KEY")))
+# Initialize Groq client lazily and defensively. If the GROQ_API_KEY is not set
+# we keep `client` as None so the module import does not raise and the server
+# can run without Groq features in development environments.
+_groq_api_key = os.environ.get("GROQ_API_KEY")
+client = None
+if _groq_api_key:
+    try:
+        client = Groq(api_key=_groq_api_key)
+    except Exception as e:
+        # Non-fatal in dev: log and continue without Groq client
+        print(f"Warning: failed to initialize Groq client: {e}")
+        client = None
 
 
 class GroqInterview:

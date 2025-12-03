@@ -675,37 +675,44 @@ async def login(request: Login, db: Session = Depends(get_db)) -> AuthResponse:
 
 @app.post("/signup", tags=["Authentication"])
 async def signup(request: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
-    if not is_valid_role(request.role):
-        raise HTTPException(status_code=400, detail="Invalid role")
-    existing_user = db.query(User).filter(User.email == request.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    new_user = User(
-        name=request.name,
-        email=request.email,
-        password=hash_password(request.password),
-        role=request.role
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    # If the new user is a candidate, create a Candidate row with sane defaults
-    if new_user.role == ROLE_CANDIDATE:
-        candidate = Candidate(
-            resume_url="",
-            skills="",
-            experience="",
-            education="",
-            profile_summary="",
-            user_id=new_user.id,
-            candidate_id=new_user.id,
+    try:
+        if not is_valid_role(request.role):
+            raise HTTPException(status_code=400, detail="Invalid role")
+        existing_user = db.query(User).filter(User.email == request.email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        new_user = User(
+            name=request.name,
+            email=request.email,
+            password=hash_password(request.password),
+            role=request.role,
         )
-        db.add(candidate)
+        db.add(new_user)
         db.commit()
-        db.refresh(candidate)
+        db.refresh(new_user)
 
-    return build_auth_response(new_user)
+        # If the new user is a candidate, create a Candidate row with sane defaults
+        if new_user.role == ROLE_CANDIDATE:
+            candidate = Candidate(
+                resume_url="",
+                skills="",
+                experience="",
+                education="",
+                profile_summary="",
+                user_id=new_user.id,
+                candidate_id=new_user.id,
+            )
+            db.add(candidate)
+            db.commit()
+            db.refresh(candidate)
+
+        return build_auth_response(new_user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Log the full traceback for debugging in dev
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/refresh", tags=["Authentication"])
 async def refresh_token(
