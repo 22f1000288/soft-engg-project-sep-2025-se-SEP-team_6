@@ -12,6 +12,7 @@ import Communications from "./pages/Communications";
 import Jobs from "./pages/Jobs";
 import Analytics from "./pages/Analytics";
 import Schedule from "./pages/Schedule";
+import Applicants from "./pages/Applicants";
 import CandidateJobs from "./pages/CandidateJobs";
 import CandidateApplications from "./pages/CandidateApplications";
 import InterviewPrep from "./pages/InterviewPrep";
@@ -20,6 +21,7 @@ import CandidateProfilePage from "./components/CandidateProfile";
 import HRProfilePage from "./components/HRProfile";
 import PrivateRoute from "./components/PrivateRoute";
 import { ROLE_ADMIN, ROLE_CANDIDATE, ROLE_HR } from "./constants/roles";
+import InterviewBot from './pages/InterviewBot';
 
 function App() {
   return (
@@ -61,6 +63,14 @@ function App() {
           }
         />
         <Route
+          path="/job-creator/:id"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <JobCreater />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/candidates"
           element={
             <PrivateRoute roles={[ROLE_HR]}>
@@ -81,6 +91,14 @@ function App() {
           element={
             <PrivateRoute roles={[ROLE_HR]}>
               <Jobs />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/job-applicants/:id"
+          element={
+            <PrivateRoute roles={[ROLE_HR]}>
+              <Applicants />
             </PrivateRoute>
           }
         />
@@ -141,6 +159,14 @@ function App() {
           }
         />
         <Route
+          path="/interview-bot"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE]}>
+              <InterviewBot />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/candidate-profile"
           element={
             <PrivateRoute roles={[ROLE_CANDIDATE]}>
@@ -148,6 +174,15 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/candidate-calendar"
+          element={
+            <PrivateRoute roles={[ROLE_CANDIDATE,ROLE_HR]}>
+              <Schedule />
+            </PrivateRoute>
+          }
+        />
+        
       </Routes>
       </AuthProvider>
     </Router>

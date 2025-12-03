@@ -12,9 +12,9 @@ export default function Navbar({
     { label: "Candidates", to: "/candidates" },
     { label: "Pipeline", to: "/kanban-board" },
     { label: "Communications", to: "/communications" },
-    { label: "Analytics", to: "/analytics" },
-    { label: "Profile", to: "/hr-profile" }
-    // { label: "Schedule", to: "/schedule" },
+  { label: "Analytics", to: "/analytics" },
+  { label: "Profile", to: "/hr-profile" },
+  { label: "Calendar", to: "/candidate-calendar" },
   ],
   userName = "User",
   brand = { title: "TalentFlow" },

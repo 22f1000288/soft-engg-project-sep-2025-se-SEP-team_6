@@ -287,8 +287,6 @@ const AuthSystem = () => {
                 : "Already have an account? Sign in"}
             </button>
           </div>
-
-          
         </div>
       </div>
     </div>

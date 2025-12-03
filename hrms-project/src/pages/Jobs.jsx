@@ -1,64 +1,25 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Navbar from "../components/HRNavbar";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import useAuth from "../contexts/useAuth";
 
 export default function Jobs(props) {
   const navigate = useNavigate();
   const userName = props?.userName ?? "Jane Recruiter";
 
-  // jobs data
-  const sampleJobs = [
-    {
-      id: "j1",
-      title: "Senior Frontend Developer",
-      department: "Engineering",
-      location: "Remote",
-      type: "Full-time",
-      posted: "3 days ago",
-      applicants: 45,
-      status: "Active",
-    },
-    {
-      id: "j2",
-      title: "Backend Developer",
-      department: "Engineering",
-      location: "San Francisco, CA",
-      type: "Full-time",
-      posted: "1 week ago",
-      applicants: 32,
-      status: "Review",
-    },
-    {
-      id: "j3",
-      title: "Product Manager",
-      department: "Product",
-      location: "New York, NY",
-      type: "Contract",
-      posted: "2 weeks ago",
-      applicants: 12,
-      status: "Closed",
-    },
-    {
-      id: "j4",
-      title: "UX Designer",
-      department: "Design",
-      location: "Remote",
-      type: "Part-time",
-      posted: "5 days ago",
-      applicants: 20,
-      status: "Active",
-    },
-  ];
-
-  const [jobs] = useState(sampleJobs);
+  const [jobs, setJobs] = useState([]);
   const [query, setQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState("recent");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const departments = Array.from(new Set(jobs.map((j) => j.department)));
-  const statuses = Array.from(new Set(jobs.map((j) => j.status)));
+  const { authFetch } = useAuth();
+
+  const departments = Array.from(new Set(jobs.map((j) => j.department || "")));
+  const statuses = Array.from(new Set(jobs.map((j) => j.status || "")));
 
   const filtered = useMemo(() => {
     let out = jobs;
@@ -74,17 +35,73 @@ export default function Jobs(props) {
     if (departmentFilter)
       out = out.filter((j) => j.department === departmentFilter);
     if (statusFilter) out = out.filter((j) => j.status === statusFilter);
-    if (sortBy === "applicants")
-      out = out.slice().sort((a, b) => b.applicants - a.applicants);
-    else
-      out = out
-        .slice()
-        .sort(
-          (a, b) =>
-            Date.parse(new Date(b.posted)) - Date.parse(new Date(a.posted))
-        );
+    if (sortBy === "applicants") out = out.slice().sort((a, b) => b.applicants - a.applicants);
+    else out = out.slice().sort((a, b) => new Date(b.posted_at || b.created_at) - new Date(a.posted_at || a.created_at));
     return out;
   }, [jobs, query, departmentFilter, statusFilter, sortBy]);
+
+  const fetchJobs = useCallback(async () => {
+  setLoading(true);
+  setError("");
+  try {
+    const res = await authFetch(`/jobs`, {
+      method: "GET",
+    });
+    if (!res.ok) throw new Error(`Failed to load jobs (${res.status})`);
+    const data = await res.json();
+
+    const normalized = data.map((j) => ({
+      id: j.id,
+      title: j.title,
+      department: j.employment_type || j.department || j.qualification || "",
+      location: j.location,
+      type: j.employment_type || "",
+      posted_at: j.created_at,
+      applicants: j.applicants ?? 0,
+      status: j.status
+        ? String(j.status).toLowerCase() === "open"
+          ? "Active"
+          : String(j.status).charAt(0).toUpperCase() + String(j.status).slice(1)
+        : "Unknown",
+      raw: j,
+    }));
+
+    setJobs(normalized);
+  } catch (err) {
+    setError(err.message || String(err));
+  } finally {
+    setLoading(false);
+  }
+}, [authFetch]);
+
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  const refresh = fetchJobs;
+
+  const handleEdit = (job) => {
+    navigate(`/job-creator/${job.id}`);
+  };
+
+  const handleClose = async (job) => {
+    if (!window.confirm(`Close job "${job.title}"? This will mark it closed.`)) return;
+    try {
+      setLoading(true);
+      const res = await authFetch(`/jobs/${job.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'closed' }),
+      });
+      if (!res.ok) throw new Error(`Close failed (${res.status})`);
+      await refresh();
+    } catch (err) {
+      alert(err.message || 'Failed to close job');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     //Navbar
@@ -189,6 +206,13 @@ export default function Jobs(props) {
 
         {/* Jobs list */}
 
+        {loading && (
+          <div className="mb-4 text-sm text-gray-600">Loading jobs…</div>
+        )}
+        {error && (
+          <div className="mb-4 text-sm text-red-600">Error: {error}</div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map((job) => (
             <div
@@ -217,26 +241,26 @@ export default function Jobs(props) {
                     {job.department}, {job.location}, {job.type}
                   </div>
                   <div className="text-sm text-gray-500 mt-2">
-                    Posted {job.posted}, {job.applicants} applicants
+                    Posted {job.posted_at ? new Date(job.posted_at).toLocaleString() : 'Unknown'}, {job.applicants} applicants
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-2">
                   <button
-                    onClick={() => alert(`Open applicants for ${job.title}`)}
+                    onClick={() => navigate(`/job-applicants/${job.id}`)}
                     className="text-sm text-indigo-600"
                   >
                     View applicants
                   </button>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => alert("Edit")}
+                      onClick={() => handleEdit(job)}
                       className="px-3 py-1 border rounded-md text-sm hover:bg-green-500 hover:text-white transition hover:cursor-pointer"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => alert("Close job")}
+                      onClick={() => handleClose(job)}
                       className="px-3 py-1 border rounded-md text-sm hover:bg-red-600 hover:text-white transition hover:cursor-pointer"
                     >
                       Close

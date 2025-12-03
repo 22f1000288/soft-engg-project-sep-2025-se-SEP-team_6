@@ -1,13 +1,13 @@
-openapi: 3.1.0
+openapi: 3.0.1
 info:
   title: TalentForm HRMS API
-  description: API documentation for HRMS application
+  description: TalentFlow is an end-to-end recruitment platform that streamlines sourcing, screening, interviewing and hiring by combining a traditional HRMS backend with GenAI-powered features (resume parsing, candidate shortlisting, automated candidate communication, mock interview practice for the students). The platform exposes RESTful APIs for user management, authentication, job postings, candidate applications, interview scheduling, notifications, and analytics. The dev-team implemented a set of APIs and integrated external services for email/SMS and GenAI capabilities.
   version: 1.0.0
 paths:
-  "/users":
+  /users:
     get:
       tags:
-      - Users
+        - Users
       summary: Read Users
       operationId: read_users_users_get
       responses:
@@ -16,10 +16,10 @@ paths:
           content:
             application/json:
               schema: {}
-  "/applications":
+  /applications:
     get:
       tags:
-      - Applications
+        - Applications
       summary: Read Apps
       operationId: read_apps_applications_get
       responses:
@@ -28,58 +28,87 @@ paths:
           content:
             application/json:
               schema: {}
-  "/login":
+      security:
+        - OAuth2PasswordBearer: []
+  /login:
     post:
       tags:
-      - Authentication
+        - Authentication
       summary: Login
       operationId: login_login_post
       requestBody:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/Login"
+              $ref: '#/components/schemas/Login'
         required: true
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/HTTPValidationError"
-  "/signup":
+                $ref: '#/components/schemas/HTTPValidationError'
+  /signup:
     post:
       tags:
-      - Authentication
+        - Authentication
       summary: Signup
       operationId: signup_signup_post
       requestBody:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/SignupRequest"
+              $ref: '#/components/schemas/SignupRequest'
         required: true
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/HTTPValidationError"
-  "/active-jobs":
+                $ref: '#/components/schemas/HTTPValidationError'
+  /refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh Token
+      operationId: refresh_token_refresh_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /active-jobs:
     get:
       tags:
-      - Jobs
+        - Jobs
       summary: Get Active Jobs
       operationId: get_active_jobs_active_jobs_get
       responses:
@@ -88,10 +117,12 @@ paths:
           content:
             application/json:
               schema: {}
-  "/candidate-count":
+      security:
+        - OAuth2PasswordBearer: []
+  /candidate-count:
     get:
       tags:
-      - Candidates
+        - Candidates
       summary: Get All Candidates
       operationId: get_all_candidates_candidate_count_get
       responses:
@@ -100,10 +131,12 @@ paths:
           content:
             application/json:
               schema: {}
-  "/hired-count":
+      security:
+        - OAuth2PasswordBearer: []
+  /hired-count:
     get:
       tags:
-      - Hires
+        - Hires
       summary: Get Hired Candidates
       operationId: get_hired_candidates_hired_count_get
       responses:
@@ -112,10 +145,94 @@ paths:
           content:
             application/json:
               schema: {}
-  "/":
+      security:
+        - OAuth2PasswordBearer: []
+  /application-count:
     get:
       tags:
-      - Health Check
+        - Applications
+      summary: Get Application Count
+      operationId: get_application_count_application_count_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+        - OAuth2PasswordBearer: []
+  /interview-count:
+    get:
+      tags:
+        - Interviews
+      summary: Get Interview Count
+      operationId: get_interview_count_interview_count_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+        - OAuth2PasswordBearer: []
+  /job-offered-count:
+    get:
+      tags:
+        - Jobs
+      summary: Get Job Offered Count
+      operationId: get_job_offered_count_job_offered_count_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+        - OAuth2PasswordBearer: []
+  /candidate-list:
+    get:
+      tags:
+        - Candidates
+      summary: Get Candidate List
+      operationId: get_candidate_list_candidate_list_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+        - OAuth2PasswordBearer: []
+  /notify-candidate:
+    post:
+      tags:
+        - Communications
+      summary: Notify Candidate
+      operationId: notify_candidate_notify_candidate_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotifyCandidateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - OAuth2PasswordBearer: []
+  /:
+    get:
+      tags:
+        - Health Check
       summary: Root
       operationId: root__get
       responses:
@@ -124,13 +241,132 @@ paths:
           content:
             application/json:
               schema: {}
+  /talk:
+    post:
+      tags:
+        - Interviews
+      summary: Post Audio
+      description: Accept audio file and return transcription + response.
+      operationId: post_audio_talk_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_post_audio_talk_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/temp_audio/{file_path}':
+    get:
+      tags:
+        - Interviews
+      summary: Serve Temp Audio
+      operationId: serve_temp_audio_temp_audio__file_path__get
+      parameters:
+        - name: file_path
+          in: path
+          required: true
+          schema:
+            type: string
+            title: File Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/audio/{file_path}':
+    get:
+      tags:
+        - Interviews
+      summary: Serve Audio
+      operationId: serve_audio_audio__file_path__get
+      parameters:
+        - name: file_path
+          in: path
+          required: true
+          schema:
+            type: string
+            title: File Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /create-calendar-event:
+    post:
+      tags:
+        - Calendar
+      summary: Create Calendar Event Endpoint
+      operationId: create_calendar_event_endpoint_create_calendar_event_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+        - OAuth2PasswordBearer: []
 components:
   schemas:
+    AuthResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        refresh_token:
+          type: string
+          title: Refresh Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+        user:
+          $ref: '#/components/schemas/UserResponse'
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - user
+      title: AuthResponse
+    Body_post_audio_talk_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+        - file
+      title: Body_post_audio_talk_post
     HTTPValidationError:
       properties:
         detail:
           items:
-            "$ref": "#/components/schemas/ValidationError"
+            $ref: '#/components/schemas/ValidationError'
           type: array
           title: Detail
       type: object
@@ -145,9 +381,35 @@ components:
           title: Password
       type: object
       required:
-      - email
-      - password
+        - email
+        - password
       title: Login
+    NotifyCandidateRequest:
+      properties:
+        candidate_email:
+          type: string
+          title: Candidate Email
+        subject:
+          type: string
+          title: Subject
+        body:
+          type: string
+          title: Body
+      type: object
+      required:
+        - candidate_email
+        - subject
+        - body
+      title: NotifyCandidateRequest
+    RefreshTokenRequest:
+      properties:
+        refresh_token:
+          type: string
+          title: Refresh Token
+      type: object
+      required:
+        - refresh_token
+      title: RefreshTokenRequest
     SignupRequest:
       properties:
         name:
@@ -164,18 +426,39 @@ components:
           title: Role
       type: object
       required:
-      - name
-      - email
-      - password
-      - role
+        - name
+        - email
+        - password
+        - role
       title: SignupRequest
+    UserResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        email:
+          type: string
+          title: Email
+        role:
+          type: string
+          title: Role
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - name
+      title: UserResponse
     ValidationError:
       properties:
         loc:
           items:
             anyOf:
-            - type: string
-            - type: integer
+              - type: string
+              - type: integer
           type: array
           title: Location
         msg:
@@ -186,7 +469,14 @@ components:
           title: Error Type
       type: object
       required:
-      - loc
-      - msg
-      - type
+        - loc
+        - msg
+        - type
       title: ValidationError
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /login

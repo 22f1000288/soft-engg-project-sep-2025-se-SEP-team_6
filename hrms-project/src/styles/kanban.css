@@ -154,6 +154,14 @@
   border-color: #bbf7d0;
 }
 
+.bg-red-50 {
+  background-color: #fef2f2;
+}
+
+.border-red-200 {
+  border-color: #fecaca;
+}
+
 /* Drag and drop states */
 .kanban-card[draggable="true"]:hover {
   cursor: grab;

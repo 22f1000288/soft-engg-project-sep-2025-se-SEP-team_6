@@ -1,0 +1,15 @@
+{
+    "job_title": "Software Engineer",
+    "department": "Engineering",
+    "experience_level": "2+ years",
+    "required_skills": [
+      "Python",
+      "JavaScript",
+      "React",
+      "Node.js",
+      "AWS",
+      "Docker"
+    ],
+    "company_culture_keywords": ["Collaborative", "Innovative", "Inclusive"],
+    "location": "Remote"
+}

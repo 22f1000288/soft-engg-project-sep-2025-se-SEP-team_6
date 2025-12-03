@@ -1,0 +1,25 @@
+{
+  "summary": "Team Sync Meeting",
+  "location": "Google Meet",
+  "description": "Discuss project updates and blockers",
+  "start": {
+    "dateTime": "2025-11-16T10:00:00+05:30",
+    "timeZone": "Asia/Kolkata"
+  },
+  "end": {
+    "dateTime": "2025-11-17T11:00:00+05:30",
+    "timeZone": "Asia/Kolkata"
+  },
+  "attendees": [
+    {"email": "teammate1@example.com"},
+    {"email": "teammate2@example.com"}
+  ],
+  "reminders": {
+    "useDefault": false,
+    "overrides": [
+      {"method": "email", "minutes": 30},
+      {"method": "popup", "minutes": 10}
+    ]
+
+  }
+}

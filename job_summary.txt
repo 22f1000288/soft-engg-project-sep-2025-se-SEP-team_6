@@ -1,0 +1,17 @@
+Join Our Team as a Software Engineer
+
+We're seeking a highly skilled Software Engineer to join our Engineering department, where you'll play a key role in designing, developing, and deploying innovative software solutions. As a remote team, we're looking for a collaborative and motivated individual who can thrive in a dynamic environment.
+
+Key Responsibilities:
+ Design, develop, and test software applications using Python, JavaScript, React, and Node.js
+ Collaborate with cross-functional teams to identify and prioritize project requirements, and deliver high-quality solutions on AWS and Docker
+ Participate in code reviews, contribute to the improvement of the codebase, and ensure adherence to industry best practices
+
+Required Qualifications:
+2+ years of experience in software development, with proficiency in Python, JavaScript, React, Node.js, AWS, and Docker. A strong foundation in computer science and software engineering principles is essential.
+
+Company Culture:
+Our company values collaboration, innovation, and inclusivity. We're committed to creating a work environment that's supportive, diverse, and empowering. If you're passionate about technology, eager to learn, and enjoy working with a talented team, we'd love to hear from you.
+
+Ready to Join Our Team?
+If you're a motivated and skilled Software Engineer looking for a new challenge, apply now to become a part of our dynamic team. Send us your resume and a brief introduction, and let's explore how you can contribute to our innovative projects and grow with our company.
