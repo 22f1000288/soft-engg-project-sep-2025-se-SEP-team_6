@@ -45,7 +45,7 @@ export default function CandidateNavbar({
               <img
                 src="/icon.png"
                 alt="TalentFlow Logo"
-                className="w-20 h-20 rounded-lg object-cover"
+                className="w-16 h-16 rounded-lg object-cover transition-transform duration-300 hover:scale-105"
               />
             </div>
 
