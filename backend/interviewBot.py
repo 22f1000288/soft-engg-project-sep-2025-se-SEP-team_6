@@ -181,8 +181,8 @@ class GroqInterview:
                 {
                     "role": "system",
                     "content": (
-                        "You are interviewing the user for a behavioural round. Ask short questions "
-                        "that are relevant to entry-level professionals from India. Keep responses under 30 words. "
+                        "You are interviewing the user for an interview. Ask short questions "
+                        "that are relevant to professionals from India. Keep responses under 30 words. "
                         "Your name is Alex."
                     ),
                 }
