@@ -143,9 +143,8 @@ export default function Analytics(props) {
       <main className="py-6 sm:pt-12 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] overflow-auto bg-gray-50">
         <header className="mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">Analytics</h1>
+            <h1 className="text-3xl font-bold text-blue-700"></h1>
             <p className="text-sm text-gray-600 mt-1">
-              Hiring insights and trends for your organization
             </p>
           </div>
         </header>
