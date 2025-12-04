@@ -186,203 +186,97 @@ export default function CandidateProfile() {
     .slice(0, 2) || "");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <CandidateNavbar />
+  <div className="min-h-screen bg-gray-50">
+    <CandidateNavbar />
 
-      <main className="max-w-4xl mx-auto px-8 py-10">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-blue-600 mt-8 mb-2">
-            My Profile
-          </h1>
-          <p className="text-gray-600">Manage your profile information</p>
-        </div>
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
 
-        <div className="bg-white rounded-2xl p-10 shadow-xl space-y-6">
-          {!isEditing ? (
-            <>
-              <div className="flex items-center gap-6 mb-6">
-                <div className="w-28 h-28 bg-indigo-600 rounded-full flex items-center justify-center text-white text-5xl font-bold">
-                  {initials}
-                </div>
+      <div className="bg-white rounded-xl p-6 sm:p-8 shadow-lg space-y-8">
 
-                <div className="flex-1">
-                  <h2 className="text-3xl font-bold text-blue-600">
-                    {profile.name}
-                    {loading && <span className="text-sm text-gray-500 ml-3">Loading…</span>}
-                  </h2>
-                  <p className="text-gray-700 italic mt-1">{profile.bio}</p>
-                </div>
-
-                <button
-                  className="ml-auto bg-indigo-100 hover:bg-green-600 hover:text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                  onClick={startEdit}
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Edit
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs text-gray-500">Email</div>
-                    <div className="font-medium text-blue-600">{profile.email}</div>
-                  </div>
-
-                  <div>
-                    <div className="text-xs text-gray-500">Resume</div>
-                    <div className="mt-1">
-                      {profile.resumeUrl ? (
-                        <a
-                          href={profile.resumeUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm text-indigo-600 underline"
-                        >
-                          View resume
-                        </a>
-                      ) : (
-                        <span className="text-sm text-gray-600">No resume uploaded</span>
-                      )}
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      <input
-                        id="resume-upload"
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-                        className="text-sm"
-                      />
-
-                      <button
-                        onClick={uploadResume}
-                        className="bg-indigo-600 text-white px-3 py-1 rounded-md text-sm"
-                      >
-                        Upload Resume
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs text-gray-500">Skills</div>
-                    <div className="mt-2">
-                      {skillsArr.length ? (
-                        <div className="flex flex-wrap">
-                          {skillsArr.map((s, i) => (
-                            <span
-                              key={s + i}
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mr-2 mb-2 ${chipColors[i % chipColors.length]}`}
-                            >
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="font-medium text-gray-800"><span className="text-gray-500">Not set</span></div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-xs text-gray-500">Experience</div>
-                    <div className="font-medium text-gray-800">{profile.experience || <span className="text-gray-500">Not set</span>}</div>
-                  </div>
-
-                  <div>
-                    <div className="text-xs text-gray-500">Education</div>
-                    <div className="font-medium text-gray-800">{profile.education || <span className="text-gray-500">Not set</span>}</div>
-                  </div>
-
-                  {/* Profile summary is shown at the top header to avoid duplication */}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-6 mb-6">
-                <div className="w-28 h-28 bg-indigo-600 rounded-full flex items-center justify-center text-white text-5xl font-bold">
-                  {initials}
-                </div>
-
-                <div className="flex-1">
-                  <h2 className="text-3xl font-bold text-blue-600">{profile.name} {loading && <span className="text-sm text-gray-500 ml-3">Loading…</span>}</h2>
-                  <textarea
-                    name="bio"
-                    className="bg-gray-100 rounded px-2 py-1 w-full mt-2"
-                    value={editForm.bio}
-                    onChange={handleEditChange}
-                    rows={3}
-                    placeholder="Short professional summary (what you do, years of experience, key strengths)"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <div className="space-y-3">
-                  <div className="text-sm text-gray-600">Email</div>
-                  <div className="font-medium text-gray-800 mb-2">{profile.email}</div>
-
-                  <input
-                    type="text"
-                    name="resumeUrl"
-                    className="text-md bg-gray-100 rounded px-2 py-1 w-full"
-                    value={editForm.resumeUrl}
-                    onChange={handleEditChange}
-                    placeholder="Resume URL (optional)"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    name="skills"
-                    className="text-md bg-gray-100 rounded px-2 py-1 w-full"
-                    value={editForm.skills}
-                    onChange={handleEditChange}
-                    placeholder="e.g. React, Python, SQL"
-                  />
-
-                  <input
-                    type="text"
-                    name="experience"
-                    className="text-md bg-gray-100 rounded px-2 py-1 w-full"
-                    value={editForm.experience}
-                    onChange={handleEditChange}
-                    placeholder="Brief experience summary (years, roles)"
-                  />
-
-                  <input
-                    type="text"
-                    name="education"
-                    className="text-md bg-gray-100 rounded px-2 py-1 w-full"
-                    value={editForm.education}
-                    onChange={handleEditChange}
-                    placeholder="Highest qualification and institute"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 bg-gray-200 rounded"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleEditSave}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded"
-                >
-                  Save
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </main>
+{/* -------- VIEW MODE (Cleaner Layout) -------- */}
+<>
+  {/* HEADER */}
+  <div className="flex flex-col items-center text-center gap-3">
+    <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center text-white text-4xl font-semibold">
+      {initials}
     </div>
-  );
-}
+
+    <h2 className="text-2xl font-bold text-gray-800">{profile.name}</h2>
+
+    {profile.bio && (
+      <p className="text-gray-600 max-w-md leading-relaxed">{profile.bio}</p>
+    )}
+
+    <button
+      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition mt-2"
+      onClick={startEdit}
+    >
+      <Edit2 className="w-4 h-4" />
+      Edit Profile
+    </button>
+  </div>
+
+  <hr className="border-gray-200 my-8" />
+
+  {/* INFO GRID */}
+  <div className="grid sm:grid-cols-2 gap-6">
+
+    <div className="bg-gray-50 p-4 rounded-lg">
+      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</h4>
+      <p className="mt-1 text-gray-800 font-medium break-all">{profile.email}</p>
+    </div>
+
+    <div className="bg-gray-50 p-4 rounded-lg">
+      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Experience</h4>
+      <p className="mt-1 text-gray-800">{profile.experience || "Not set"}</p>
+    </div>
+
+    <div className="bg-gray-50 p-4 rounded-lg sm:col-span-2">
+      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Education</h4>
+      <p className="mt-1 text-gray-800">{profile.education || "Not set"}</p>
+    </div>
+
+    {/* SKILLS */}
+    <div className="bg-gray-50 p-4 rounded-lg sm:col-span-2">
+      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Skills</h4>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {skillsArr.length ? (
+          skillsArr.map((s, i) => (
+            <span
+              key={s + i}
+              className={`px-2 py-1 rounded-full text-xs font-medium ${chipColors[i % chipColors.length]}`}
+            >
+              {s}
+            </span>
+          ))
+        ) : (
+          <p className="text-gray-500">No skills added</p>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* RESUME SECTION */}
+  <div className="mt-10 bg-gray-50 p-6 rounded-xl">
+    
+
+    <div className="flex flex-col sm:flex-row gap-3 mt-4">
+      <input
+        type="file"
+        accept=".pdf,.doc,.docx"
+        onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+        className="text-sm border p-2 rounded bg-white"
+      />
+      <button
+        onClick={uploadResume}
+        className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm"
+      >
+        Upload Resume
+      </button>
+    </div>
+  </div>
+</>
+        </div>
+    </main>
+  </div>
+  );}
