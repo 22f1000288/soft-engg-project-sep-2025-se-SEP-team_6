@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/HRNavbar";
-import config from "../../public/config.json";
+import useAuth from "../contexts/useAuth";
 
 export default function Schedule(props) {
   const userName = props?.userName ?? "HR Manager";
+  const { authFetch } = useAuth();
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -12,22 +13,11 @@ export default function Schedule(props) {
   const [scheduledTime, setScheduledTime] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Read token from localStorage
-  let token = localStorage.getItem("tf_tokens") ?? "";
-  try {
-    if (token.startsWith("{")) {
-      token = JSON.parse(token).access_token ?? "";
-    }
-  } catch (e) {
-    token = "";
-    console.error("Error parsing token from localStorage", e);
-  }
-
   useEffect(() => {
     document.title = "Candidate Calendar - HRMS";
     setLoading(true);
     setError("");
-    fetch(`${config.backend}:${config.port}/candidate-list`)
+    authFetch("/candidate-list")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch candidate list");
@@ -42,7 +32,7 @@ export default function Schedule(props) {
         setError("Error fetching candidate list. " + error.message);
         setLoading(false);
       });
-  }, []);
+  }, [authFetch]);
 
   const openScheduleModal = (candidateId) => {
     setSelectedCandidate(candidateId);
@@ -51,28 +41,42 @@ export default function Schedule(props) {
     setSuccessMsg("");
   };
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (!scheduledTime) {
       setError("Please select date and time.");
       return;
     }
-    setError("");
-    fetch(`${config.backend}:${config.port}/schedule-interview`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" }, // Remove Authorization
-      body: JSON.stringify({ candidate_id: selectedCandidate, scheduled_time: scheduledTime }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setSuccessMsg(data.message || "Interview scheduled!");
-        setShowModal(false);
-        setScheduledTime("");
-        setSelectedCandidate(null);
-        // Optionally, refresh calendar or candidate list here
-      })
-      .catch((error) => {
-        setError("Error scheduling interview: " + error);
+    try {
+      setError("");
+      const res = await authFetch("/schedule-interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidate_id: selectedCandidate,
+          scheduled_time: scheduledTime,
+        }),
       });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const msg =
+          errBody.detail ||
+          (res.status === 401
+            ? "Unauthorized – please log in again as an HR user."
+            : res.status === 403
+            ? "You do not have permission to schedule interviews."
+            : `Error ${res.status}`);
+        throw new Error(msg);
+      }
+
+      const data = await res.json();
+      setSuccessMsg(data.message || "Interview scheduled!");
+      setShowModal(false);
+      setScheduledTime("");
+      setSelectedCandidate(null);
+    } catch (e) {
+      setError("Error scheduling interview: " + e.message);
+    }
   };
 
   return (
