@@ -43,7 +43,7 @@ class Application(Base):
     # Autoincrementing primary key for applications
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     # Candidate/user id
-    candidate_id = Column(Integer, nullable=False, index=True)
+    candidate_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     # Job id — candidate may apply to multiple jobs, but only once per job
     job_id = Column(Integer, nullable=False, index=True)
     status_applied = Column(Boolean, nullable=True)
