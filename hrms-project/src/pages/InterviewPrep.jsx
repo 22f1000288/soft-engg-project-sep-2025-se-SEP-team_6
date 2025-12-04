@@ -11,25 +11,36 @@ export default function InterviewPrep() {
 
   const navigate = useNavigate();
 
-  const startInterview = (e) => {
-    navigate('/interview-bot');
-    e?.preventDefault();
-    const skills = skillsText
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+  const startInterview = async (e) => {
+  e.preventDefault();
 
-    // Backend not implemented
-    const payload = {
-      company: company || "(not provided)",
-      role: role || "(not provided)",
-      interviewType,
-      yearsOfExperience: yoe || "(not provided)",
-      skills,
-    };
+  // generate a new conv_id
+  const convId = crypto.randomUUID();
+  localStorage.setItem("conv_id", convId);
 
-    alert(`Starting interview (dummy)\n\n${JSON.stringify(payload, null, 2)}`);
+  const skills = skillsText
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const payload = {
+    conversation_id: convId,
+    company,
+    role,
+    interviewType,
+    yoe,
+    skills,
   };
+
+  await fetch("http://localhost:8000/interview/context", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  navigate("/interview-bot");
+};
+
 
   return (
     <div className="min-h-screen bg-gray-50">

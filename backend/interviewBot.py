@@ -181,7 +181,7 @@ class GroqInterview:
                 {
                     "role": "system",
                     "content": (
-                        "You are interviewing the user for an interview. Ask short questions "
+                        "You are interviewing the user for an interview. Ask short questions based on role the user is interviewing for "
                         "that are relevant to professionals from India. Keep responses under 30 words. "
                         "Your name is Alex."
                     ),

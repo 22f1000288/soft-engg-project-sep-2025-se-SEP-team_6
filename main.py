@@ -68,7 +68,10 @@ from fastapi import Request
 import json
 from backend.interviewBot import GroqInterview, AUDIO_FOLDER, client as groq_client
 import uuid
-
+from backend.interviewBot import (
+    _ensure_conv_folder,
+    _safe_json_write
+)
 import os
 from fastapi.staticfiles import StaticFiles
 
@@ -1047,29 +1050,71 @@ async def root():
 
 
 @app.post("/talk")
-async def talk(file: UploadFile = File(...), conversation_id: Optional[str] = Form(None)):
+async def talk(
+    file: UploadFile = File(...),
+    conversation_id: Optional[str] = Form(None)
+):
     """
-    Accepts a file upload (from browser). Saves the uploaded user audio in
-    conversations/<conv_id>/user_<uuid>.<ext>, transcribes, queries the chat model,
-    generates assistant TTS saved as assistant_<uuid>.wav in same folder, and
-    returns JSON with transcript, assistant text, assistant audio path, and conversation_id.
+    Handles user audio, loads interview context, ensures system prompt contains
+    interview metadata, and runs GroqInterview chat pipeline.
     """
-    # generate or use provided conversation id
+    # Use existing conv_id or create new one
     conv_id = conversation_id or str(uuid.uuid4())
+    conv_folder = os.path.join(CONVERSATIONS_DIR, conv_id)
+    os.makedirs(conv_folder, exist_ok=True)
+
+    # Load interview context if exists
+    context_path = os.path.join(conv_folder, "context.json")
+    context = None
+    if os.path.exists(context_path):
+        with open(context_path, "r", encoding="utf-8") as f:
+            context = json.load(f)
+
+    # If context exists, inject system prompt (only once)
+    messages_path = os.path.join(conv_folder, "messages.json")
+    if context and not os.path.exists(messages_path):
+        system_message = {
+            "role": "system",
+            "content": f"""
+You are an AI Interviewer named Alex.
+
+Use ONLY the following interview metadata to ask questions:
+
+• Company: {context.get('company')}
+• Role: {context.get('role')}
+• Interview Type: {context.get('interviewType')}
+• Years of Experience: {context.get('yoe')}
+• Skills to test: {context.get('skills')}
+
+RULES:
+1. Ask one question at a time.
+2. Stay within the above context—never drift.
+3. Each question must be UNDER 30 words.
+4. Begin by greeting the candidate and starting the interview.
+""".strip()
+        }
+
+        # Save as first message
+        with open(messages_path, "w", encoding="utf-8") as f:
+            json.dump([system_message], f, indent=4)
 
     try:
+        # Read uploaded audio
         file_bytes = await file.read()
-        # transcribe + save user audio
+
+        # Transcribe + save user audio
         user_msg = await groq_instance.transcribe_audio_and_save(file_bytes, conv_id)
-        # user_msg contains role & content and user_audio_filename (for storage only)
-        # get assistant response (this will append to conv messages.json)
+
+        # Send to LLM & get assistant response
         assistant_msg = await groq_instance.get_chat_response(conv_id, user_msg)
         assistant_text = assistant_msg.get("content", "")
 
-        # create assistant TTS and save to conversation folder
-        assistant_audio_filename = await groq_instance.text_to_speech_and_save(assistant_text, conv_id)
+        # Generate TTS
+        assistant_audio_filename = await groq_instance.text_to_speech_and_save(
+            assistant_text, conv_id
+        )
 
-        # Prepare response to frontend. Provide paths under /conversations/<conv_id>/<filename>
+        # URLs for client
         user_audio_url = f"/conversations/{conv_id}/{user_msg['user_audio_filename']}"
         assistant_audio_url = f"/conversations/{conv_id}/{assistant_audio_filename}"
 
@@ -1082,11 +1127,8 @@ async def talk(file: UploadFile = File(...), conversation_id: Optional[str] = Fo
                 "audio_file": assistant_audio_url,
             }
         )
-    except RuntimeError as re:
-        # expected runtime errors from transcription/chat
-        raise HTTPException(status_code=500, detail=str(re))
+
     except Exception as e:
-        # catch-all
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
 
@@ -1739,6 +1781,69 @@ async def score_all_candidates_for_job(
     except Exception as e:
         print("Score error:", e)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.post("/interview/context")
+async def set_interview_context(payload: dict):
+    """
+    Saves interview metadata AND initializes the system prompt ONLY if the
+    conversation has not started yet.
+    """
+    conv_id = payload["conversation_id"]
+    conv_folder = _ensure_conv_folder(conv_id)
+
+    # ----- 1. Save context.json -----
+    context = {
+        "company": payload.get("company"),
+        "role": payload.get("role"),
+        "interviewType": payload.get("interviewType"),
+        "yoe": payload.get("yoe"),
+        "skills": payload.get("skills", []),
+    }
+
+    context_path = os.path.join(conv_folder, "context.json")
+    await _safe_json_write(context_path, context)
+
+    # ----- 2. initialization of messages.json only once -----
+    messages_path = os.path.join(conv_folder, "messages.json")
+
+    if os.path.exists(messages_path):
+        # conversation already started → do NOT overwrite
+        return {"ok": True, "message": "Context saved. Conversation already initialized."}
+
+    # Format skills
+    skills_str = ", ".join(context["skills"]) if context["skills"] else "None"
+
+    system_prompt = {
+        "role": "system",
+        "content": f"""
+You are an AI Interviewer named Alex.
+
+Use the following interview metadata:
+
+• Company: {context['company']}
+• Role: {context['role']}
+• Interview Type: {context['interviewType']}
+• Experience Level: {context['yoe']} years
+• Skills to test: {skills_str}
+
+STRICT RULES:
+1. Ask one question at a time.
+2. DO NOT ask anything outside the above context.
+3. Keep questions under 30 words.
+4. Ask realistic interview-style questions.
+
+Start the interview by saying:
+"Let’s begin the interview for the role of {context['role']} at {context['company']}."
+"""
+    }
+
+    # Write messages.json with ONLY system prompt
+    await _safe_json_write(messages_path, [system_prompt])
+
+    return {"ok": True, "message": "Context saved and conversation initialized."}
+
 
 # Google OAuth2 setup
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Only for development

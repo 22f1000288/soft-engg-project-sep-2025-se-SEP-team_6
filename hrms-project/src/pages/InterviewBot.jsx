@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import config from '../../public/config.json';
+import config from "../../public/config.json";
 
 const InterviewBot = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -12,13 +12,12 @@ const InterviewBot = () => {
   const [lastResponse, setLastResponse] = useState("");
   const [recordingTime, setRecordingTime] = useState(0);
 
-  // Refs for non-react state
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const recordingInterval = useRef(null);
   const audioPlayer = useRef(null);
 
-  // Safely join URLs
+  // Join URL safely
   const joinUrl = (base, path) => {
     if (!base) return path;
     const b = base.replace(/\/+$/g, "");
@@ -26,6 +25,7 @@ const InterviewBot = () => {
     return `${b}/${p}`;
   };
 
+  // RECORDING
   const toggleRecording = () => {
     if (isRecording) stopRecording();
     else startRecording();
@@ -42,18 +42,15 @@ const InterviewBot = () => {
         mimeType: "audio/webm;codecs=opus",
       });
 
-      // Store reference immediately (sync)
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
 
       recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
+        if (event.data?.size > 0) audioChunksRef.current.push(event.data);
       };
 
       recorder.onstop = async () => {
-        await new Promise((res) => setTimeout(res, 100)); // Let chunks flush
+        await new Promise((r) => setTimeout(r, 80));
         sendAudioToBackend();
       };
 
@@ -61,12 +58,10 @@ const InterviewBot = () => {
       setIsRecording(true);
 
       recordingInterval.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
+        setRecordingTime((t) => t + 1);
       }, 1000);
-
     } catch (error) {
-      setErrorMessage("Failed to access microphone. Please check your permissions.");
-      console.error(error);
+      setErrorMessage("Microphone access denied. Please check permissions.");
     }
   };
 
@@ -76,34 +71,20 @@ const InterviewBot = () => {
     if (recorder) {
       try {
         recorder.stop();
-      } catch (err) {
-        console.error("Recorder stop failed:", err);
-      }
+      } catch {}
+      recorder.stream?.getTracks()?.forEach((t) => t.stop());
     }
 
     setIsRecording(false);
-
-    if (recordingInterval.current) {
-      clearInterval(recordingInterval.current);
-      recordingInterval.current = null;
-    }
-
-    // Ensure stream tracks stop
-    if (recorder && recorder.stream) {
-      recorder.stream.getTracks().forEach((t) => t.stop());
-    }
+    clearInterval(recordingInterval.current);
   };
 
+  // SEND TO BACKEND
   const sendAudioToBackend = async () => {
     const chunks = audioChunksRef.current;
-
-    if (!chunks || chunks.length === 0) {
-      setErrorMessage("No audio recorded.");
-      return;
-    }
+    if (!chunks.length) return;
 
     setIsProcessing(true);
-    setErrorMessage(null);
 
     try {
       const audioBlob = new Blob(chunks, { type: "audio/webm" });
@@ -117,240 +98,162 @@ const InterviewBot = () => {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error(`Backend returned ${response.status}`);
-      }
+      if (!response.ok) throw new Error("Failed to process audio");
 
       const data = await response.json();
-
-      const transcript =
-        data?.transcript ||
-        data?.user_transcript ||
-        lastTranscript ||
-        "Transcript unavailable";
-
-      const assistantText =
-        data?.response ||
-        data?.text ||
-        data?.assistant_text ||
-        data?.reply ||
-        data?.message ||
-        lastResponse ||
-        "";
+      const transcript = data.transcript ?? lastTranscript;
+      const assistantText = data.response ?? lastResponse;
 
       setLastTranscript(transcript);
       setLastResponse(assistantText);
 
-      const audioPath = data?.audio_file || data?.audio_url || "";
-      const audioUrl = audioPath
-        ? audioPath.startsWith("http")
-          ? audioPath
-          : joinUrl(backendBase, audioPath)
-        : null;
+      const audioPath = data.audio_file;
+      const audioUrl = audioPath?.startsWith("http")
+        ? audioPath
+        : joinUrl(backendBase, audioPath);
 
       setConversationHistory((prev) => [
         ...prev,
-        { type: "user", time: new Date().toLocaleTimeString(), text: transcript },
-        {
-          type: "assistant",
-          time: new Date().toLocaleTimeString(),
-          text: assistantText.trim()
-            ? assistantText
-            : "[Audio response — no transcript available]",
-          audioUrl,
-        },
+        { type: "user", text: transcript, time: new Date().toLocaleTimeString() },
+        { type: "assistant", text: assistantText, audioUrl, time: new Date().toLocaleTimeString() },
       ]);
 
-      if (audioUrl) {
-        setAudioResponse(audioUrl);
-        if (audioPlayer.current) {
-          audioPlayer.current.src = audioUrl;
-          setTimeout(async () => {
-            try {
-              await audioPlayer.current.play();
-              setIsSpeaking(true);
-            } catch {
-              setErrorMessage("Audio ready — click replay to listen.");
-            }
-          }, 120);
-        }
+      if (audioUrl && audioPlayer.current) {
+        audioPlayer.current.src = audioUrl;
+        setTimeout(async () => {
+          try {
+            await audioPlayer.current.play();
+            setIsSpeaking(true);
+          } catch {}
+        }, 120);
       }
 
-      // Reset chunks
       audioChunksRef.current = [];
-
-    } catch (error) {
-      setErrorMessage("Failed to process the audio. Please try again.");
-      console.error(error);
+    } catch (err) {
+      setErrorMessage("Failed. Try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const replayAudio = async () => {
-    if (audioPlayer.current) {
+    try {
       audioPlayer.current.currentTime = 0;
-      try {
-        await audioPlayer.current.play();
-        setIsSpeaking(true);
-      } catch {
-        setErrorMessage("Failed to play audio. Please try again.");
-      }
+      await audioPlayer.current.play();
+      setIsSpeaking(true);
+    } catch {
+      setErrorMessage("Replay failed.");
     }
   };
 
   const onAudioEnded = () => setIsSpeaking(false);
 
-  const onAudioError = () => {
-    setIsSpeaking(false);
-    setErrorMessage("Failed to play audio response.");
-  };
+  // AVATAR ANIMATION
+  const avatarPulse = isSpeaking
+    ? "animate-[pulse_1.5s_infinite_ease-in-out]"
+    : isRecording
+    ? "animate-[ping_1.2s_infinite]"
+    : "";
 
-  // Dynamic UI Colors
-  let assistantCircleClass =
-    "w-40 h-40 rounded-full bg-white flex items-center justify-center cursor-pointer transition-all duration-300 shadow-xl relative";
-
-  if (isRecording)
-    assistantCircleClass +=
-      " bg-gradient-to-br from-pink-300 to-pink-500 animate-pulse";
-  else if (isProcessing)
-    assistantCircleClass += " bg-gradient-to-br from-blue-400 to-cyan-300";
-  else if (isSpeaking)
-    assistantCircleClass +=
-      " bg-gradient-to-br from-green-400 to-teal-300 animate-pulse";
+  const avatarGlow = isSpeaking
+    ? "shadow-[0_0_25px_rgba(0,255,180,0.7)]"
+    : isRecording
+    ? "shadow-[0_0_25px_rgba(255,90,120,0.7)]"
+    : "";
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-indigo-400 to-purple-600 font-sans p-4 overflow-x-hidden">
-      <div className="max-w-xl w-full mx-auto px-2">
-        
-        {/* Header */}
-        <header className="text-center text-white mb-8 pt-2">
-          <h1 className="text-2xl font-bold mb-2 flex items-center justify-center gap-3 text-white">
-            <span className="text-3xl">🎤</span> InterviewBot
+    <div className="min-h-screen w-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 overflow-x-hidden p-4 flex justify-center">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-10">
+
+        {/* HEADER */}
+        <header className="text-center my-6">
+          <h1 className="text-4xl font-bold text-white drop-shadow">
+            AI Interview Assistant
           </h1>
-          <p className="text-base opacity-95 font-normal text-white">
-            Your AI Interview Assistant
+          <p className="text-white/80 mt-2 text-lg">
+            Speak naturally — your virtual HR is listening.
           </p>
         </header>
 
-        {/* Main Mic UI */}
-        <div className="flex flex-col items-center my-10 mb-8 relative">
-          <div className={assistantCircleClass} onClick={toggleRecording}>
-            {isRecording && (
-              <>
-                <div className="absolute w-40 h-40 rounded-full border-4 border-white/50 animate-ping" />
-                <div className="absolute w-40 h-40 rounded-full border-4 border-white/50 animate-ping delay-1000" />
-              </>
-            )}
-            <div className="text-5xl animate-fadeIn">
-              {!isRecording && !isProcessing && !isSpeaking && <span>🎤</span>}
-              {isRecording && <span className="animate-bounce">🎙️</span>}
-              {isProcessing && <span className="animate-bounce">⚡</span>}
-              {isSpeaking && <span className="animate-bounce">🔊</span>}
-            </div>
+        {/* AVATAR */}
+        <div className="flex justify-center my-10">
+          <div
+            className={`w-44 h-44 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all duration-300 ${avatarPulse} ${avatarGlow}`}
+          >
+            {/* Animated HR Avatar */}
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/921/921071.png"
+              alt="HR Avatar"
+              className={`w-32 transition-all duration-300 ${
+                isSpeaking ? "scale-110" : ""
+              }`}
+            />
           </div>
-
-          {/* Status */}
-          <div className="mt-6 text-center min-h-[28px]">
-            {!isRecording && !isProcessing && !isSpeaking && (
-              <p className="text-white text-lg">Click to start speaking</p>
-            )}
-            {isRecording && (
-              <p className="text-white text-lg">
-                Listening...{" "}
-                <span className="animate-blink text-yellow-300 text-xl">●</span>
-              </p>
-            )}
-            {isProcessing && (
-              <p className="text-white text-lg">Processing your response...</p>
-            )}
-            {isSpeaking && <p className="text-white text-lg">Playing response...</p>}
-          </div>
-
-          {/* Timer */}
-          {isRecording && (
-            <div className="mt-3 text-white text-xl font-mono bg-black/20 px-5 py-2 rounded-full">
-              {recordingTime}s
-            </div>
-          )}
         </div>
 
-        {/* Buttons */}
-        <div className="flex justify-center gap-3 my-6 flex-wrap">
+        {/* STATUS */}
+        <div className="text-center text-white text-xl mb-4 h-8">
+          {isRecording && "🎙 Listening..."}
+          {isProcessing && "⚡ Processing..."}
+          {isSpeaking && "🔊 Speaking..."}
+        </div>
+
+        {/* MAIN MIC BUTTON */}
+        <div className="flex justify-center">
           <button
             onClick={toggleRecording}
-            className={`px-8 py-3 text-base rounded-full font-semibold shadow-md flex items-center gap-2 transition-all ${
-              isRecording ? "bg-pink-500 text-white" : "bg-white text-indigo-500"
+            className={`px-10 py-4 rounded-full text-xl font-bold shadow-lg transition-all ${
+              isRecording
+                ? "bg-red-500 text-white scale-105"
+                : "bg-white text-indigo-600 hover:bg-gray-50"
             }`}
           >
-            {isRecording ? "⏹️ Stop" : "🎙️ Start"}
+            {isRecording ? "⏹ Stop" : "🎙 Start"}
           </button>
-
-          {audioResponse && (
-            <button
-              onClick={replayAudio}
-              className="px-8 py-3 text-base rounded-full font-semibold shadow-md bg-green-400 text-white"
-              disabled={isSpeaking}
-            >
-              🔄 Replay
-            </button>
-          )}
         </div>
 
-        {/* Conversation */}
-        {conversationHistory.length > 0 && (
-          <div className="bg-white/95 rounded-2xl p-5 my-6 shadow-xl max-h-72 overflow-y-auto">
-            <h3 className="text-indigo-500 mb-4 text-lg">Conversation History</h3>
-            <div className="flex flex-col gap-3">
-              {conversationHistory.map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-center gap-3 p-3 rounded-xl ${
-                    item.type === "user"
-                      ? "bg-indigo-400/15"
-                      : "bg-green-300/15"
-                  }`}
-                >
-                  <div className="text-2xl">{item.type === "user" ? "👤" : "🤖"}</div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-800 text-sm">
-                      {item.type === "user" ? "You" : "Assistant"}
-                    </div>
-                    <div className="text-xs text-gray-500">{item.time}</div>
-                    {item.text && (
-                      <div className="mt-1 text-gray-700">{item.text}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
+        {/* REPLAY BUTTON */}
+        {audioResponse && !isSpeaking && (
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={replayAudio}
+              className="px-8 py-3 rounded-full font-semibold bg-green-400 text-white shadow-md hover:bg-green-500"
+            >
+              🔄 Replay Response
+            </button>
+          </div>
+        )}
+
+        {/* HISTORY */}
+        <div className="mt-10 bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-white shadow-xl max-h-80 overflow-y-auto">
+          <h3 className="text-xl font-semibold mb-4">Conversation</h3>
+
+          {conversationHistory.map((msg, i) => (
+            <div
+              key={i}
+              className={`p-4 rounded-xl my-3 ${
+                msg.type === "user"
+                  ? "bg-indigo-500/30 border-l-4 border-indigo-300"
+                  : "bg-green-500/30 border-l-4 border-green-300"
+              }`}
+            >
+              <div className="text-sm opacity-80">
+                {msg.time} — {msg.type === "user" ? "You" : "Assistant"}
+              </div>
+              <div className="mt-2 text-base">{msg.text}</div>
             </div>
-          </div>
-        )}
+          ))}
+        </div>
 
-        {/* Error */}
+        {/* ERROR */}
         {errorMessage && (
-          <div className="bg-pink-500 text-white px-5 py-4 rounded-xl my-5 flex items-center gap-3 shadow-md">
-            <span className="text-xl">⚠️</span>
-            <span>{errorMessage}</span>
+          <div className="mt-6 bg-red-500 text-white p-4 rounded-xl shadow-lg">
+            ⚠ {errorMessage}
           </div>
         )}
 
-        <audio
-          ref={audioPlayer}
-          src={audioResponse || undefined}
-          onEnded={onAudioEnded}
-          onError={onAudioError}
-          style={{ display: "none" }}
-        />
+        <audio ref={audioPlayer} onEnded={onAudioEnded} style={{ display: "none" }} />
       </div>
-
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fadeIn { animation: fadeIn 0.3s ease; }
-
-        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
-        .animate-blink { animation: blink 1s infinite; }
-      `}</style>
     </div>
   );
 };
