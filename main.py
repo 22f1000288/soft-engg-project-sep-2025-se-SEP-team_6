@@ -70,7 +70,8 @@ from backend.interviewBot import GroqInterview, AUDIO_FOLDER, client as groq_cli
 import uuid
 from backend.interviewBot import (
     _ensure_conv_folder,
-    _safe_json_write
+    _safe_json_write,
+    CONVERSATIONS_DIR
 )
 import os
 from fastapi.staticfiles import StaticFiles
