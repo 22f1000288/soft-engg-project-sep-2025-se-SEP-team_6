@@ -59,7 +59,6 @@ export default function HRProfilePage() {
       {/* Main Profile Content */}
       <main className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-blue-700 mb-2">My Profile</h1>
           <p className="text-gray-600">Manage your profile information</p>
         </div>
 

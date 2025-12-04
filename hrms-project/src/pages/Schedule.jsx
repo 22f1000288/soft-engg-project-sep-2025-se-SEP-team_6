@@ -80,7 +80,7 @@ export default function Schedule(props) {
       <Navbar userName={userName} />
 
       <div className="p-6">
-        <h1 className="text-2xl font-semibold mb-4 mt-5 text-blue-600">Candidate Calendar</h1>
+        <h1 className="text-2xl font-semibold mb-4 mt-5 text-blue-600"></h1>
         <p className="mb-4">Select a candidate below to send an automated interview invite.</p>
         {successMsg && <p className="text-green-600">{successMsg}</p>}
       </div>

@@ -124,7 +124,6 @@ export default function Communications(props) {
         {/* Page header */}
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-blue-700">
-            Candidate Communications
           </h1>
           <p className="text-gray-600 mt-1 mb-2">
             Automate follow-ups, translate messages, and provide personalized

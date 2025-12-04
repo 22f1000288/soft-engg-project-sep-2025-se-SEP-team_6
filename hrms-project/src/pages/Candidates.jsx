@@ -163,7 +163,6 @@ export default function Candidates(props) {
         {/* Title */}
         <div className="mb-6 shadow-lg">
           <h1 className="text-2xl md:text-4xl font-bold text-blue-700">
-            AI Resume Screening
           </h1>
           <p className="text-gray-600 mt-1">
             Score, cluster, and analyze resumes to shortlist top candidates
@@ -223,15 +222,8 @@ export default function Candidates(props) {
                 Top 5 Candidates
               </h2>
               <div className="flex items-center gap-3">
-                <button className="text-sm px-3 py-1 border rounded text-gray-600 inline-flex items-center gap-2">
-                  <Download className="w-4 h-4" /> Export
-                </button>
-                <button
-                  onClick={() => alert("Shortlist selected candidates")}
-                  className="text-sm px-3 py-1 bg-green-600 text-white rounded"
-                >
-                  Shortlist All
-                </button>
+
+
               </div>
             </div>
 
