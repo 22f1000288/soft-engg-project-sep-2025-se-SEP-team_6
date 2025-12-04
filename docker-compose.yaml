@@ -23,6 +23,8 @@ services:
     volumes:
       - .:/app
       - db_data:/data/db     # <-- new named volume for sqlite
+      - ./backend/token.json:/app/backend/token.json
+      - ./backend/credentials.json:/app/backend/credentials.json
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
   
   mailhog:

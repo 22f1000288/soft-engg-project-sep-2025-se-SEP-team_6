@@ -1,7 +1,50 @@
+def create_calendar_event(candidate_email, scheduled_time):
+
+    creds = None
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    if not creds or not creds.valid:
+        raise Exception("No valid Google API token found. Please generate token.json locally and copy it here.")
+
+    try:
+        service = build("calendar", "v3", credentials=creds)
+
+        # Build event data dynamically
+        start_dt = scheduled_time.isoformat()
+        end_dt = (scheduled_time + datetime.timedelta(hours=1)).isoformat()
+        event_data = {
+            "summary": "Interview with Candidate",
+            "location": "Google Meet",
+            "description": f"Interview scheduled for candidate {candidate_email}",
+            "start": {
+                "dateTime": start_dt,
+                "timeZone": "Asia/Kolkata"
+            },
+            "end": {
+                "dateTime": end_dt,
+                "timeZone": "Asia/Kolkata"
+            },
+            "attendees": [
+                {"email": candidate_email}
+            ],
+            "reminders": {
+                "useDefault": False,
+                "overrides": [
+                    {"method": "email", "minutes": 30},
+                    {"method": "popup", "minutes": 10}
+                ]
+            }
+        }
+
+        event = service.events().insert(calendarId="primary", body=event_data).execute()
+        return event.get("id"), event.get("htmlLink")
+
+    except HttpError as error:
+        print(f"❌ An error occurred: {error}")
+        return None
 import datetime
 import json
 import os.path
-import webbrowser
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -40,7 +83,3 @@ def main():
     except HttpError as error:
         print(f"❌ An error occurred: {error}")
 
-
-if __name__ == "__main__":
-    main()
-    webbrowser.open("https://calendar.google.com/calendar/u/0/r")

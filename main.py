@@ -1,8 +1,9 @@
+import sys
 import os
 import uvicorn
-from datetime import datetime
-import webbrowser
-from fastapi import FastAPI, HTTPException, Depends, Request, status, UploadFile, File, Form
+from datetime import datetime, timedelta
+
+from fastapi import FastAPI, HTTPException, Depends, Request, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import FileResponse
@@ -49,7 +50,7 @@ from backend.security import (
 )
 from backend.utils import verify_password, hash_password
 from backend.mailUtils.sendMail import send_email
-from backend.eventCreator import main as create_calendar_event
+from backend.eventCreator import create_calendar_event
 from backend.databases.seed_users import seed_all
 import tempfile
 import asyncio
@@ -80,6 +81,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
+session = {}
+
 @app.on_event("startup")
 def on_startup():
     seed_all()
@@ -91,10 +94,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-        ],
+    allow_origins=["http://localhost:5173"],  # Add your frontend origin here
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -1188,7 +1188,7 @@ async def create_calendar_event_endpoint(
     
     try:
         create_calendar_event()
-        webbrowser.open("https://calendar.google.com/calendar/u/0/r")
+        
         return {"message": "Calendar event created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create calendar event: {e}")
@@ -1602,6 +1602,7 @@ async def update_my_candidate_profile(
 @app.post("/schedule-interview", tags=["Interviews"])
 async def schedule_interview(
     payload: InterviewRequest,
+    hr_user: User = Depends(require_roles(ROLE_HR)),  # Add this dependency
     db: Session = Depends(get_db),
 ):
     candidate = db.query(User).filter(User.id == payload.candidate_id).first()
@@ -1609,13 +1610,11 @@ async def schedule_interview(
         raise HTTPException(status_code=404, detail="Candidate not found")
 
     scheduled_time = payload.scheduled_time or (datetime.utcnow() + timedelta(days=5))
-
-    # Call with correct arguments
-    event_id = create_calendar_event(candidate.email, scheduled_time)
+    event_id, event_link = create_calendar_event(candidate.email, scheduled_time)
 
     interview = Interview(
         candidate_id=candidate.id,
-        hr_id=None,
+        hr_id=hr_user.id,  # Use the HR user's ID here
         scheduled_time=scheduled_time,
         calendar_event_id=event_id,
         status="scheduled"
@@ -1624,7 +1623,18 @@ async def schedule_interview(
     db.commit()
     db.refresh(interview)
 
-    return {"message": "Interview scheduled", "interview_id": interview.id}
+    # Send email to candidate with calendar invite link
+    subject = "Interview Scheduled"
+    body = (
+        f"Dear {candidate.name},\n\nYour interview has been scheduled for {scheduled_time.strftime('%Y-%m-%d %H:%M')} (Asia/Kolkata). "
+        f"Please check your calendar for details.\n\nYou can view and accept the invite here: {event_link}\n\nBest regards,\nHR Team"
+    )
+    try:
+        send_email(candidate.email, subject, body)
+    except Exception as e:
+        print(f"Failed to send interview email: {e}")
+
+    return {"message": "Interview scheduled and email sent", "interview_id": interview.id, "calendar_event_link": event_link}
 
 @app.post("/reschedule-interview", tags=["Interviews"])
 async def reschedule_interview(
@@ -1730,11 +1740,81 @@ async def score_all_candidates_for_job(
         print("Score error:", e)
         raise HTTPException(status_code=500, detail=str(e))
 
+# Google OAuth2 setup
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Only for development
+CLIENT_SECRETS_FILE = 'credentials.json'
+SCOPES = ["https://www.googleapis.com/auth/calendar.readonly","https://www.googleapis.com/auth/calendar","https://www.googleapis.com/auth/calendar.events"]
+REDIRECT_URI = 'http://localhost:8080/oauth2callback'
 
-CONVERSATIONS_DIR = os.path.join(os.getcwd(), "conversations")
-os.makedirs(CONVERSATIONS_DIR, exist_ok=True)
+# Check if credentials.json exists
+if not os.path.exists(CLIENT_SECRETS_FILE):
+    print(f"Error: {CLIENT_SECRETS_FILE} not found. Please ensure it is in the project directory.")
+    sys.exit(1)
 
-app.mount("/conversations", StaticFiles(directory=CONVERSATIONS_DIR), name="conversations")
+
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import Form
+from starlette.requests import Request as StarletteRequest
+
+@app.get("/", response_class=HTMLResponse)
+async def index_get():
+    # You can use Jinja2 or return a simple HTML string
+    return """
+    <form method='post'>
+        Email: <input type='email' name='email'><br>
+        Date: <input type='date' name='date'><br>
+        <input type='submit' value='Authorize'>
+    </form>
+    """
+
+@app.post("/")
+async def index_post(email: str = Form(...), date: str = Form(...)):
+    session["email"] = email
+    session["date"] = date
+    return RedirectResponse(url="/authorize", status_code=303)
+
+
+@app.get("/authorize")
+async def authorize():
+    flow = Flow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE,
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true'
+    )
+    session['state'] = state
+    return RedirectResponse(url=authorization_url, status_code=303)
+
+
+
+@app.get("/oauth2callback")
+async def oauth2callback(request: Request):
+    state = session.get('state')
+    flow = Flow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE,
+        scopes=SCOPES,
+        state=state,
+        redirect_uri=REDIRECT_URI
+    )
+    authorization_response = str(request.url)
+    flow.fetch_token(authorization_response=authorization_response)
+    credentials = flow.credentials
+
+    def credentials_to_dict(creds):
+        return {
+            'token': creds.token,
+            'refresh_token': creds.refresh_token,
+            'token_uri': creds.token_uri,
+            'client_id': creds.client_id,
+            'client_secret': creds.client_secret,
+            'scopes': creds.scopes
+        }
+
+    session['credentials'] = credentials_to_dict(credentials)
+    return RedirectResponse(url="/create-calendar-event", status_code=303)
 
 
 
