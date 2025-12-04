@@ -112,8 +112,6 @@ export default function CandidateJobs() {
       <main className="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-blue-700">Open Roles</h1>
-            <p className="text-sm text-gray-600">Explore and apply to jobs</p>
           </div>
 
           <div className="w-full md:w-1/2 lg:w-1/3">

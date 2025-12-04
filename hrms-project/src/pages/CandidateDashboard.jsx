@@ -115,10 +115,8 @@ export default function CandidateDashboard() {
         {/* Page Title */}
         <div className="mb-8 mt-4">
           <h1 className="text-4xl font-bold text-blue-600 mb-2">
-            Candidate Dashboard
           </h1>
           <p className="text-gray-600">
-            Track your job applications and prepare for interviews
           </p>
         </div>
 
