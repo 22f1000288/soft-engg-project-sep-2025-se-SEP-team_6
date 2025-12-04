@@ -9,7 +9,7 @@ export default function CandidateNavbar({
   navItems = [
     { label: "Dashboard", to: "/candidate-dashboard" },
     { label: "Jobs", to: "/candidate-jobs" },
-    { label: "Applications", to: "/candidate-applications" },
+    { label: "My Applications", to: "/candidate-applications" },
     { label: "Interview Prep", to: "/interview-prep" },
     { label: "Profile", to: "/candidate-profile" },
   ],

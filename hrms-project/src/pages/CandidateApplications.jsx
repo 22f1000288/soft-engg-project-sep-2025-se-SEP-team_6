@@ -133,7 +133,6 @@ export default function CandidateApplications() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-blue-700">
-              My Applications
             </h1>
             <p className="text-sm text-gray-600">
               Track your submitted applications and their status.
