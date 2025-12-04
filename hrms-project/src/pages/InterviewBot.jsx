@@ -1,18 +1,20 @@
 import React, { useState, useRef } from "react";
-import config from '../../public/config.json'
+import config from '../../public/config.json';
 
 const InterviewBot = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [audioChunks, setAudioChunks] = useState([]);
   const [audioResponse, setAudioResponse] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [lastTranscript, setLastTranscript] = useState("");
   const [lastResponse, setLastResponse] = useState("");
   const [recordingTime, setRecordingTime] = useState(0);
+
+  // Refs for non-react state
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const recordingInterval = useRef(null);
   const audioPlayer = useRef(null);
 
@@ -36,28 +38,26 @@ const InterviewBot = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      //  FIX: use stable codec!
       const recorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm;codecs=opus"
+        mimeType: "audio/webm;codecs=opus",
       });
 
-      setMediaRecorder(recorder);
-      setAudioChunks([]);
+      // Store reference immediately (sync)
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
 
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
-          setAudioChunks((prev) => [...prev, event.data]);
+          audioChunksRef.current.push(event.data);
         }
       };
 
       recorder.onstop = async () => {
-        // allow chunks to flush
-        await new Promise(res => setTimeout(res, 100));
+        await new Promise((res) => setTimeout(res, 100)); // Let chunks flush
         sendAudioToBackend();
       };
 
       recorder.start();
-
       setIsRecording(true);
 
       recordingInterval.current = setInterval(() => {
@@ -66,27 +66,38 @@ const InterviewBot = () => {
 
     } catch (error) {
       setErrorMessage("Failed to access microphone. Please check your permissions.");
+      console.error(error);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorder) {
-      try { mediaRecorder.stop(); } catch {}
-      setIsRecording(false);
+    const recorder = mediaRecorderRef.current;
 
-      if (recordingInterval.current) {
-        clearInterval(recordingInterval.current);
-        recordingInterval.current = null;
+    if (recorder) {
+      try {
+        recorder.stop();
+      } catch (err) {
+        console.error("Recorder stop failed:", err);
       }
+    }
 
-      if (mediaRecorder.stream) {
-        mediaRecorder.stream.getTracks().forEach((t) => t.stop());
-      }
+    setIsRecording(false);
+
+    if (recordingInterval.current) {
+      clearInterval(recordingInterval.current);
+      recordingInterval.current = null;
+    }
+
+    // Ensure stream tracks stop
+    if (recorder && recorder.stream) {
+      recorder.stream.getTracks().forEach((t) => t.stop());
     }
   };
 
   const sendAudioToBackend = async () => {
-    if (!audioChunks || audioChunks.length === 0) {
+    const chunks = audioChunksRef.current;
+
+    if (!chunks || chunks.length === 0) {
       setErrorMessage("No audio recorded.");
       return;
     }
@@ -95,9 +106,7 @@ const InterviewBot = () => {
     setErrorMessage(null);
 
     try {
-      // FIX: correct MIME type for Blob
-      const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-
+      const audioBlob = new Blob(chunks, { type: "audio/webm" });
       const formData = new FormData();
       formData.append("file", audioBlob, "recording.webm");
 
@@ -134,7 +143,9 @@ const InterviewBot = () => {
 
       const audioPath = data?.audio_file || data?.audio_url || "";
       const audioUrl = audioPath
-        ? (audioPath.startsWith("http") ? audioPath : joinUrl(backendBase, audioPath))
+        ? audioPath.startsWith("http")
+          ? audioPath
+          : joinUrl(backendBase, audioPath)
         : null;
 
       setConversationHistory((prev) => [
@@ -143,8 +154,10 @@ const InterviewBot = () => {
         {
           type: "assistant",
           time: new Date().toLocaleTimeString(),
-          text: assistantText.trim() ? assistantText : "[Audio response — no transcript available]",
-          audioUrl
+          text: assistantText.trim()
+            ? assistantText
+            : "[Audio response — no transcript available]",
+          audioUrl,
         },
       ]);
 
@@ -163,7 +176,8 @@ const InterviewBot = () => {
         }
       }
 
-      setAudioChunks([]);
+      // Reset chunks
+      audioChunksRef.current = [];
 
     } catch (error) {
       setErrorMessage("Failed to process the audio. Please try again.");
@@ -196,10 +210,14 @@ const InterviewBot = () => {
   let assistantCircleClass =
     "w-40 h-40 rounded-full bg-white flex items-center justify-center cursor-pointer transition-all duration-300 shadow-xl relative";
 
-  if (isRecording) assistantCircleClass += " bg-gradient-to-br from-pink-300 to-pink-500 animate-pulse";
-  else if (isProcessing) assistantCircleClass += " bg-gradient-to-br from-blue-400 to-cyan-300";
-  else if (isSpeaking) assistantCircleClass += " bg-gradient-to-br from-green-400 to-teal-300 animate-pulse";
-
+  if (isRecording)
+    assistantCircleClass +=
+      " bg-gradient-to-br from-pink-300 to-pink-500 animate-pulse";
+  else if (isProcessing)
+    assistantCircleClass += " bg-gradient-to-br from-blue-400 to-cyan-300";
+  else if (isSpeaking)
+    assistantCircleClass +=
+      " bg-gradient-to-br from-green-400 to-teal-300 animate-pulse";
 
   return (
     <div className="min-h-screen w-screen bg-gradient-to-br from-indigo-400 to-purple-600 font-sans p-4 overflow-x-hidden">
@@ -210,7 +228,9 @@ const InterviewBot = () => {
           <h1 className="text-2xl font-bold mb-2 flex items-center justify-center gap-3 text-white">
             <span className="text-3xl">🎤</span> InterviewBot
           </h1>
-          <p className="text-base opacity-95 font-normal text-white">Your AI Interview Assistant</p>
+          <p className="text-base opacity-95 font-normal text-white">
+            Your AI Interview Assistant
+          </p>
         </header>
 
         {/* Main Mic UI */}
@@ -232,9 +252,18 @@ const InterviewBot = () => {
 
           {/* Status */}
           <div className="mt-6 text-center min-h-[28px]">
-            {!isRecording && !isProcessing && !isSpeaking && <p className="text-white text-lg">Click to start speaking</p>}
-            {isRecording && <p className="text-white text-lg">Listening... <span className="animate-blink text-yellow-300 text-xl">●</span></p>}
-            {isProcessing && <p className="text-white text-lg">Processing your response...</p>}
+            {!isRecording && !isProcessing && !isSpeaking && (
+              <p className="text-white text-lg">Click to start speaking</p>
+            )}
+            {isRecording && (
+              <p className="text-white text-lg">
+                Listening...{" "}
+                <span className="animate-blink text-yellow-300 text-xl">●</span>
+              </p>
+            )}
+            {isProcessing && (
+              <p className="text-white text-lg">Processing your response...</p>
+            )}
             {isSpeaking && <p className="text-white text-lg">Playing response...</p>}
           </div>
 
@@ -274,12 +303,23 @@ const InterviewBot = () => {
             <h3 className="text-indigo-500 mb-4 text-lg">Conversation History</h3>
             <div className="flex flex-col gap-3">
               {conversationHistory.map((item, idx) => (
-                <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl ${item.type === "user" ? "bg-indigo-400/15" : "bg-green-300/15"}`}>
+                <div
+                  key={idx}
+                  className={`flex items-center gap-3 p-3 rounded-xl ${
+                    item.type === "user"
+                      ? "bg-indigo-400/15"
+                      : "bg-green-300/15"
+                  }`}
+                >
                   <div className="text-2xl">{item.type === "user" ? "👤" : "🤖"}</div>
                   <div className="flex-1">
-                    <div className="font-semibold text-gray-800 text-sm">{item.type === "user" ? "You" : "Assistant"}</div>
+                    <div className="font-semibold text-gray-800 text-sm">
+                      {item.type === "user" ? "You" : "Assistant"}
+                    </div>
                     <div className="text-xs text-gray-500">{item.time}</div>
-                    {item.text && <div className="mt-1 text-gray-700">{item.text}</div>}
+                    {item.text && (
+                      <div className="mt-1 text-gray-700">{item.text}</div>
+                    )}
                   </div>
                 </div>
               ))}
