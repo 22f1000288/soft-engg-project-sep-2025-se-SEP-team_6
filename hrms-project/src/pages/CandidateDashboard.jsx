@@ -111,7 +111,7 @@ export default function CandidateDashboard() {
       <CandidateNavbar />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-full mx-auto px-6 py-8">
         {/* Page Title */}
         <div className="mb-8 mt-4">
           <h1 className="text-4xl font-bold text-blue-600 mb-2">

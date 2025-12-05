@@ -77,8 +77,7 @@ export default function Communications(props) {
     <div className="min-h-screen bg-gray-50">
       <Navbar userName={userName} />
 
-      <main className="py-10 px-6 sm:px-10 max-w-7xl mx-auto">
-        
+      <main className="py-10 px-6 sm:px-10 max-w-full mx-auto">
         {/* PAGE INTRO */}
         <header className="mb-10">
           <p className="text-gray-600 mt-2">

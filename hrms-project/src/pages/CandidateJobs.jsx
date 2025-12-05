@@ -109,7 +109,7 @@ export default function CandidateJobs() {
     <div className="min-h-screen bg-gray-50">
       <CandidateNavbar />
 
-      <main className="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="pt-20 max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex-1">
           </div>

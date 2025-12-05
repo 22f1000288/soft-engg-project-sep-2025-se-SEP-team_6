@@ -158,7 +158,7 @@ export default function CandidateProfile() {
     <div className="min-h-screen bg-gray-50">
       <CandidateNavbar />
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <div className="bg-white rounded-xl p-6 sm:p-8 shadow-lg space-y-8">
 
           {/* ---------- VIEW MODE ---------- */}

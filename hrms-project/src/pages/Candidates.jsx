@@ -44,7 +44,6 @@ export default function Candidates(props) {
     try {
       const res = await authFetch(`/scores/job/${jobId}`);
       if (!res.ok) throw new Error('Failed to fetch scores');
-      
       const data = await res.json();
       const scores = data.scores || [];
 
@@ -161,7 +160,7 @@ export default function Candidates(props) {
 
       <main className="py-6 sm:pt-12 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] overflow-auto bg-gray-50">
         {/* Title */}
-        <div className="mb-6 shadow-lg">
+        <div className="mb-6 px-6">
           <h1 className="text-2xl md:text-4xl font-bold text-blue-700">
           </h1>
           <p className="text-gray-600 mt-1">

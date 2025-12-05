@@ -14,7 +14,7 @@ export default function TalentFlowLanding() {
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
 
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 w-full">
+      <header className="bg-white border-b border-gray-200 px-3 py-3 w-full">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
@@ -29,13 +29,13 @@ export default function TalentFlowLanding() {
       {/* Hero Section */}
       <section className="w-full">
         <div className="
-            bg-gradient-to-r 
-            from-indigo-600 
+            bg-gradient-to-r
+            from-indigo-600
             via-purple-600
             to-purple-700
-            w-full py-24 px-4 sm:px-6 lg:px-8
+            w-full py-12 px-2 sm:px-4 lg:px-5
             text-center text-white
-            animate-fadeIn
+            animate-fadeIn rounded-lg shadow-lg
           "
         >
           <h1 className="text-4xl sm:text-5xl font-extrabold mb-6 drop-shadow-lg">
@@ -68,11 +68,11 @@ export default function TalentFlowLanding() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 animate-slideUp">
-        <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+      <section className="py-8 px-2 sm:px-4 lg:px-5 animate-slideUp">
+        <div className="grid md:grid-cols-3 gap-6 max-w-7xl mx-auto">
 
           {/* Feature 1 */}
-          <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1">
+          <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
               <FileText className="w-6 h-6 text-blue-600" />
             </div>
@@ -85,7 +85,7 @@ export default function TalentFlowLanding() {
           </div>
 
           {/* Feature 2 */}
-          <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1">
+          <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1">
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-6">
               <Clipboard className="w-6 h-6 text-green-600" />
             </div>
@@ -98,7 +98,7 @@ export default function TalentFlowLanding() {
           </div>
 
           {/* Feature 3 */}
-          <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1">
+          <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1">
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
               <MessageSquare className="w-6 h-6 text-purple-600" />
             </div>

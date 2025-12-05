@@ -129,7 +129,7 @@ export default function CandidateApplications() {
     <div className="min-h-screen bg-gray-50">
       <CandidateNavbar />
 
-      <main className="pt-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <main className="pt-20 max-w-full mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-blue-700">
@@ -190,10 +190,10 @@ export default function CandidateApplications() {
         {filtered.map((app) => (
           <div
             key={app.id}
-            className="bg-white p-5 rounded-xl shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:shadow-2xl transition-shadow"
+            className="bg-white p-6 m-8 rounded-xl shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:shadow-2xl transition-shadow"
           >
             <div className="flex-1 min-w-0">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-6">
                 <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-700 font-semibold">{(app.jobTitle||"").split(" ").map(n=>n[0]).join("").slice(0,2)}</div>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg font-semibold text-gray-900 truncate">

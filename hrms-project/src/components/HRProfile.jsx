@@ -48,9 +48,9 @@ export default function HRProfilePage() {
     <div className="min-h-screen bg-gray-50">
       <HRNavbar />
 
-      <main className="max-w-2xl mx-auto px-6 py-16">
+      <main className="max-w-6xl mx-auto px-6 py-16">
         {/* CARD WRAPPER */}
-        <div className="bg-white rounded-3xl shadow-sm p-10 border border-gray-100">
+        <div className="bg-white rounded-3xl shadow-lg p-10 border border-gray-100">
 
           {/* AVATAR + NAME */}
           <div className="flex flex-col items-center text-center gap-4 mb-10">

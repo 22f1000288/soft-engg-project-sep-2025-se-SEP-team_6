@@ -46,7 +46,7 @@ export default function InterviewPrep() {
     <div className="min-h-screen bg-gray-50">
       <CandidateNavbar />
 
-      <main className="pt-20 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <main className="pt-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <section className="bg-white rounded-2xl p-6 shadow-lg">
           <h1 className="text-xl font-semibold text-blue-700 mb-2">
             Interview Practice

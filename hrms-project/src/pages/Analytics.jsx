@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/HRNavbar";
-import { BarChart, Users, Briefcase, Clock } from "lucide-react";
+import { BarChart, Users, Briefcase, Clock, CheckCircle } from "lucide-react";
 import useAuth from "../contexts/useAuth";
 
 export default function Analytics(props) {
@@ -20,9 +20,9 @@ export default function Analytics(props) {
   const [hiresSeries, setHiresSeries] = useState([]);
 
   const kpis = [
-    { id: 1, label: "Open Roles", value: openRoles, icon: Briefcase },
-    { id: 2, label: "Applications", value: applicationsCount, icon: Users },
-    { id: 3, label: "Hires (30d)", value: hiresCount, icon: BarChart },
+    { id: 1, label: "Open Roles", value: openRoles, icon: Briefcase, bg: "bg-indigo-50", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
+    { id: 2, label: "Applications", value: applicationsCount, icon: Users, bg: "bg-sky-50", iconBg: "bg-sky-100", iconColor: "text-sky-600" },
+    { id: 3, label: "Hires (30d)", value: hiresCount, icon: CheckCircle, bg: "bg-emerald-50", iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
   ];
 
   useEffect(() => {
@@ -109,17 +109,17 @@ export default function Analytics(props) {
     <div className="min-h-screen bg-gray-50">
       <Navbar userName={userName} />
 
-      <main className="py-10 px-4 sm:px-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto space-y-10">
+      <main className="py-10 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-full mx-auto space-y-10">
 
           {/* KPI CARDS */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <section className="grid grid-cols-1 pt-3 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {kpis.map((k) => {
               const Icon = k.icon;
               return (
                 <div
                   key={k.id}
-                  className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition"
+                  className={`bg-white shadow-lg border border-gray-100 rounded-xl p-5 hover:shadow-2xl transition ${k.bg}`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -128,8 +128,8 @@ export default function Analytics(props) {
                         {k.value}
                       </p>
                     </div>
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <Icon className="w-5 h-5 text-gray-600" />
+                    <div className={`p-2 rounded-lg ${k.iconBg}`}>
+                      <Icon className={`w-5 h-5 ${k.iconColor}`} />
                     </div>
                   </div>
                 </div>
@@ -138,24 +138,24 @@ export default function Analytics(props) {
           </section>
 
           {/* PIPELINE FULL WIDTH */}
-          <section className="bg-white border border-gray-200 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-lg">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4">
               Candidate Pipeline
             </h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: "Applied", value: appliedCount },
-                { label: "Screened", value: screenedCount },
-                { label: "Interview", value: interviewCount },
-                { label: "Offer", value: offerCount },
+                { label: "Applied", value: appliedCount, color: "bg-sky-50 text-sky-800" },
+                { label: "Screened", value: screenedCount, color: "bg-indigo-50 text-indigo-800" },
+                { label: "Interview", value: interviewCount, color: "bg-amber-50 text-amber-800" },
+                { label: "Offer", value: offerCount, color: "bg-emerald-50 text-emerald-800" },
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center"
+                  className={`border border-gray-200 rounded-lg p-4 text-center ${item.color}`}
                 >
-                  <p className="text-xs text-gray-500">{item.label}</p>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900">
+                  <p className="text-xs font-medium">{item.label}</p>
+                  <p className="mt-1 text-2xl font-semibold">
                     {item.value}
                   </p>
                 </div>
@@ -167,7 +167,7 @@ export default function Analytics(props) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
             {/* HIRES OVER TIME - WITH AXES */}
-            <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6">
+            <div className="lg:col-span-2 bg-white border shadow-lg  border-gray-100 rounded-xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
                   Hires over time
@@ -179,24 +179,10 @@ export default function Analytics(props) {
                 <svg viewBox="0 0 220 120" className="w-full h-full">
 
                   {/* Horizontal axis */}
-                  <line
-                    x1="0"
-                    y1="100"
-                    x2="200"
-                    y2="100"
-                    stroke="#d1d5db"
-                    strokeWidth="2"
-                  />
+                  <line x1="0" y1="100" x2="200" y2="100" stroke="#e5e7eb" strokeWidth="2" />
 
                   {/* Vertical axis */}
-                  <line
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="100"
-                    stroke="#d1d5db"
-                    strokeWidth="2"
-                  />
+                  <line x1="0" y1="0" x2="0" y2="100" stroke="#e5e7eb" strokeWidth="2" />
 
                   {(() => {
                     const series = hiresSeries.slice();
@@ -227,18 +213,31 @@ export default function Analytics(props) {
 
                     return (
                       <>
+                        <defs>
+                          <linearGradient id="lineGradient" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.35" />
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+
                         <polyline
                           fill="none"
-                          stroke="#3b82f6"
+                          stroke="#2563eb"
                           strokeWidth="3"
                           points={points.join(" ")}
                           strokeLinecap="round"
                         />
 
+                        <polygon
+                          fill="url(#lineGradient)"
+                          points={`0,100 ${points.join(" ")} 200,100`}
+                          opacity="0.5"
+                        />
+
                         {points.map((p, i) => {
                           const [x, y] = p.split(",");
                           return (
-                            <circle key={i} cx={x} cy={y} r="3" fill="#2563eb" />
+                            <circle key={i} cx={x} cy={y} r="3" fill="#1d4ed8" />
                           );
                         })}
                       </>
@@ -249,7 +248,7 @@ export default function Analytics(props) {
             </div>
 
             {/* RIGHT SIDEBAR */}
-            <aside className="bg-white border border-gray-200 rounded-xl p-6">
+            <aside className="bg-white border border-gray-100 shadow-lg rounded-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Top Open Roles
               </h3>
@@ -260,13 +259,15 @@ export default function Analytics(props) {
 
               <ul className="space-y-4">
                 {topRoles.map((r) => (
-                  <li key={r.id} className="flex justify-between">
+                  <li key={r.id} className="flex justify-between items-center bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
                     <div>
                       <p className="font-medium text-gray-800">{r.title}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <Users className="w-4 h-4 text-indigo-600" />
                         {r.open} applicants
                       </p>
                     </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">Open</span>
                   </li>
                 ))}
               </ul>
