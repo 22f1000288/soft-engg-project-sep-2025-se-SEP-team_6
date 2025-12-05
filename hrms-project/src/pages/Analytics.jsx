@@ -21,9 +21,8 @@ export default function Analytics(props) {
 
   const kpis = [
     { id: 1, label: "Open Roles", value: openRoles, icon: Briefcase },
-    { id: 2, label: "Avg Time to Hire (days)", value: avgTimeToHire, icon: Clock },
-    { id: 3, label: "Applications", value: applicationsCount, icon: Users },
-    { id: 4, label: "Hires (30d)", value: hiresCount, icon: BarChart },
+    { id: 2, label: "Applications", value: applicationsCount, icon: Users },
+    { id: 3, label: "Hires (30d)", value: hiresCount, icon: BarChart },
   ];
 
   useEffect(() => {
@@ -114,7 +113,7 @@ export default function Analytics(props) {
         <div className="max-w-7xl mx-auto space-y-10">
 
           {/* KPI CARDS */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {kpis.map((k) => {
               const Icon = k.icon;
               return (
