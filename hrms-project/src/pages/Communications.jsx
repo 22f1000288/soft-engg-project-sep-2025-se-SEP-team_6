@@ -7,13 +7,10 @@ export default function Communications(props) {
   const userName = props?.userName ?? "Jane Recruiter";
   const { authFetch } = useAuth();
 
-  // Form state
   const [selectedCandidate, setSelectedCandidate] = useState("");
   const [messageType, setMessageType] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [autoTranslate, setAutoTranslate] = useState(false);
-  const [scheduled, setScheduled] = useState(false);
   const [candidateList, setCandidateList] = useState([]);
   const [recent, setRecent] = useState([]);
 
@@ -27,21 +24,16 @@ export default function Communications(props) {
 
   useEffect(() => {
     authFetch("/candidate-list")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch candidates");
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => setCandidateList(data.candidates ?? []))
       .catch((err) => console.error("Error fetching candidate list:", err));
 
-    // Fetch recent communications
     authFetch("/recent-communications")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch recent communications");
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => setRecent(data.recent ?? []))
-      .catch((err) => console.error("Error fetching recent communications:", err));
+      .catch((err) =>
+        console.error("Error fetching recent communications:", err)
+      );
   }, [authFetch]);
 
   const handleSend = async () => {
@@ -50,231 +42,169 @@ export default function Communications(props) {
       return;
     }
 
-    const selectedCandidateData = candidateList.find(
-      (c) => c.name === selectedCandidate
-    );
-    const candidateEmail = selectedCandidateData ? selectedCandidateData.email : "";
+    const candidate = candidateList.find((c) => c.name === selectedCandidate);
+    const email = candidate?.email;
 
-    if (!candidateEmail) {
-      alert("Selected candidate has no email");
-      return;
-    }
+    if (!email) return alert("Candidate has no email.");
 
     const emailData = {
-      candidate_email: candidateEmail,
+      candidate_email: email,
       subject,
       body: message,
       message_type: messageType,
-      auto_translate: autoTranslate,
-      scheduled,
     };
 
     try {
-      // Prefer authFetch (adds Authorization header). If not available, attach token from tf_tokens.
-      let res;
-      if (typeof authFetch === "function") {
-        res = await authFetch("/notify-candidate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(emailData),
-        });
-      } else {
-        const tokenData = localStorage.getItem("tf_tokens");
-        if (!tokenData) throw new Error("Not authenticated");
-        const token = JSON.parse(tokenData).accessToken;
-        res = await fetch("http://localhost:8000/notify-candidate", {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify(emailData),
-        });
-      }
+      const res = await authFetch("/notify-candidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emailData),
+      });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(err.detail || `Status ${res.status}`);
-      }
+      if (!res.ok) throw new Error();
 
-      await res.json();
-      alert(`Message sent to ${selectedCandidate}: ${subject || "[no subject]"}`);
+      alert(`Message sent to ${selectedCandidate}`);
       setSelectedCandidate("");
       setMessageType("");
       setSubject("");
       setMessage("");
-      setAutoTranslate(false);
-      setScheduled(false);
     } catch (err) {
-      console.error("Error sending email:", err);
-      alert("Error sending email. Please try again.");
+      alert("Failed to send message.");
     }
-  };
-
-  const handlePreview = () => {
-    alert("Preview\n\n" + message);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar userName={userName} />
 
-      <main className="py-6 sm:pt-12 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] overflow-auto bg-gray-50">
-        {/* Page header */}
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-blue-700">
-          </h1>
-          <p className="text-gray-600 mt-1 mb-2">
-            Automate follow-ups, translate messages, and provide personalized
-            feedback to candidates
+      <main className="py-10 px-6 sm:px-10 max-w-7xl mx-auto">
+        
+        {/* PAGE INTRO */}
+        <header className="mb-10">
+          <p className="text-gray-600 mt-2">
+            Send personalized messages, automate follow-ups, and manage communication workflows.
           </p>
-        </div>
-        {/* Middle section: Send Message + AI Suggestions */}
-        <section>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6  mb-6 ">
-            {/* Send Message card */}
-            <div className="lg:col-span-18 bg-white rounded-2xl p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Send Message
-                </h3>
+        </header>
+
+        {/* TWO COLUMN LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* LEFT COLUMN — MESSAGE COMPOSER */}
+          <section className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Send Message</h2>
+
+            <div className="space-y-6">
+
+              {/* Candidate */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">Select Candidate</label>
+                <select
+                  value={selectedCandidate}
+                  onChange={(e) => setSelectedCandidate(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-white text-gray-900"
+                >
+                  <option value="">Choose candidate</option>
+                  {candidateList.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                <div className="lg:col-span-7 space-y-4">
-                  <div>
-                    <label className="text-sm text-gray-700">
-                      Select Candidate
-                    </label>
-                    <select
-                      value={selectedCandidate}
-                      onChange={(e) => setSelectedCandidate(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 bg-white"
-                    >
-                      <option value="">Choose candidate</option>
-                      {candidateList.map((c) => (
-                        <option key={c.id} value={c.name}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              {/* Message Type */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">Message Type</label>
+                <select
+                  value={messageType}
+                  onChange={(e) => setMessageType(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-white"
+                >
+                  {messageTypes.map((t, i) => (
+                    <option key={i} value={t === "Select type" ? "" : t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm text-gray-700">
-                        Message Type
-                      </label>
-                      <select
-                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 bg-white"
-                        value={messageType}
-                        onChange={(e) => setMessageType(e.target.value)}
-                      >
-                        {messageTypes.map((t, i) => (
-                          <option key={i} value={t === "Select type" ? "" : t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                
-                  </div>
+              {/* Subject */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">Subject</label>
+                <input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Enter subject"
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-white"
+                />
+              </div>
 
-                  <div>
-                    <label className="text-sm text-gray-700">Subject</label>
-                    <input
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 bg-white"
-                      placeholder="Enter message subject"
-                    />
-                  </div>
+              {/* Message */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Message Content
+                </label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={8}
+                  placeholder="Write your message..."
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 bg-white"
+                />
+              </div>
 
-                  <div>
-                    <label className="text-sm text-gray-700">
-                      Message Content
-                    </label>
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      rows={7}
-                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 bg-white"
-                      placeholder="Type your message here..."
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleSend}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-md inline-flex items-center gap-2"
-                    >
-                      <Send className="w-4 h-4" /> Send Message
-                    </button>
-                    <button
-                      onClick={handlePreview}
-                      className="px-4 py-2 border rounded-md"
-                    >
-                      Preview
-                    </button>
-                  </div>
-                </div>
-                <div className="lg:col-span-5"></div>
+              {/* Send Button */}
+              <div>
+                <button
+                  onClick={handleSend}
+                  className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-lg inline-flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" /> Send Message
+                </button>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* BottomRecent Communications Card */}
-        <section>
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Recent Communications
-              </h3>
-            </div>
+          {/* RIGHT COLUMN — RECENT COMMUNICATIONS */}
+          <aside className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm h-fit sticky top-20">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Recent Communications
+            </h2>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {recent.map((r) => (
                 <div
                   key={r.id}
-                  className="border border-gray-100 rounded-lg p-4"
+                  className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-700">
-                        {r.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <div className="font-medium text-gray-900">
-                            {r.name}
-                          </div>
-                          <div className="text-xs text-gray-500">{r.time}</div>
-                        </div>
-                        <div className="text-sm text-gray-600 mt-2">
-                          {r.snippet}
-                        </div>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-700">
+                      {r.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </div>
 
-                    <div className="text-right">
-                      <div className={`text-sm font-semibold ${r.color}`}>
-                        {r.tags.join(", ")}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-gray-900">{r.name}</p>
+                        <span className="text-xs text-gray-500">{r.time}</span>
                       </div>
-                      <div className="text-xs text-blue-600 mt-3">
-                        View Full
-                      </div>
+
+                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        {r.snippet}
+                      </p>
+
+                      <p className="text-xs text-blue-600 mt-2 cursor-pointer hover:underline">
+                        View full →
+                      </p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
+          </aside>
+        </div>
       </main>
     </div>
   );
