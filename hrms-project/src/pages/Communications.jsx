@@ -195,9 +195,7 @@ export default function Communications(props) {
                         {r.snippet}
                       </p>
 
-                      <p className="text-xs text-blue-600 mt-2 cursor-pointer hover:underline">
-                        View full →
-                      </p>
+
                     </div>
                   </div>
                 </div>
