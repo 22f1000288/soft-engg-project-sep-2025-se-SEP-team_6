@@ -1,170 +1,167 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Lock, Edit2, Calendar, MapPin } from 'lucide-react';
-import HRNavbar from '../components/HRNavbar';
-import useAuth from '../contexts/useAuth';
-
-// Mock profile data (replace with props or API response)
-const initialProfile = {
-  name: 'John HR',
-  email: 'john.hr@email.com',
-  password: '********',
-  company: 'ABC Company',
-  location: 'New Delhi, India',
-};
+import React, { useState, useEffect } from "react";
+import HRNavbar from "../components/HRNavbar";
+import useAuth from "../contexts/useAuth";
 
 export default function HRProfilePage() {
   const { user } = useAuth();
+
+  // no dummy values
   const derived = {
-    name: user?.name || initialProfile.name,
-    email: user?.email || initialProfile.email,
-    password: '********',
-    company: user?.company || initialProfile.company,
-    location: user?.location || initialProfile.location,
+    name: user?.name || "",
+    email: user?.email || "",
+    company: user?.company || "",
+    location: user?.location || "",
   };
+
   const [profile, setProfile] = useState(derived);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(derived);
 
   useEffect(() => {
-    // keep local profile in sync if auth user changes
     const next = {
-      name: user?.name || initialProfile.name,
-      email: user?.email || initialProfile.email,
-      password: '********',
-      company: user?.company || initialProfile.company,
-      location: user?.location || initialProfile.location,
+      name: user?.name || "",
+      email: user?.email || "",
+      company: user?.company || "",
+      location: user?.location || "",
     };
     setProfile(next);
     setEditForm(next);
   }, [user]);
 
-  // For Edit logic
   const handleEditChange = (e) => {
-    setEditForm({
-      ...editForm,
-      [e.target.name]: e.target.value,
-    });
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
-  const handleEditSave = () => {
+  const handleSave = () => {
     setProfile(editForm);
     setIsEditing(false);
   };
 
+  const initials =
+    profile.name
+      ?.split(" ")
+      ?.map((n) => n[0])
+      ?.join("")
+      ?.toUpperCase() || "U";
+
   return (
     <div className="min-h-screen bg-gray-50">
-  {/* Header */}
-  <HRNavbar />
+      <HRNavbar />
 
-      {/* Main Profile Content */}
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <div className="mb-8">
-          <p className="text-gray-600">Manage your profile information</p>
+      <main className="max-w-2xl mx-auto px-6 py-16">
+        {/* CARD WRAPPER */}
+        <div className="bg-white rounded-3xl shadow-sm p-10 border border-gray-100">
+
+          {/* AVATAR + NAME */}
+          <div className="flex flex-col items-center text-center gap-4 mb-10">
+            <div className="w-28 h-28 rounded-full bg-indigo-600 text-white flex items-center justify-center text-4xl font-semibold">
+              {initials}
+            </div>
+
+            <div>
+              <h2 className="text-3xl font-semibold text-gray-900">
+                {profile.name || "Unnamed User"}
+              </h2>
+              <p className="text-gray-500 mt-1">{profile.company || "---"}</p>
+            </div>
+
+            {/* EDIT BUTTON */}
+            <button
+              onClick={() => setIsEditing(true)}
+              className="mt-3 px-6 py-2 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition"
+            >
+              Edit Profile
+            </button>
+          </div>
+
+          {/* INFO SECTION */}
+          <div className="space-y-8">
+            <section>
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                Email
+              </h3>
+              <p className="text-gray-800 text-lg">{profile.email || "---"}</p>
+            </section>
+
+            <section>
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                Location
+              </h3>
+              <p className="text-gray-800 text-lg">{profile.location || "---"}</p>
+            </section>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-lg space-y-6">
-          {/* Personal Info */}
-          {!isEditing ? (
-            <>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                  {profile.name.split(' ').map(n => n[0]).join('')}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
-                  <p className="text-gray-600">{profile.company}</p>
-                </div>
-                <button
-                  className="ml-auto bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg flex items-center gap-2"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Edit
-                </button>
-              </div>
+        {/* EDIT MODE OVERLAY */}
+        {isEditing && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center px-4">
+            <div className="bg-white w-full max-w-lg rounded-2xl p-8 shadow-xl">
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">
+                Edit Profile
+              </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium text-gray-700">{profile.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Lock className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium text-gray-700">{profile.password}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium text-gray-700">{profile.location}</span>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                  {editForm.name.split(' ').map(n => n[0]).join('')}
-                </div>
+              <div className="space-y-5">
                 <div>
+                  <label className="text-sm text-gray-500">Full Name</label>
                   <input
-                    type="text"
                     name="name"
-                    className="text-2xl font-bold text-gray-900 bg-gray-100 rounded px-2 py-1 w-full"
                     value={editForm.name}
                     onChange={handleEditChange}
-                  />
-                  <textarea
-                    name="company"
-                    className="text-gray-900 bg-gray-100 rounded px-2 py-1 w-full mt-1"
-                    value={editForm.company}
-                    onChange={handleEditChange}
-                    rows={2}
+                    className="mt-1 w-full bg-gray-100 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <div className="space-y-3">
+
+                <div>
+                  <label className="text-sm text-gray-500">Company</label>
+                  <input
+                    name="company"
+                    value={editForm.company}
+                    onChange={handleEditChange}
+                    className="mt-1 w-full bg-gray-100 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-500">Email</label>
                   <input
                     type="email"
                     name="email"
-                    className="text-md text-gray-700 bg-gray-100 rounded px-2 py-1 w-full"
                     value={editForm.email}
                     onChange={handleEditChange}
+                    className="mt-1 w-full bg-gray-100 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
                   />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-500">Location</label>
                   <input
-                    type="text"
-                    name="password"
-                    className="text-md text-gray-700 bg-gray-100 rounded px-2 py-1 w-full"
-                    value={editForm.password}
-                    onChange={handleEditChange}
-                  />
-                  <input
-                    type="text"
                     name="location"
-                    className="text-md text-gray-700 bg-gray-100 rounded px-2 py-1 w-full"
                     value={editForm.location}
                     onChange={handleEditChange}
+                    className="mt-1 w-full bg-gray-100 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
-              <div className="flex gap-2">
+
+              {/* BUTTONS */}
+              <div className="flex gap-3 justify-end mt-8">
                 <button
-                  className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-medium"
-                  onClick={handleEditSave}
-                >
-                  Save
-                </button>
-                <button
-                  className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-medium"
                   onClick={() => setIsEditing(false)}
+                  className="px-5 py-2 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300 transition"
                 >
                   Cancel
                 </button>
+
+                <button
+                  onClick={handleSave}
+                  className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                >
+                  Save
+                </button>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
