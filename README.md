@@ -1,26 +1,56 @@
-# soft-engg-project-sep-2025-se-SEP-team_6
+# TalentFlow: AI-Integrated HRMS Solution
 
-Industry: HRMS
+TalentFlow is a comprehensive recruitment platform designed to modernize the hiring process. By integrating GenAI capabilities with traditional HR Management systems, it automates resume screening, interview preparation, and job description generation to reduce manual overhead for recruiters and candidates alike.
 
+## 🚀 Key Features
 
-Git clone the repo 
-1. npm install tailwindcss @tailwindcss/vite
-2. In the viteconfig.js, pasted the below code 
-    import { defineConfig } from 'vite'
-    import tailwindcss from '@tailwindcss/vite'
+### For Recruiters
+* **Intelligent JD Creation**: Generate structured job descriptions using AI based on role requirements.
+* **Resume Screening & Ranking**: Automated candidate ranking using NLP pipelines to match resumes against job descriptions.
+* **Hiring Dashboard**: End-to-end tracking of candidate progress from application to offer.
+* **Integrated Scheduling**: Tools to coordinate interview slots and manage communication.
 
-    export default defineConfig({
-    plugins: [
-        tailwindcss(),
-    ],
-    })
+### For Candidates
+* **AI Interview Bot**: Practice mock interviews with real-time feedback using Speech-to-Text (STT) and Text-to-Speech (TTS) technology.
+* **Application Tracking**: Real-time status updates and a user-friendly interface for managing applications.
+* **Resume Enhancement**: AI-driven insights to help candidates improve their profiles.
 
-3. In the index.css file added the css import
+## 🛠️ Tech Stack
 
-## Working in Docker
+* **Frontend**: React.js, Bootstrap
+* **Backend**: FastAPI (Python)
+* **Database**: PostgreSQL / SQLite (SQLAlchemy ORM)
+* **AI/LLM**: LLaMA-3.3-70B (via Groq API), Whisper (Transcription)
+* **DevOps**: Docker, GitHub Actions, Mailhog (Email Testing)
 
-1. Install the docker desktop -> https://docs.docker.com/desktop
-2. Start the docker engine
-3. Run the startup.sh on a bash terminal in vs code
-4. The app is live on localhost:5173 ( Docker will run in detached mode )
-5. In case you want to kill the docker containers -> run docker-compose down on your terminal
+## 💻 Getting Started
+
+### Prerequisites
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+* A bash terminal (Linux/Mac) or PowerShell (Windows).
+
+### Installation & Setup
+
+1.  **Clone the Repository**:
+    ```bash
+    git clone <your-repo-url>
+    cd talentflow
+    ```
+
+2.  **Start the Application**:
+    Run the provided startup script to pull images and start containers:
+    ```bash
+    sh startup.sh
+    ```
+
+3.  **Access the Services**:
+    | Service | URL |
+    | :--- | :--- |
+    | **Frontend** | `http://localhost:5173` |
+    | **Backend API** | `http://localhost:8080` |
+    | **Mailhog (Email)** | `http://localhost:8025` |
+
+## 🧪 Testing
+The project includes a comprehensive suite of backend tests. To run them:
+```bash
+pytest
